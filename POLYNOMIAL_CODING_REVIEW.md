@@ -92,6 +92,12 @@ Full-program worst-case certificates must include arithmetic, retries and storag
 the hash count alone cannot establish them. Expected work is optional reporting,
 not a replacement for a hard cap. Signing-failure probability is separate.
 
+The September 13 R9 clarification makes these worst-case limits mandatory for
+eligibility, including every failure/retry path and all required precomputation.
+Separate raw-query caps include empty and repeated calls: weighted hash counts
+alone must not allow honest query padding to make the security slope vacuous.
+The complete executable and resource certificates remain to implement.
+
 The security claim is pure ROM, public keys <= 32 bytes, total query work
 Q = qH + qS (including challenger hashes), with exact constants and same-scheme
 124-bit / 100-bit floors at 2^20 / 2^32 requests. No constants-dropping rule or

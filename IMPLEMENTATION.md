@@ -1,6 +1,6 @@
 # Statement and harness implementation contract
 
-Status: reviewed-rule implementation for draft v0.17, 2026-09-11.
+Status: implementation contract accompanying draft v0.18, 2026-09-13.
 This is not a frozen competition, an accepted cryptographic baseline or a
 deployment certificate. Historical decisions and validation snapshots are retained
 in [SCHEMECLAIM_PLAN.md](SCHEMECLAIM_PLAN.md).
@@ -59,6 +59,36 @@ unconditional, end-to-end ROM theorem with all internal reduction premises
 discharged. There is no conjectural assumption registry, separate proof-style
 exception or construction classifier by family name. Allowed axioms are exactly
 `propext`, `Classical.choice` and `Quot.sound`.
+
+## Resource bounds and nontrivial security budgets
+
+R9 makes keygen <= 60 s and signing <= 1.5 s mandatory worst-case limits, on
+every execution path, with 64 KiB working RAM. Signing covers every generated
+key and message, including subsequent requests. Charge setup/precomputation,
+arithmetic, randomness and all successful/failed retries. These are required
+eligibility certificates; the current `SchemeClaim` still has no fields proving
+them and no full-program execution binding.
+
+The whole-experiment accounting permits a vacuous security slope if honest work
+already consumes the entire security range. With keygen fixed at 2^128 raw calls,
+every admissible Q is at least 2^128, so Adv <= 1 <= Q/2^128 holds independently
+of forgery resistance. The `sigma_positive` field rejects zero bytes, but a
+padded trivial signature demonstrates the same accounting problem.
+
+The resource profile must independently cap raw keygen, per-request signing and
+verification calls (K, S, V), including repeated and empty queries. Its honest
+work plus signing-request charges is bounded by K + qS*(S+1) + V. Profile
+validation must keep that overhead within the nontrivial security ranges,
+in addition to full runtime/memory checks. For the complete-scheme target, check
+K + 2^20*(S+1) + V < 2^124 and K + 2^32*(S+1) + V < 2^100.
+Actual calibrated caps remain open; no arbitrary raw-call-to-seconds conversion
+or new numerical resource limit is asserted here. The same requirement applies
+to ranked academic profiles under their own pinned games.
+
+Before opening ranking/promotion, bind these limits to the actual implementation
+and add regressions for huge setup, signing and verification, including padding
+with zero-weight empty queries and rare over-budget retry paths. Current local
+mathematical acceptance remains unranked and cannot establish full eligibility.
 
 ## Fixed exact bound and lifetime certificates
 

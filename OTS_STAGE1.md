@@ -15,6 +15,12 @@ exists yet. Account limits remain 1.5 s signing / 60 s keygen / 64 KiB working R
 component allocations and full-program certificates remain open. Abstract hash
 counts do not certify seconds.
 
+R9 requires finite budgets before an academic profile can rank entries. Raw
+keygen/sign/verify query caps must also count repeated and empty-input queries
+and prevent honest work from exhausting the security range. All setup and failed
+retries count. The current research declarations and counting experiments do
+not provide those eligibility certificates.
+
 `LeanSphincs/OTS/Score.lean` defines exact additive arithmetic, positivity and
 monotonicity. `stage1RankKey price` and `stage2RankKey price` use that same
 formula, not the same security game or metric profile. None of these arithmetic

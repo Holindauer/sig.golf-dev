@@ -1,9 +1,29 @@
 # SchemeClaim: current plan and decision history
 
-Status: draft v0.17 implementation, 2026-09-11. The
+Status: draft v0.18 rules and implementation plan, 2026-09-13. The
 [public rules](https://nconsigny.github.io/leansphincs/) and
 [implementation contract](IMPLEMENTATION.md) describe the current target.
 Historical notes below are snapshots, not competing current instructions.
+
+## Mandatory bounded honest work (2026-09-13)
+
+R9 now explicitly requires worst-case keygen <= 60 s, signing <= 1.5 s and
+64 KiB working RAM. Charge every path, all required setup/precomputation and
+all retries, including failure. A small probability of exceeding the cap is
+not sufficient. Signing bounds cover every generated key and message and
+successive requests. Ranked academic profiles must fix their own budgets.
+
+The whole-experiment qH convention needs independent limits on honest work:
+2^128 setup queries make a 128-bit work/probability slope trivial even for an
+insecure scheme. Raw keygen/sign/verify caps must include empty and repeated
+queries and keep honest overhead within the nontrivial security range.
+`IMPLEMENTATION.md` records the corresponding profile-validation inequalities.
+
+Priority before any ranking/promotion: implement the protected resource contract
+and executable binding, calibrate caps, and add query-padding and runtime-overrun
+rejection fixtures. The current mathematical claim remains unchanged and cannot
+establish resource eligibility. The budget values were already decided; this
+revision replaces the ambiguous “intended limits” wording with a mandatory rule.
 
 ## Current decisions: Benedikt review accepted, 2026-09-11
 

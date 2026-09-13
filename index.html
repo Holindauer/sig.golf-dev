@@ -303,8 +303,8 @@
   <h1><span class="lean">lean</span>SPHINCS</h1>
   <p class="subtitle">An open search for stateless hash-based signatures for Ethereum accounts, with Lean proofs of security in the classical, pure random-oracle model.</p>
   <div class="statusline">
-    <span><strong>DRAFT v0.17</strong></span>
-    <span>2026-09-11</span>
+    <span><strong>DRAFT v0.18</strong></span>
+    <span>2026-09-13</span>
     <span>values in <span class="tbd">amber</span> remain open</span>
   </div>
 </header>
@@ -362,6 +362,7 @@
     <p>Prove SUF-CMA: the adversary cannot produce a new valid message/signature pair, including a different valid signature on an already-signed message. Only an exact successful signing response is a replay. Every signing request counts, including repeats and responses returning ⊥.</p>
     <p>Let q<sub>H</sub> bound <strong>raw hash calls across the whole experiment</strong>: key generation, adversarial hashing, honest signing and final forgery verification. It excludes uniform sampling. Let q<sub>S</sub> bound signing requests and define <strong>Q = q<sub>H</sub> + q<sub>S</sub></strong>. These are pathwise query bounds, not expected costs. Raw hash queries are distinct from the input-weighted verification meter.</p>
     <p>For the declared bound B, prove Adv<sub>SUF-CMA</sub> ≤ B(Q, q<sub>S</sub>). At up to 2<sup>20</sup> signing requests, certify B(Q, 2<sup>20</sup>) ≤ Q / 2<sup>124</sup> for 1 ≤ Q ≤ 2<sup>124</sup>. This is the competition's concrete 124-bit classical work/probability floor, not a NIST-category or quantum-security certificate.</p>
+    <p><strong>This security condition must be accompanied by the resource bounds in <a href="#r9">R9</a>.</strong> If key generation always makes 2<sup>128</sup> hash queries, every admissible experiment has Q ≥ 2<sup>128</sup>, so even Adv ≤ Q / 2<sup>128</sup> follows from Adv ≤ 1. Such query padding does not establish useful security. The runtime and raw-query caps must exclude it in key generation, signing and verification.</p>
   </div>
 
   <div class="rule" id="r3">
@@ -399,9 +400,12 @@
   </div>
 
   <div class="rule" id="r9">
-    <h3>R9 · Wallet and complete-program resource gates</h3>
-    <p>The intended complete-account limits are <strong>key generation ≤ 1 minute and signing ≤ 1.5 s</strong>, with <strong>64 KiB working RAM</strong>. Reference hardware calibration, persistent secret/precomputation storage limits and the verification execution cap are <span class="tbd">to be pinned</span>. There is no separate free 4 KiB cache allowance.</p>
-    <p>All work counts: randomness handling, encoding, finite-field and integer arithmetic, memory access, bounded retries and authentication. A fixed conversion from abstract hash units to seconds cannot establish these limits. These resource gates are <strong>not enforced by the current statement/harness</strong>; they require a bound on the complete executable linked to the Lean scheme before eligibility can be claimed.</p>
+    <h3>R9 · Mandatory bounded key generation and signing time</h3>
+    <p><strong>Every eligible complete scheme must prove key generation ≤ 1 minute and signing ≤ 1.5 s</strong> on the reference execution profile, with <strong>64 KiB working RAM</strong>. These are mandatory worst-case limits. Key generation must terminate within its cap on every randomness/oracle-response path. For every generated secret key and every message, each signing invocation must return a signature or explicit failure within its cap on every path, including after earlier signing requests.</p>
+    <p>Charge all setup and precomputation required to produce the usable key, and all work performed before a signing request returns: hashing, randomness handling, encoding, finite-field and integer arithmetic, memory access, authentication and every retry, including failed attempts. Moving setup outside the named keygen function does not exempt it. Expected runtime, sample averages and a small probability of exceeding the cap do not satisfy a worst-case limit.</p>
+    <p>Every ranked Stage 1 profile must also fix finite keygen and signing budgets before admitting entries. Profiles must cap <strong>raw oracle calls</strong> by key generation, each signing invocation and verification, including repeated and empty-input calls, and keep total honest work within the nontrivial security ranges of R2/R4 or the component's pinned game. This requirement also applies to academic hash-work profiles, where a zero-length input has zero weighted cost.</p>
+    <p>Reference hardware calibration, the corresponding raw-query caps, persistent secret/precomputation storage limits and the verification execution cap are <span class="tbd">to be pinned</span>. A fixed conversion from abstract hash units to seconds cannot establish the time limits. There is no separate free 4 KiB cache allowance.</p>
+    <p><strong>A submission without the required resource certificates is ineligible for ranking or promotion.</strong> These resource gates are <strong>not enforced by the current statement/harness</strong>; implementing their binding to the complete executable and Lean scheme is required before opening submissions. Passing the current mathematical claim alone cannot certify competition eligibility.</p>
   </div>
 
   <h3>The required theorem, in shape</h3>
@@ -419,6 +423,7 @@
   verificationWork ≤ declaredHVerify   // malformed inputs included
   correctnessOnSuccess
   freshKeyFixedMessageFailureProbability ≤ 2^-128</code></pre>
+  <p>Eligibility additionally requires the R9 certificates for the same implementation: worst-case <code>keygenTime ≤ 60 s</code>, <code>signingTime ≤ 1.5 s</code>, <code>workingRAM ≤ 64 KiB</code>, and the profile's raw-query and verification execution caps. These clauses still need implementation in the protected resource contract.</p>
 </section>
 
 <section id="costmodels">
@@ -496,7 +501,7 @@
 </section>
 
 <footer>
-  leanSPHINCS draft rules v0.17 · submissions not open · implementation and deployment review pending
+  leanSPHINCS draft rules v0.18 · submissions not open · implementation and deployment review pending
 </footer>
 
 </div>

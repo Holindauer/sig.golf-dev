@@ -1,17 +1,23 @@
 # leanSPHINCS
 
 The [competition rules](https://nconsigny.github.io/leansphincs/) are draft
-**v0.17**, incorporating Benedikt's review. Stage 1 covers academic research
+**v0.18**, with mandatory keygen/signing resource limits. Stage 1 covers academic research
 beyond OTS: primitives, encodings, authentication, composition and complete
 constructions. Stage 2 evaluates complete stateless Ethereum account signatures,
 complementing the leanSig consensus track.
 
 Both use **`c * signatureBytes + verificationWork`**, within separately pinned
 games and cost profiles. The positive rational bandwidth price `c` is not yet
-calibrated: no default price or scalar ranking is issued. The intended account
+calibrated: no default price or scalar ranking is issued. The mandatory account
 limits remain **1.5 s signing, 60 s keygen and 64 KiB working RAM**. Complete-program
 certificates and hardware/storage calibration remain unfinished; hash throughput
 does not certify seconds.
+
+R9 requires these worst-case limits on every execution path, including failed
+retries and all required setup. Missing resource certificates exclude ranking
+and promotion. Raw-query caps must also prevent honest algorithms from consuming
+the security budget through query padding, including zero-weight empty queries.
+These caps and their protected executable binding still need implementation.
 
 ## What is implemented
 

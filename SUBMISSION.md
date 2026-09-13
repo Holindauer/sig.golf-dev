@@ -1,6 +1,6 @@
 # MVP submission contract
 
-Status: implementer guide for draft v0.17, not an open competition.
+Status: implementer guide for draft v0.18, not an open competition.
 The revised claim identifier is `suf-cma-total-work-pk32-decay-v1`.
 The three-file format remains, but security semantics and lifetime coverage have
 changed. The additive price is organizer-owned and not yet calibrated; receipts
@@ -64,6 +64,26 @@ remains 32 bytes; empty input costs 0 hash-work units but still consumes one raw
 security query. This convention is pinned. Receipts identify it as
 `rom256-input64-ceil-v1`; historical 32-byte-unit receipts are not comparable.
 Rebuild cost certificates and regenerate receipts against the current statement.
+
+## Mandatory resource certificates before eligibility
+
+R9 requires worst-case keygen <= 60 s and signing <= 1.5 s, with 64 KiB working
+RAM. Keygen covers all setup needed for a usable key; signing covers every
+generated secret key, every message and every invocation path. All retries,
+including failures, count. Expected runtime and rare overruns do not meet a
+worst-case limit. Each profile must also fix raw-query caps for keygen, signing
+and verification, counting repeated and empty-input queries.
+
+Whole-experiment qH includes honest work: if keygen always makes 2^128 queries,
+Adv <= Q/2^128 is trivial for every admissible budget, even for an always-accepting
+verifier. A positive signature-size requirement does not cure that problem.
+Resource bounds must therefore be checked independently of the security slope.
+
+The current three-file mathematical contract lacks these resource certificates.
+Its local accepted receipt is insufficient for ranking or promotion. The next
+protected resource contract must bind the actual algorithms/executable and
+organizer caps before ranked submissions open; do not invent extra entrant files
+for this still-unimplemented interface.
 
 ## Declared metrics
 

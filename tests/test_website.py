@@ -75,9 +75,9 @@ class WebsiteTests(unittest.TestCase):
         self.assertGreater(checked, 0)
 
     def test_version_and_additive_objective(self):
-        self.assertIn("DRAFT v0.17", self.source)
-        self.assertIn("draft rules v0.17", self.source)
-        self.assertIn("2026-09-11", self.source)
+        self.assertIn("DRAFT v0.18", self.source)
+        self.assertIn("draft rules v0.18", self.source)
+        self.assertIn("2026-09-13", self.source)
         self.assertIn('<span class="formula-big">minimize&nbsp;&nbsp;c × |σ| + V</span>', self.source)
         self.assertIn("Stage 1 is academic research; Stage 2 is the Ethereum selection.", self.source)
         objective = self.page.section_text("objective")
@@ -88,7 +88,7 @@ class WebsiteTests(unittest.TestCase):
         self.assertIn("not directly comparable", objective)
         self.assertIn("1.5 s signing, 1 minute keygen", objective)
         self.assertIn("worst-case cap", objective)
-        for stale in ("v0.12", "v0.13", "v0.14", "v0.15", "v0.16", "Spacetime"):
+        for stale in ("v0.12", "v0.13", "v0.14", "v0.15", "v0.16", "v0.17", "Spacetime"):
             self.assertNotIn(stale, self.source)
 
     def test_publication_mechanics_stay_out_of_the_rules(self):
@@ -120,6 +120,14 @@ class WebsiteTests(unittest.TestCase):
         cost = self.page.section_text("costmodels")
         self.assertIn("would not alone prove a worst-case bound", cost)
         self.assertIn("No aggregate hash-throughput estimate certifies", cost)
+        rules = self.page.section_text("rules")
+        for text in ("Mandatory bounded key generation and signing time",
+                     "key generation ≤ 1 minute and signing ≤ 1.5 s",
+                     "every generated secret key and every message",
+                     "including failed attempts", "repeated and empty-input calls",
+                     "without the required resource certificates is ineligible",
+                     "query padding does not establish useful security"):
+            self.assertIn(text, rules)
 
     def test_pure_rom_and_exact_constants(self):
         rules = self.page.section_text("rules")
