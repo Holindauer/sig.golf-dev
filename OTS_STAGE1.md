@@ -9,17 +9,21 @@ interface and the audited SPHINCS reference pin are unchanged.
 ## Current objective and experiment semantics
 
 The rules use **c * signatureBytes + verificationWork**, with signing and keygen
-as hard budget constraints. The positive rational c belongs to a calibrated
+subject to latency and absolute resource constraints. The positive rational c belongs to a calibrated
 organizer profile. No official price has been selected and no scalar leaderboard
-exists yet. Account limits remain 1.5 s signing / 60 s keygen / 64 KiB working RAM;
-component allocations and full-program certificates remain open. Abstract hash
+exists yet. Account normal latency targets are 1.5 s signing / 60 s keygen, each
+with overrun probability <= 2^-60; RAM stays bounded by 64 KiB on every path.
+Larger absolute timeouts, component allocations and full-program certificates
+remain open. Abstract hash
 counts do not certify seconds.
 
 R9 requires finite budgets before an academic profile can rank entries. Raw
 keygen/sign/verify query caps must also count repeated and empty-input queries
 and prevent honest work from exhausting the security range. All setup and failed
-retries count. The current research declarations and counting experiments do
-not provide those eligibility certificates.
+retries count. Slow executions remain subject to absolute caps and the complete
+security proof. Signing failure stays a separate 2^-128 gate; latency overrun
+does not automatically cause failure. The current research declarations and
+counting experiments do not provide those eligibility certificates.
 
 `LeanSphincs/OTS/Score.lean` defines exact additive arithmetic, positivity and
 monotonicity. `stage1RankKey price` and `stage2RankKey price` use that same
@@ -143,8 +147,9 @@ code does not implement the decoder or prove this SUF-preserving serialization.
 ## Next proof milestones, in order
 
 1. Pin the first academic game, component budgets and price calibration.
-   Account budgets remain 1.5 s / 60 s; no hash-unit-to-time conversion certifies
-   them and no price is inferred from historical product winners.
+   Account latency targets remain 1.5 s / 60 s with overrun probability <= 2^-60;
+   the larger absolute caps still need calibration. No hash-unit-to-time conversion
+   certifies these guarantees and no price is inferred from historical product winners.
 2. Address serialization and actual oracle evaluation/metering are implemented.
    Reconstruction against an oracle-consistent reference is now proved. Next
    construct that reference from randomized keygen and transport through the ROM; instantiate each
@@ -169,8 +174,10 @@ is inferred from these arithmetic and graph foundations.
 
 The organizer requested explicit treatment of worst-case probability. This does
 not turn a conditional failure envelope into an actual signer certificate.
-Signing is no longer a score factor. A hard latency cap needs worst-case work;
-expected work may be reported separately.
+Signing is no longer a score factor. The normal latency targets now allow a
+proved 2^-60 overrun probability per operation, while larger absolute caps
+still bound worst-case work. The failure envelopes below concern exhaustion
+at a retry limit; they are not already proofs of a runtime-tail guarantee.
 
 The new proof bounds survival mass from a step inequality
 `tail(n+1) <= tail(n)*(1-p)`. A success lower bound conditional on every surviving

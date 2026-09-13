@@ -75,8 +75,8 @@ class WebsiteTests(unittest.TestCase):
         self.assertGreater(checked, 0)
 
     def test_version_and_additive_objective(self):
-        self.assertIn("DRAFT v0.18", self.source)
-        self.assertIn("draft rules v0.18", self.source)
+        self.assertIn("DRAFT v0.19", self.source)
+        self.assertIn("draft rules v0.19", self.source)
         self.assertIn("2026-09-13", self.source)
         self.assertIn('<span class="formula-big">minimize&nbsp;&nbsp;c × |σ| + V</span>', self.source)
         self.assertIn("Stage 1 is academic research; Stage 2 is the Ethereum selection.", self.source)
@@ -88,7 +88,7 @@ class WebsiteTests(unittest.TestCase):
         self.assertIn("not directly comparable", objective)
         self.assertIn("1.5 s signing, 1 minute keygen", objective)
         self.assertIn("worst-case cap", objective)
-        for stale in ("v0.12", "v0.13", "v0.14", "v0.15", "v0.16", "v0.17", "Spacetime"):
+        for stale in ("v0.12", "v0.13", "v0.14", "v0.15", "v0.16", "v0.17", "v0.18", "Spacetime"):
             self.assertNotIn(stale, self.source)
 
     def test_publication_mechanics_stay_out_of_the_rules(self):
@@ -121,8 +121,11 @@ class WebsiteTests(unittest.TestCase):
         self.assertIn("would not alone prove a worst-case bound", cost)
         self.assertIn("No aggregate hash-throughput estimate certifies", cost)
         rules = self.page.section_text("rules")
-        for text in ("Mandatory bounded key generation and signing time",
-                     "key generation ≤ 1 minute and signing ≤ 1.5 s",
+        for text in ("Mandatory latency guarantees and absolute resource caps",
+                     "Pr[T_keygen > 60 s] ≤ 2^-60", "Pr[T_sign > 1.5 s] ≤ 2^-60",
+                     "Absolute runtime and raw-query caps still apply on every path",
+                     "Late completion, signing failure and forgery are separate events",
+                     "cannot be substituted for that bound", "permitted adaptive message selection",
                      "every generated secret key and every message",
                      "including failed attempts", "repeated and empty-input calls",
                      "without the required resource certificates is ineligible",

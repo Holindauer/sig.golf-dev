@@ -87,16 +87,18 @@ and profiles. The organizer-owned rational price c is pending calibration; no
 scalar ranking is issued until then. The Pareto frontier remains useful meanwhile.
 Stage 1 is broader than OTS and does not assume components are used fully black-box.
 
-Hard account budgets remain 1.5 s signing, 60 s keygen and 64 KiB working RAM.
-Full-program worst-case certificates must include arithmetic, retries and storage;
-the hash count alone cannot establish them. Expected work is optional reporting,
-not a replacement for a hard cap. Signing-failure probability is separate.
+The September 13 latency-tail decision sets normal targets of 1.5 s signing and
+60 s keygen, each with overrun probability <= 2^-60. Exceptionally slow runs may
+take minutes within larger absolute timeouts still to be pinned. Working RAM
+remains bounded by 64 KiB on every path. Full-program certificates include
+arithmetic, retries and storage; hash counts or expected work alone do not prove
+these guarantees. Signing failure remains a separate 2^-128 obligation.
 
-The September 13 R9 clarification makes these worst-case limits mandatory for
-eligibility, including every failure/retry path and all required precomputation.
-Separate raw-query caps include empty and repeated calls: weighted hash counts
-alone must not allow honest query padding to make the security slope vacuous.
-The complete executable and resource certificates remain to implement.
+R9 also requires absolute raw-query caps, including empty and repeated calls:
+even a rare huge-query branch can make the pathwise security bound vacuous.
+These caps apply to slow paths as well. The full security proof cannot discard
+late executions using the 2^-60 allowance. The precise performance game,
+complete executable binding and resource certificates remain to implement.
 
 The security claim is pure ROM, public keys <= 32 bytes, total query work
 Q = qH + qS (including challenger hashes), with exact constants and same-scheme

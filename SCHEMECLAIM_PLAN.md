@@ -1,11 +1,41 @@
 # SchemeClaim: current plan and decision history
 
-Status: draft v0.18 rules and implementation plan, 2026-09-13. The
+Status: draft v0.19 rules and implementation plan, 2026-09-13. The
 [public rules](https://nconsigny.github.io/leansphincs/) and
 [implementation contract](IMPLEMENTATION.md) describe the current target.
 Historical notes below are snapshots, not competing current instructions.
 
-## Mandatory bounded honest work (2026-09-13)
+## Latency-tail decision (2026-09-13, current)
+
+The organizer accepts exceptionally slow operations with probability at most
+2^-60. Normal latency targets remain 60 s keygen and 1.5 s signing; prove a
+2^-60 overrun bound for each. Runs may take minutes within larger absolute
+timeouts whose values remain to pin. This supersedes the earlier requirement
+that the normal targets hold on every path. RAM remains a hard 64 KiB cap.
+
+For signing, cover each request position under allowed adaptive message
+selection. The planned probability space includes the ROM and keygen/signing/
+adversary randomness. The exact performance game and adversarial query budgets
+still need to be pinned. With a proved per-position bound, a union bound gives
+at most N*2^-60 probability of any late signature in N requests, without
+independence. This is not a lifetime 2^-60 promise.
+
+Keep absolute runtime and raw-query caps on every path. Even a rare huge-query
+branch can make the current pathwise security budget vacuous. The 2^-60
+latency allowance does not relax signing failure (2^-128 in the R8 game) or
+unforgeability; full proofs must include slow executions. Do not abort at the
+normal latency target merely to satisfy the performance bound.
+
+Before ranking/promotion: implement the resource/performance game and executable
+binding; calibrate absolute and raw-query caps; prove latency, termination and
+failure separately; test late valid outputs, excessive tail mass, absolute-cap
+overruns and rare query-padding branches. `SchemeClaim` remains unchanged.
+
+## Earlier bounded-honest-work decision (2026-09-13, superseded in part)
+
+The following records the earlier strict-latency wording. The current decision
+above replaces its per-path 60 s / 1.5 s requirement with latency-tail bounds.
+Independent absolute limits and the query-padding exclusion remain required.
 
 R9 now explicitly requires worst-case keygen <= 60 s, signing <= 1.5 s and
 64 KiB working RAM. Charge every path, all required setup/precomputation and
@@ -31,8 +61,10 @@ revision replaces the ambiguous “intended limits” wording with a mandatory r
    pinned games and meters. c is an organizer-owned positive rational, pending
    calibration. No implicit price, no scalar ranking before calibration.
    The former product and four-factor objectives are superseded.
-2. Complete-account limits remain 1.5 s signing, 60 s keygen and 64 KiB working
-   RAM. Full-program worst-case bounds include retries and arithmetic.
+2. Complete-account normal latency targets are 1.5 s signing and 60 s keygen,
+   now with 2^-60 overrun allowance per operation (September 13 decision above).
+   Absolute runtime/raw-query caps and 64 KiB RAM still cover every path.
+   Full-program bounds include retries and arithmetic.
    Hardware calibration, storage limits and component budgets remain open.
    Historical hash-throughput conversions are not resource certificates.
 3. Pure-ROM, end-to-end Lean proofs only. No extra cryptographic assumptions,

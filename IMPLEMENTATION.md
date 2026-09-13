@@ -1,6 +1,6 @@
 # Statement and harness implementation contract
 
-Status: implementation contract accompanying draft v0.18, 2026-09-13.
+Status: implementation contract accompanying draft v0.19, 2026-09-13.
 This is not a frozen competition, an accepted cryptographic baseline or a
 deployment certificate. Historical decisions and validation snapshots are retained
 in [SCHEMECLAIM_PLAN.md](SCHEMECLAIM_PLAN.md).
@@ -62,24 +62,46 @@ exception or construction classifier by family name. Allowed axioms are exactly
 
 ## Resource bounds and nontrivial security budgets
 
-R9 makes keygen <= 60 s and signing <= 1.5 s mandatory worst-case limits, on
-every execution path, with 64 KiB working RAM. Signing covers every generated
-key and message, including subsequent requests. Charge setup/precomputation,
-arithmetic, randomness and all successful/failed retries. These are required
-eligibility certificates; the current `SchemeClaim` still has no fields proving
-them and no full-program execution binding.
+R9 requires Pr[T_keygen > 60 s] <= 2^-60 and Pr[T_sign > 1.5 s] <= 2^-60.
+Longer runs, including minutes, may complete within larger absolute timeouts
+whose values remain to calibrate. RAM stays bounded by 64 KiB on every path.
+Charge setup/precomputation, arithmetic, randomness and all successful/failed
+retries. Crossing the normal latency threshold does not automatically abort.
+
+The planned performance game must quantify over allowed adaptive adversaries
+and each signing-request position i. Its event is: request i occurs and its
+runtime exceeds 1.5 s. Probability is over the shared ROM, keygen randomness
+and execution randomness, including the adversary's random choices. This is
+an unconditional bound for each position in that game, not a claim conditional
+on every possible key or prior transcript. Averages over random messages are
+insufficient. The precise game, adversarial raw-query budgets and program-cost
+semantics remain to pin and implement before ranking.
+
+Given that per-position bound, the probability of at least one late signature
+in N requests is at most N*2^-60, without independence: at N=2^20 this is
+2^-40, and at N=2^32 it is 2^-28. Keygen has its own one-operation tail bound.
+The allowance is not a 2^-60 guarantee over an entire key lifetime.
+
+Late completion is separate from failure. Any signing timeout at the absolute
+limit returns explicit failure and must be covered by R8's existing 2^-128
+fresh-key/fixed-message bound. The full security proof must cover slow paths;
+the 2^-60 latency allowance is not an extra permitted forgery probability.
+The current `SchemeClaim` has no resource fields or executable binding yet.
 
 The whole-experiment accounting permits a vacuous security slope if honest work
 already consumes the entire security range. With keygen fixed at 2^128 raw calls,
 every admissible Q is at least 2^128, so Adv <= 1 <= Q/2^128 holds independently
-of forgery resistance. The `sigma_positive` field rejects zero bytes, but a
-padded trivial signature demonstrates the same accounting problem.
+of forgery resistance. Even a rare 2^128-query branch can force the pathwise
+`HasHashQueryBound` budget that high. A high-probability runtime guarantee alone
+does not close this loophole. The `sigma_positive` field rejects zero bytes,
+but a padded trivial signature demonstrates the same accounting problem.
 
 The resource profile must independently cap raw keygen, per-request signing and
 verification calls (K, S, V), including repeated and empty queries. Its honest
 work plus signing-request charges is bounded by K + qS*(S+1) + V. Profile
 validation must keep that overhead within the nontrivial security ranges,
-in addition to full runtime/memory checks. For the complete-scheme target, check
+in addition to latency-tail and absolute runtime/memory checks. These raw caps
+bound every path, including late executions. For the complete-scheme target, check
 K + 2^20*(S+1) + V < 2^124 and K + 2^32*(S+1) + V < 2^100.
 Actual calibrated caps remain open; no arbitrary raw-call-to-seconds conversion
 or new numerical resource limit is asserted here. The same requirement applies
@@ -87,7 +109,8 @@ to ranked academic profiles under their own pinned games.
 
 Before opening ranking/promotion, bind these limits to the actual implementation
 and add regressions for huge setup, signing and verification, including padding
-with zero-weight empty queries and rare over-budget retry paths. Current local
+with zero-weight empty queries, rare huge-work branches, violations of the
+2^-60 latency envelope and overruns of the larger absolute limits. Current local
 mathematical acceptance remains unranked and cannot establish full eligibility.
 
 ## Fixed exact bound and lifetime certificates

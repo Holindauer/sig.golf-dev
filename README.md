@@ -1,23 +1,25 @@
 # leanSPHINCS
 
 The [competition rules](https://nconsigny.github.io/leansphincs/) are draft
-**v0.18**, with mandatory keygen/signing resource limits. Stage 1 covers academic research
+**v0.19**, with latency guarantees and absolute resource limits. Stage 1 covers academic research
 beyond OTS: primitives, encodings, authentication, composition and complete
 constructions. Stage 2 evaluates complete stateless Ethereum account signatures,
 complementing the leanSig consensus track.
 
 Both use **`c * signatureBytes + verificationWork`**, within separately pinned
 games and cost profiles. The positive rational bandwidth price `c` is not yet
-calibrated: no default price or scalar ranking is issued. The mandatory account
-limits remain **1.5 s signing, 60 s keygen and 64 KiB working RAM**. Complete-program
+calibrated: no default price or scalar ranking is issued. Normal account latency
+targets are **1.5 s signing and 60 s keygen**, each with overrun probability
+at most **2^-60 per operation**. Working RAM is bounded by **64 KiB** on every path. Complete-program
 certificates and hardware/storage calibration remain unfinished; hash throughput
 does not certify seconds.
 
-R9 requires these worst-case limits on every execution path, including failed
-retries and all required setup. Missing resource certificates exclude ranking
-and promotion. Raw-query caps must also prevent honest algorithms from consuming
-the security budget through query padding, including zero-weight empty queries.
-These caps and their protected executable binding still need implementation.
+R9 permits exceptionally slow runs, including minutes within the larger absolute
+timeouts still to be pinned. Absolute runtime/raw-query caps apply on every path,
+including all setup and failed retries; even rare query padding must not make
+the security bound vacuous. Lateness is separate from signing failure, whose
+existing bound remains 2^-128. The performance game, calibrated caps and protected
+executable binding remain to implement before ranking or promotion.
 
 ## What is implemented
 

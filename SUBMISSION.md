@@ -1,6 +1,6 @@
 # MVP submission contract
 
-Status: implementer guide for draft v0.18, not an open competition.
+Status: implementer guide for draft v0.19, not an open competition.
 The revised claim identifier is `suf-cma-total-work-pk32-decay-v1`.
 The three-file format remains, but security semantics and lifetime coverage have
 changed. The additive price is organizer-owned and not yet calibrated; receipts
@@ -67,17 +67,25 @@ Rebuild cost certificates and regenerate receipts against the current statement.
 
 ## Mandatory resource certificates before eligibility
 
-R9 requires worst-case keygen <= 60 s and signing <= 1.5 s, with 64 KiB working
-RAM. Keygen covers all setup needed for a usable key; signing covers every
-generated secret key, every message and every invocation path. All retries,
-including failures, count. Expected runtime and rare overruns do not meet a
-worst-case limit. Each profile must also fix raw-query caps for keygen, signing
-and verification, counting repeated and empty-input queries.
+R9 requires Pr[T_keygen > 60 s] <= 2^-60 and Pr[T_sign > 1.5 s] <= 2^-60,
+with 64 KiB working RAM on every path. Signing must cover each request position
+under permitted adaptive message selection in the bounded-query performance
+game; an average over random messages does not suffice. The precise game and
+adversarial budgets remain to pin. The allowance is per operation, not lifetime.
+
+Runs may take minutes within larger absolute timeouts still to be calibrated.
+All setup and retries, including failures, count. A late signature must remain
+valid; crossing the normal target does not trigger automatic failure. Any
+failure at the absolute timeout must fit the separate R8 failure bound of 2^-128.
+Every execution path must meet the absolute runtime and raw-query caps, including
+repeated and empty-input calls. Slow branches remain inside the security proof.
 
 Whole-experiment qH includes honest work: if keygen always makes 2^128 queries,
 Adv <= Q/2^128 is trivial for every admissible budget, even for an always-accepting
 verifier. A positive signature-size requirement does not cure that problem.
 Resource bounds must therefore be checked independently of the security slope.
+A rare huge-query branch can also inflate the pathwise qH bound; the 2^-60
+latency envelope alone cannot exclude that loophole.
 
 The current three-file mathematical contract lacks these resource certificates.
 Its local accepted receipt is insufficient for ranking or promotion. The next
