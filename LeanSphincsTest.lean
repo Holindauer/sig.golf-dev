@@ -1,5 +1,6 @@
 import LeanSphincsTest.BoundExamples
 import LeanSphincsTest.Contract
+import LeanSphincsTest.AdaptiveAvailability
 import LeanSphincsTest.SigningFailure
 import LeanSphincsTest.OracleMeter
 import LeanSphincsTest.ReviewRules
