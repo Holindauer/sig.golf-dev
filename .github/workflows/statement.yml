@@ -16,6 +16,8 @@ jobs:
       - uses: leanprover/lean-action@v1
       - run: bash setup.sh
       - run: python3 -m unittest discover -s tests -v
+      - run: lake build LeanSphincsTest.AdaptiveAvailability
+      - run: lake env lean scripts/check-availability-axioms.lean
       - run: lake build LeanSphincsTest.BoundExamples LeanSphincsTest.SigningFailure LeanSphincsTest.OracleMeter
       - run: lake build LeanSphincsTest.ReviewRules
       - run: lake build LeanSphincsTest.OTSScore LeanSphincsTest.OTSGraph LeanSphincsTest.OTSEvaluate

@@ -165,6 +165,8 @@ def stop_service(unit, output):
         "--property=LoadState,ActiveState,ControlGroup"], env=dict(os.environ),
         capture_output=True, text=True, timeout=15)
     fields = dict(line.split("=", 1) for line in state.stdout.splitlines() if "=" in line)
+    if not {"LoadState", "ActiveState", "ControlGroup"} <= fields.keys():
+        raise RuntimeError("service cleanup uncertain: missing state for " + unit)
     if fields.get("LoadState") == "not-found":
         return  # systemd collected a terminated transient cgroup
     if state.returncode or fields.get("ActiveState") not in {"inactive", "failed"}:
@@ -187,10 +189,10 @@ def verify(submission: Path, insecure: bool = False) -> tuple[dict, Path]:
             return _verify_admitted(submission, insecure)
     except WorkerBusy as error:
         now = int(time.time())
-        report = {"schema": "leansphincs-verification-v1", "ranked": False,
+        report = {"schema": "leansphincs-verification-v2", "ranked": False,
                   "claim_version": CLAIM_ID,
-              "mathematical_verification": False, "resource_certification": False,
-              "side_channel_review": False, "deployment_eligible": False,
+                  "mathematical_verification": False, "resource_certification": False,
+                  "side_channel_review": False, "deployment_eligible": False,
                   "hash_meter": meter_metadata(),
                   "profile": "insecure-local" if insecure else "leansphincs-linux-v1",
                   "status": "worker_busy", "stage": "admission", "retryable": True,
@@ -206,7 +208,7 @@ def _verify_admitted(submission: Path, insecure: bool = False) -> tuple[dict, Pa
     result_root.mkdir(parents=True, exist_ok=True)
     directory = Path(tempfile.mkdtemp(prefix="run-", dir=result_root))
     os.chmod(directory, 0o700)
-    report = {"schema": "leansphincs-verification-v1", "ranked": False,
+    report = {"schema": "leansphincs-verification-v2", "ranked": False,
               "claim_version": CLAIM_ID,
               "mathematical_verification": False, "resource_certification": False,
               "side_channel_review": False, "deployment_eligible": False,
@@ -314,6 +316,8 @@ def _verify_admitted(submission: Path, insecure: bool = False) -> tuple[dict, Pa
         report.pop("score", None)
         report["status"] = "interrupted"
         report["error"] = "verification interrupted; worker stop requested"
+    if "resource_profile" in report:
+        report["deployment_gates"] = deployment_gates(report["resource_profile"], report)
     report["stage"] = stage
     report["finished_unix"] = int(time.time())
     report["logs"] = {p.name: digest(p) for p in directory.glob("*.log")}

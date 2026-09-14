@@ -237,3 +237,20 @@ coefficient remains null, so no scalar score is issued. Existing latency targets
 2^-40 overrun allowances, absolute deadlines and 64 KiB RAM cap are unchanged.
 Positive metric/availability fixtures are not cryptographic baselines. Emile's
 upstream pin, OTS construction work and baseline parameters are unchanged.
+
+### v0.21 verification coverage
+
+Receipts use schema `leansphincs-verification-v2`; mathematical acceptance does
+not set resource certification, side-channel review or deployment eligibility.
+Missing systemd state is an infrastructure error even after a successful compiler
+exit. Prebuilt metric canaries exercise the same capture/check/export sequence,
+including the no-build adapter, and remain explicitly non-cryptographic.
+
+Run `lake env lean scripts/check-availability-axioms.lean` after the test build
+for the adaptive positive/negative fixture axiom closures. Run
+`python3 scripts/test-sandbox-lifecycle.py` for the organizer-controlled detached
+compiler-child probe: the child survives its parent, ignores SIGTERM and attempts
+a delayed artifact write, and the service must terminate it before capture.
+The scanner is intentionally bypassed by these sandbox probes. Unit regressions
+cover cleanup uncertainty, symlinks, special files, substitution, snapshot drift,
+receipt gates and migration of only the recognized comparator patch.

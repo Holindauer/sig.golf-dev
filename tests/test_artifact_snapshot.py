@@ -62,7 +62,8 @@ class SnapshotTests(unittest.TestCase):
         with self.assertRaises(OSError): capture_artifacts(self.compiler, ['Solution'])
 
     def test_cleanup_uncertainty_fails_even_after_success(self):
-        for state in ('', 'LoadState=loaded\nActiveState=active\nControlGroup=/test',):
+        for state in ('', 'LoadState=loaded\nActiveState=active\nControlGroup=/test',
+                      'LoadState=loaded\nActiveState=inactive', 'LoadState=not-found'):
             with self.subTest(state=state), patch.object(verifier.subprocess, 'run',
                     return_value=subprocess.CompletedProcess([], 0, state, '')):
                 with self.assertRaisesRegex(RuntimeError, 'cleanup uncertain'):

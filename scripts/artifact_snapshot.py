@@ -10,7 +10,7 @@ MAX_FILE = 256 * 1024 * 1024
 MAX_TOTAL = 2 * 1024 * 1024 * 1024
 
 
-def capture_artifacts(root, modules, prefix="LeanSphincs.Submission"):
+def capture_artifacts(root, modules, prefix="LeanSphincs.Submission", required_modules=None):
     components = prefix.split(".")
     if any(not c.isidentifier() or not c.isascii() for c in components):
         raise ValueError("invalid organizer module prefix")
@@ -25,7 +25,10 @@ def capture_artifacts(root, modules, prefix="LeanSphincs.Submission"):
         allowed = {m + suffix for m in modules for suffix in SUFFIXES}
         if set(names) - allowed:
             raise RuntimeError('unexpected module artifact paths')
-        if not {m + '.olean' for m in modules if m in {'Scheme', 'Solution'}} <= set(names):
+        required = set(modules) & {'Scheme', 'Solution'} if required_modules is None else set(required_modules)
+        if not required <= set(modules):
+            raise ValueError('required modules outside source manifest')
+        if not {m + '.olean' for m in required} <= set(names):
             raise RuntimeError('missing compiled modules')
         bundle, total = {}, 0
         for name in sorted(names):
@@ -44,8 +47,8 @@ def capture_artifacts(root, modules, prefix="LeanSphincs.Submission"):
         os.close(fd)
 
 
-def freeze_artifacts(compiler, verifier, modules, prefix="LeanSphincs.Submission"):
-    bundle = capture_artifacts(compiler, modules, prefix)
+def freeze_artifacts(compiler, verifier, modules, prefix="LeanSphincs.Submission", required_modules=None):
+    bundle = capture_artifacts(compiler, modules, prefix, required_modules)
     destination = verifier / ".lake/build/lib/lean" / prefix.replace(".", "/")
     for name, data in bundle.items():
         with (destination / name).open('xb') as stream:

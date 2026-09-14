@@ -90,7 +90,7 @@ with termination_as_interrupt():
                     events.append(("stop", command))
                     if stop_error:
                         raise stop_error
-                    return subprocess.CompletedProcess(command, 0, "LoadState=not-found\n", "")
+                    return subprocess.CompletedProcess(command, 0, "LoadState=not-found\nActiveState=inactive\nControlGroup=\n", "")
 
                 with patch.object(verify_submission.subprocess, "Popen", return_value=worker), \
                      patch.object(verify_submission.subprocess, "run", side_effect=stop), \

@@ -140,6 +140,9 @@ class OrchestrationTests(unittest.TestCase):
         report, checks = self.exercise([0, 0, 0, 0])
         self.assertEqual(checks, 1)
         self.assertEqual(report["status"], "accepted")
+        self.assertTrue(report["mathematical_verification"])
+        self.assertFalse(report["deployment_eligible"])
+        self.assertNotIn("current mathematical certificate missing", report["deployment_gates"]["reasons"])
         self.assertNotIn("score", report)
         self.assertIn("coefficient", report["score_pending"])
         self.assertIn("lake", report["tools"])
@@ -153,6 +156,8 @@ class OrchestrationTests(unittest.TestCase):
         cases = [([1], None, "infrastructure_error", "trusted_build"),
                  ([0, 1], None, "infrastructure_error", "trusted_build"),
                  ([0, 0, 0, 1], None, "verification_failed", "integrity"),
+                 ([0, 0, RuntimeError("service cleanup uncertain")], None,
+                  "infrastructure_error", "compilation"),
                  ([0, 0, 0, subprocess.TimeoutExpired("comparator", 1)], None,
                   "infrastructure_error", "comparison"),
                  ([0, 0, 0, KeyboardInterrupt()], None, "interrupted", "comparison"),

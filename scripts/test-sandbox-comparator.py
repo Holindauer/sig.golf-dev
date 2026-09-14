@@ -71,7 +71,7 @@ def main():
                 ignore=shutil.ignore_patterns("Submission"))
         (frozen / ".lake/build/lib/lean/LeanSphincsTest/Submission").mkdir()
         modules = [p.stem for p in (ROOT / "LeanSphincsTest/Submission").glob("*.lean")]
-        artifacts = freeze_artifacts(project, frozen, modules, "LeanSphincsTest.Submission")
+        artifacts = freeze_artifacts(project, frozen, modules, "LeanSphincsTest.Submission", [case])
         sandbox_config = json.loads((project / "sandbox.json").read_text())
         sandbox_config["verification_only"] = True
         (frozen / "sandbox.json").write_text(json.dumps(sandbox_config))
@@ -83,7 +83,7 @@ def main():
             frozen, frozen_env)
         log = directory / f"{case}.log"
         code = run(command, frozen, dict(os.environ), log)
-        if artifacts != manifest(capture_artifacts(frozen, modules, "LeanSphincsTest.Submission")):
+        if artifacts != manifest(capture_artifacts(frozen, modules, "LeanSphincsTest.Submission", [case])):
             raise RuntimeError("canary artifact snapshot drift")
         if (code == 0) != (case == "Good") or expected not in log.read_text():
             raise SystemExit(f"{case}: unexpected result; see {log}")
