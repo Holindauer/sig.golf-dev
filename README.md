@@ -1,7 +1,7 @@
 # leanSPHINCS
 
 The [competition rules](https://nconsigny.github.io/leansphincs/) are draft
-**v0.19**, with latency guarantees and absolute resource limits. Stage 1 covers academic research
+**v0.20**, with latency guarantees and absolute resource limits. Stage 1 covers academic research
 beyond OTS: primitives, encodings, authentication, composition and complete
 constructions. Stage 2 evaluates complete stateless Ethereum account signatures,
 complementing the leanSig consensus track.
@@ -10,15 +10,18 @@ Both use **`c * signatureBytes + verificationWork`**, within separately pinned
 games and cost profiles. The positive rational bandwidth price `c` is not yet
 calibrated: no default price or scalar ranking is issued. Normal account latency
 targets are **1.5 s signing and 60 s keygen**, each with overrun probability
-at most **2^-60 per operation**. Working RAM is bounded by **64 KiB** on every path. Complete-program
+at most **2^-40 per operation**. Working RAM is bounded by **64 KiB** on every path. Complete-program
 certificates and hardware/storage calibration remain unfinished; hash throughput
 does not certify seconds.
 
-R9 permits exceptionally slow runs, including minutes within the larger absolute
-timeouts still to be pinned. Absolute runtime/raw-query caps apply on every path,
+R9 permits exceptionally slow runs up to absolute limits of **2 minutes signing
+and 6 minutes keygen**, with no overrun allowance at those limits.
+Absolute runtime/raw-query caps apply on every path,
 including all setup and failed retries; even rare query padding must not make
 the security bound vacuous. Lateness is separate from signing failure, whose
-existing bound remains 2^-128. The performance game, calibrated caps and protected
+existing bound remains 2^-128. A union bound over 2^32 requests permits at most
+1/256 probability of any late signature, not a lifetime 2^-40 guarantee.
+The performance game, calibrated raw-query caps and protected
 executable binding remain to implement before ranking or promotion.
 
 ## What is implemented

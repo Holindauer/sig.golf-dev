@@ -1,6 +1,6 @@
 # Statement and harness implementation contract
 
-Status: implementation contract accompanying draft v0.19, 2026-09-13.
+Status: implementation contract accompanying draft v0.20, 2026-09-14.
 This is not a frozen competition, an accepted cryptographic baseline or a
 deployment certificate. Historical decisions and validation snapshots are retained
 in [SCHEMECLAIM_PLAN.md](SCHEMECLAIM_PLAN.md).
@@ -62,9 +62,11 @@ exception or construction classifier by family name. Allowed axioms are exactly
 
 ## Resource bounds and nontrivial security budgets
 
-R9 requires Pr[T_keygen > 60 s] <= 2^-60 and Pr[T_sign > 1.5 s] <= 2^-60.
-Longer runs, including minutes, may complete within larger absolute timeouts
-whose values remain to calibrate. RAM stays bounded by 64 KiB on every path.
+R9 requires Pr[T_keygen > 60 s] <= 2^-40 and Pr[T_sign > 1.5 s] <= 2^-40.
+Longer runs may complete within absolute limits of T_sign <= 120 s (2 minutes)
+and T_keygen <= 360 s (6 minutes). These limits apply on every path with no
+probabilistic exception. Keygen must return a usable key, not a timeout failure.
+RAM stays bounded by 64 KiB on every path.
 Charge setup/precomputation, arithmetic, randomness and all successful/failed
 retries. Crossing the normal latency threshold does not automatically abort.
 
@@ -78,14 +80,14 @@ insufficient. The precise game, adversarial raw-query budgets and program-cost
 semantics remain to pin and implement before ranking.
 
 Given that per-position bound, the probability of at least one late signature
-in N requests is at most N*2^-60, without independence: at N=2^20 this is
-2^-40, and at N=2^32 it is 2^-28. Keygen has its own one-operation tail bound.
-The allowance is not a 2^-60 guarantee over an entire key lifetime.
+in N requests is at most min(1, N*2^-40), without independence: at N=2^20 this is
+2^-20, and at N=2^32 it is 2^-8 (1/256). Keygen has its own one-operation tail bound.
+The allowance is not a 2^-40 guarantee over an entire key lifetime.
 
 Late completion is separate from failure. Any signing timeout at the absolute
 limit returns explicit failure and must be covered by R8's existing 2^-128
 fresh-key/fixed-message bound. The full security proof must cover slow paths;
-the 2^-60 latency allowance is not an extra permitted forgery probability.
+the 2^-40 latency allowance is not an extra permitted forgery probability.
 The current `SchemeClaim` has no resource fields or executable binding yet.
 
 The whole-experiment accounting permits a vacuous security slope if honest work
@@ -103,14 +105,15 @@ validation must keep that overhead within the nontrivial security ranges,
 in addition to latency-tail and absolute runtime/memory checks. These raw caps
 bound every path, including late executions. For the complete-scheme target, check
 K + 2^20*(S+1) + V < 2^124 and K + 2^32*(S+1) + V < 2^100.
-Actual calibrated caps remain open; no arbitrary raw-call-to-seconds conversion
-or new numerical resource limit is asserted here. The same requirement applies
+Actual calibrated raw-query caps remain open; no arbitrary raw-call-to-seconds
+conversion certifies the fixed runtime limits. The same requirement applies
 to ranked academic profiles under their own pinned games.
 
 Before opening ranking/promotion, bind these limits to the actual implementation
 and add regressions for huge setup, signing and verification, including padding
 with zero-weight empty queries, rare huge-work branches, violations of the
-2^-60 latency envelope and overruns of the larger absolute limits. Current local
+2^-40 latency envelope and overruns of the 120 s signing / 360 s keygen absolute
+limits, including failed retries. Current local
 mathematical acceptance remains unranked and cannot establish full eligibility.
 
 ## Fixed exact bound and lifetime certificates

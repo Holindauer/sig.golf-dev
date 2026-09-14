@@ -75,9 +75,9 @@ class WebsiteTests(unittest.TestCase):
         self.assertGreater(checked, 0)
 
     def test_version_and_additive_objective(self):
-        self.assertIn("DRAFT v0.19", self.source)
-        self.assertIn("draft rules v0.19", self.source)
-        self.assertIn("2026-09-13", self.source)
+        self.assertIn("DRAFT v0.20", self.source)
+        self.assertIn("draft rules v0.20", self.source)
+        self.assertIn("2026-09-14", self.source)
         self.assertIn('<span class="formula-big">minimize&nbsp;&nbsp;c × |σ| + V</span>', self.source)
         self.assertIn("Stage 1 is academic research; Stage 2 is the Ethereum selection.", self.source)
         objective = self.page.section_text("objective")
@@ -88,7 +88,9 @@ class WebsiteTests(unittest.TestCase):
         self.assertIn("not directly comparable", objective)
         self.assertIn("1.5 s signing, 1 minute keygen", objective)
         self.assertIn("worst-case cap", objective)
-        for stale in ("v0.12", "v0.13", "v0.14", "v0.15", "v0.16", "v0.17", "v0.18", "Spacetime"):
+        self.assertIn("2 minutes signing and 6 minutes keygen", objective)
+        self.assertIn("Those absolute limits admit no overrun allowance", objective)
+        for stale in ("v0.12", "v0.13", "v0.14", "v0.15", "v0.16", "v0.17", "v0.18", "v0.19", "Spacetime", "2^-60", "2<sup>−60</sup>"):
             self.assertNotIn(stale, self.source)
 
     def test_publication_mechanics_stay_out_of_the_rules(self):
@@ -122,7 +124,9 @@ class WebsiteTests(unittest.TestCase):
         self.assertIn("No aggregate hash-throughput estimate certifies", cost)
         rules = self.page.section_text("rules")
         for text in ("Mandatory latency guarantees and absolute resource caps",
-                     "Pr[T_keygen > 60 s] ≤ 2^-60", "Pr[T_sign > 1.5 s] ≤ 2^-60",
+                     "Pr[T_keygen > 60 s] ≤ 2^-40", "Pr[T_sign > 1.5 s] ≤ 2^-40",
+                     "T_keygen ≤ 360 s", "T_sign ≤ 120 s", "with no probabilistic exception",
+                     "(1/256)", "not a lifetime",
                      "Absolute runtime and raw-query caps still apply on every path",
                      "Late completion, signing failure and forgery are separate events",
                      "cannot be substituted for that bound", "permitted adaptive message selection",

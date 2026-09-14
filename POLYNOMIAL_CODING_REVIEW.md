@@ -80,16 +80,17 @@ python3 -m unittest discover -s tests -v
   correctness, leakage and instruction-cost proofs; direct pure-ROM scheme
   submissions must remain an alternative to templates.
 
-## Current reviewed decisions (2026-09-11)
+## Current reviewed decisions (updated 2026-09-14)
 
 Both stages use `c * signatureBytes + verificationWork` within matched games
 and profiles. The organizer-owned rational price c is pending calibration; no
 scalar ranking is issued until then. The Pareto frontier remains useful meanwhile.
 Stage 1 is broader than OTS and does not assume components are used fully black-box.
 
-The September 13 latency-tail decision sets normal targets of 1.5 s signing and
-60 s keygen, each with overrun probability <= 2^-60. Exceptionally slow runs may
-take minutes within larger absolute timeouts still to be pinned. Working RAM
+The September 14 latency-tail decision keeps normal targets of 1.5 s signing and
+60 s keygen, each with overrun probability <= 2^-40. Exceptionally slow runs may
+continue up to 120 s signing and 360 s keygen, with no probabilistic exception
+at those absolute limits. Working RAM
 remains bounded by 64 KiB on every path. Full-program certificates include
 arithmetic, retries and storage; hash counts or expected work alone do not prove
 these guarantees. Signing failure remains a separate 2^-128 obligation.
@@ -97,7 +98,7 @@ these guarantees. Signing failure remains a separate 2^-128 obligation.
 R9 also requires absolute raw-query caps, including empty and repeated calls:
 even a rare huge-query branch can make the pathwise security bound vacuous.
 These caps apply to slow paths as well. The full security proof cannot discard
-late executions using the 2^-60 allowance. The precise performance game,
+late executions using the 2^-40 allowance. The precise performance game,
 complete executable binding and resource certificates remain to implement.
 
 The security claim is pure ROM, public keys <= 32 bytes, total query work

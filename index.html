@@ -303,8 +303,8 @@
   <h1><span class="lean">lean</span>SPHINCS</h1>
   <p class="subtitle">An open search for stateless hash-based signatures for Ethereum accounts, with Lean proofs of security in the classical, pure random-oracle model.</p>
   <div class="statusline">
-    <span><strong>DRAFT v0.19</strong></span>
-    <span>2026-09-13</span>
+    <span><strong>DRAFT v0.20</strong></span>
+    <span>2026-09-14</span>
     <span>values in <span class="tbd">amber</span> remain open</span>
   </div>
 </header>
@@ -343,7 +343,7 @@
   </div>
   <p>For both stages, |σ| is the complete signature size in bytes and V is verification work in the selected profile. The positive coefficient c prices one transmitted byte in the same units as verification work. This additive model represents transmission plus verification cost; it does not multiply two costs that are paid separately.</p>
   <p><strong>c = <span class="tbd">pending bandwidth/execution calibration</span>.</strong> It is an exact positive rational fixed by the organizers, not a submission parameter. There is no default c = 1 and no scalar ranking until that coefficient is pinned. Reports can already retain the size/verification Pareto frontier and explore explicitly labeled prices. Different security games, meters or prices are not directly comparable.</p>
-  <p>Signing and key generation are eligibility constraints. The complete account profile sets normal latency targets of <strong>1.5 s signing, 1 minute keygen</strong>: the probability of exceeding either target must be at most 2<sup>−60</sup> per operation, under the game specified in R9. Exceptionally unlucky runs may take minutes within a larger absolute worst-case cap, whose value remains to be pinned. Working RAM remains bounded by 64 KiB on every path. Stage 1 component budgets must be stated for each experiment; the full account budget is not automatically assigned independently to every component.</p>
+  <p>Signing and key generation are eligibility constraints. The complete account profile sets normal latency targets of <strong>1.5 s signing, 1 minute keygen</strong>: the probability of exceeding either target must be at most 2<sup>−40</sup> per operation, under the game specified in R9. Exceptionally unlucky runs may continue up to the absolute worst-case caps of <strong>2 minutes signing and 6 minutes keygen</strong>. Those absolute limits admit no overrun allowance. Working RAM remains bounded by 64 KiB on every path. Stage 1 component budgets must be stated for each experiment; the full account budget is not automatically assigned independently to every component.</p>
   <p>The academic hash-work view and full-program execution views remain separate. A Reed–Solomon encoding can improve hash work while adding substantial field arithmetic. That is useful research evidence, not a demonstrated latency improvement; the execution profile must charge that arithmetic. Preserve the frontier so the price and profile can be revisited without discarding useful constructions.</p>
 </section>
 
@@ -401,13 +401,13 @@
 
   <div class="rule" id="r9">
     <h3>R9 · Mandatory latency guarantees and absolute resource caps</h3>
-    <p>Every eligible complete scheme must prove <code>Pr[T_keygen &gt; 60 s] ≤ 2^-60</code> and <code>Pr[T_sign &gt; 1.5 s] ≤ 2^-60</code> on the reference execution profile. A slow run may take minutes within the profile's larger absolute timeout. Crossing the normal latency target does not require aborting the operation.</p>
-    <p>The keygen probability is over fresh randomness and the shared ROM. The signing bound must cover each request position under permitted adaptive message selection, with probability over key generation, the shared ROM and execution randomness. Averaging over random messages is insufficient. The exact performance game and adversarial query budgets are <span class="tbd">to be pinned before ranking</span>. The allowance is per operation: a proved per-position bound gives at most N · 2<sup>−60</sup> probability of any late signature in N requests by a union bound, without assuming independence.</p>
-    <p><strong>Absolute runtime and raw-query caps still apply on every path</strong>, including exceptionally slow paths. Keygen must return a usable key within its absolute cap; signing must return a signature or explicit failure within its absolute cap for every generated secret key and every message. Working RAM is at most <strong>64 KiB</strong> on every path. The late-run allowance does not permit unbounded work or a rare 2<sup>128</sup>-query branch: the current security query bound is pathwise, so even such a rare branch could make it vacuous.</p>
+    <p>Every eligible complete scheme must prove <code>Pr[T_keygen &gt; 60 s] ≤ 2^-40</code> and <code>Pr[T_sign &gt; 1.5 s] ≤ 2^-40</code> on the reference execution profile. A slow run may continue up to the absolute limits of <strong>120 s signing and 360 s keygen</strong>. Crossing the normal latency target does not require aborting the operation.</p>
+    <p>The keygen probability is over fresh randomness and the shared ROM. The signing bound must cover each request position under permitted adaptive message selection, with probability over key generation, the shared ROM and execution randomness. Averaging over random messages is insufficient. The exact performance game and adversarial query budgets are <span class="tbd">to be pinned before ranking</span>. The allowance is per operation: a proved per-position bound gives at most min(1, N · 2<sup>−40</sup>) probability of any late signature in N requests by a union bound, without assuming independence. At 2<sup>20</sup> requests this is 2<sup>−20</sup>; at 2<sup>32</sup> requests it is 2<sup>−8</sup> (1/256), not a lifetime 2<sup>−40</sup> guarantee.</p>
+    <p><strong>Absolute runtime and raw-query caps still apply on every path</strong>, including exceptionally slow paths: <code>T_keygen ≤ 360 s</code> and <code>T_sign ≤ 120 s</code>, with no probabilistic exception. Keygen must return a usable key within its absolute cap; signing must return a signature or explicit failure within its absolute cap for every generated secret key and every message. Working RAM is at most <strong>64 KiB</strong> on every path. The late-run allowance does not permit unbounded work or a rare 2<sup>128</sup>-query branch: the current security query bound is pathwise, so even such a rare branch could make it vacuous.</p>
     <p>Charge all setup and precomputation required to produce the usable key, and all work performed before a signing request returns: hashing, randomness handling, encoding, finite-field and integer arithmetic, memory access, authentication and every retry, including failed attempts. Moving setup outside the named keygen function does not exempt it. Expected runtime or sample averages alone do not establish the tail-probability guarantee.</p>
-    <p><strong>Late completion, signing failure and forgery are separate events.</strong> A late signature must still be valid. Any failure caused by reaching the absolute timeout must be included in the R8 failure probability, which remains at most 2<sup>−128</sup> in its stated experiment. The 2<sup>−60</sup> latency allowance cannot be substituted for that bound or used to discard slow executions from the security proof.</p>
+    <p><strong>Late completion, signing failure and forgery are separate events.</strong> A late signature must still be valid. Any failure caused by reaching the absolute timeout must be included in the R8 failure probability, which remains at most 2<sup>−128</sup> in its stated experiment. The 2<sup>−40</sup> latency allowance cannot be substituted for that bound or used to discard slow executions from the security proof.</p>
     <p>Every ranked Stage 1 profile must also fix its latency guarantees and absolute budgets before admitting entries. Profiles must cap <strong>raw oracle calls</strong> by key generation, each signing invocation and verification, including repeated and empty-input calls, and keep total honest work within the nontrivial security ranges of R2/R4 or the component's pinned game. This requirement also applies to academic hash-work profiles, where a zero-length input has zero weighted cost.</p>
-    <p>Reference hardware calibration, the larger absolute timeouts, raw-query caps, persistent secret/precomputation storage limits and the verification execution cap are <span class="tbd">to be pinned</span>. A fixed conversion from abstract hash units to seconds cannot establish the time guarantees. There is no separate free 4 KiB cache allowance.</p>
+    <p>The signing and keygen absolute time limits are fixed above. Reference hardware calibration, raw-query caps, persistent secret/precomputation storage limits and the verification execution cap are <span class="tbd">to be pinned</span>. A fixed conversion from abstract hash units to seconds cannot establish the time guarantees. There is no separate free 4 KiB cache allowance.</p>
     <p><strong>A submission without the required resource certificates is ineligible for ranking or promotion.</strong> These resource gates are <strong>not enforced by the current statement/harness</strong>; implementing their binding to the complete executable and Lean scheme is required before opening submissions. Passing the current mathematical claim alone cannot certify competition eligibility.</p>
   </div>
 
@@ -426,7 +426,7 @@
   verificationWork ≤ declaredHVerify   // malformed inputs included
   correctnessOnSuccess
   freshKeyFixedMessageFailureProbability ≤ 2^-128</code></pre>
-  <p>Eligibility additionally requires the R9 certificates for the same implementation: <code>Pr[T_keygen &gt; 60 s] ≤ 2^-60</code>, <code>Pr[T_sign &gt; 1.5 s] ≤ 2^-60</code>, and pathwise bounds on absolute runtime, raw queries and <code>workingRAM ≤ 64 KiB</code>. These clauses and the performance game still need implementation in the protected resource contract.</p>
+  <p>Eligibility additionally requires the R9 certificates for the same implementation: <code>Pr[T_keygen &gt; 60 s] ≤ 2^-40</code>, <code>Pr[T_sign &gt; 1.5 s] ≤ 2^-40</code>, and pathwise bounds <code>T_keygen ≤ 360 s</code>, <code>T_sign ≤ 120 s</code>, raw-query caps and <code>workingRAM ≤ 64 KiB</code>. These clauses and the performance game still need implementation in the protected resource contract.</p>
 </section>
 
 <section id="costmodels">
@@ -504,7 +504,7 @@
 </section>
 
 <footer>
-  leanSPHINCS draft rules v0.19 · submissions not open · implementation and deployment review pending
+  leanSPHINCS draft rules v0.20 · submissions not open · implementation and deployment review pending
 </footer>
 
 </div>

@@ -1,11 +1,40 @@
 # SchemeClaim: current plan and decision history
 
-Status: draft v0.19 rules and implementation plan, 2026-09-13. The
+Status: draft v0.20 rules and implementation plan, 2026-09-14. The
 [public rules](https://nconsigny.github.io/leansphincs/) and
 [implementation contract](IMPLEMENTATION.md) describe the current target.
 Historical notes below are snapshots, not competing current instructions.
 
-## Latency-tail decision (2026-09-13, current)
+## Latency-tail and absolute-limit decision (2026-09-14, current)
+
+Normal targets remain 1.5 s signing and 60 s keygen. The organizer sets the
+overrun probability to <= 2^-40 per operation and fixes absolute limits of
+120 s signing (2 minutes) and 360 s keygen (6 minutes), on every path with no
+probabilistic exception. This replaces the September 13 tail threshold and
+closes the previously open absolute-timeout values. RAM remains <= 64 KiB.
+
+The signing tail event covers each request position under permitted adaptive
+message selection, as specified in IMPLEMENTATION.md. The union bound is
+min(1, N*2^-40): <= 2^-20 at 2^20 requests and <= 2^-8 (1/256) at 2^32 requests.
+This is not a lifetime 2^-40 guarantee. Keygen has its own one-operation bound.
+
+Late completion remains distinct from failure and forgery. Keygen must return
+a usable key within 360 s. Signing must return a valid signature or explicit
+failure within 120 s for every generated key and message; timeout failures must
+fit the unchanged R8 fresh-key/fixed-message bound of 2^-128. All retries and
+setup count. The security proof must include slow paths without a 2^-40 loss.
+
+Before ranking/promotion, pin and implement the performance game, hardware
+calibration, pathwise raw-query caps and executable binding. Prove the latency
+tails and absolute bounds separately; test excessive tail mass, late valid
+outputs, timeout failures and query padding. The protected `SchemeClaim` is
+unchanged: these resource gates remain unimplemented, not certified by prose.
+
+## Earlier latency-tail decision (2026-09-13, superseded in part)
+
+Historical snapshot: the September 14 decision above replaces the 2^-60
+threshold and fixes the formerly open absolute timeouts. The distinct latency,
+failure and security obligations below remain applicable.
 
 The organizer accepts exceptionally slow operations with probability at most
 2^-60. Normal latency targets remain 60 s keygen and 1.5 s signing; prove a
@@ -62,8 +91,9 @@ revision replaces the ambiguous “intended limits” wording with a mandatory r
    calibration. No implicit price, no scalar ranking before calibration.
    The former product and four-factor objectives are superseded.
 2. Complete-account normal latency targets are 1.5 s signing and 60 s keygen,
-   now with 2^-60 overrun allowance per operation (September 13 decision above).
-   Absolute runtime/raw-query caps and 64 KiB RAM still cover every path.
+   now with 2^-40 overrun allowance per operation (September 14 decision above).
+   Absolute limits are 120 s signing / 360 s keygen; raw-query caps and 64 KiB
+   RAM still cover every path.
    Full-program bounds include retries and arithmetic.
    Hardware calibration, storage limits and component budgets remain open.
    Historical hash-throughput conversions are not resource certificates.

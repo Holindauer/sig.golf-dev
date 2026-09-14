@@ -1,6 +1,6 @@
 # Experimental OTS foundations within the academic track
 
-Status: experimental implementation, updated 2026-09-11. Not an open competition,
+Status: experimental implementation, updated 2026-09-14. Not an open competition,
 protected OTS security claim or accepted scheme. Stage 1 also covers few-time
 components, encodings, authentication, composition and complete constructions.
 This document describes only the current OTS research tools. Emile's construction
@@ -12,10 +12,10 @@ The rules use **c * signatureBytes + verificationWork**, with signing and keygen
 subject to latency and absolute resource constraints. The positive rational c belongs to a calibrated
 organizer profile. No official price has been selected and no scalar leaderboard
 exists yet. Account normal latency targets are 1.5 s signing / 60 s keygen, each
-with overrun probability <= 2^-60; RAM stays bounded by 64 KiB on every path.
-Larger absolute timeouts, component allocations and full-program certificates
-remain open. Abstract hash
-counts do not certify seconds.
+with overrun probability <= 2^-40. Account absolute limits are 120 s signing and
+360 s keygen, with no probabilistic exception; RAM stays bounded by 64 KiB on
+every path. Component allocations, hardware calibration and full-program
+certificates remain open. Abstract hash counts do not certify seconds.
 
 R9 requires finite budgets before an academic profile can rank entries. Raw
 keygen/sign/verify query caps must also count repeated and empty-input queries
@@ -147,8 +147,9 @@ code does not implement the decoder or prove this SUF-preserving serialization.
 ## Next proof milestones, in order
 
 1. Pin the first academic game, component budgets and price calibration.
-   Account latency targets remain 1.5 s / 60 s with overrun probability <= 2^-60;
-   the larger absolute caps still need calibration. No hash-unit-to-time conversion
+   Account latency targets remain 1.5 s / 60 s with overrun probability <= 2^-40;
+   absolute limits are 120 s signing / 360 s keygen on every path. Hardware and
+   raw-query calibration remain open. No hash-unit-to-time conversion
    certifies these guarantees and no price is inferred from historical product winners.
 2. Address serialization and actual oracle evaluation/metering are implemented.
    Reconstruction against an oracle-consistent reference is now proved. Next
@@ -175,8 +176,8 @@ is inferred from these arithmetic and graph foundations.
 The organizer requested explicit treatment of worst-case probability. This does
 not turn a conditional failure envelope into an actual signer certificate.
 Signing is no longer a score factor. The normal latency targets now allow a
-proved 2^-60 overrun probability per operation, while larger absolute caps
-still bound worst-case work. The failure envelopes below concern exhaustion
+proved 2^-40 overrun probability per operation, while absolute limits of
+120 s signing / 360 s keygen still bound worst-case account work. The failure envelopes below concern exhaustion
 at a retry limit; they are not already proofs of a runtime-tail guarantee.
 
 The new proof bounds survival mass from a step inequality
