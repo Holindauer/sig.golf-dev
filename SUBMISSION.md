@@ -1,6 +1,6 @@
 # MVP submission contract
 
-Status: implementer guide for draft v0.20, not an open competition.
+Status: implementer guide for draft v0.21, not an open competition.
 The revised claim identifier is `suf-cma-total-work-pk32-decay-v1`.
 The three-file format remains, but security semantics and lifetime coverage have
 changed. The additive price is organizer-owned and not yet calibrated; receipts
@@ -53,6 +53,12 @@ are rejected. All theorem/algorithm axiom closures must stay within `propext`,
   adversary at up to 2^32 signing requests.
 - Both endpoint predicates on the same scheme and bound: 124 bits at 2^20
   requests and 100 bits at 2^32. No reparameterization or constants dropping.
+- Structural raw hash-query caps on every response path, including responses
+  the random oracle never returns: key generation at most `rawKeygenCap = 2^38`
+  calls, each signing request at most `rawSignCap = 2^36` for every secret-key
+  value and message, verification at most `rawVerifyCap = 2^24` including empty
+  calls. Straight-line algorithms discharge these with `isQueryBoundP_pure` and
+  the bind lemmas; data-dependent loops need a fixed iteration cap.
 
 Failed signing responses are visible and count against the signing-query budget.
 Only an exact successful message/signature pair is a replay. qH counts raw
@@ -88,8 +94,9 @@ Resource bounds must therefore be checked independently of the security slope.
 A rare huge-query branch can also inflate the pathwise qH bound; the 2^-40
 latency envelope alone cannot exclude that loophole.
 
-The current three-file mathematical contract lacks these resource certificates.
-Its local accepted receipt is insufficient for ranking or promotion. The next
+The three-file mathematical contract now enforces the structural raw-query caps
+but still lacks the runtime, storage and executable certificates. Its local
+accepted receipt is insufficient for ranking or promotion. The next
 protected resource contract must bind the actual algorithms/executable and
 organizer caps before ranked submissions open; do not invent extra entrant files
 for this still-unimplemented interface.
@@ -144,3 +151,52 @@ competition verifier; it is for organizer-owned diagnostics only.
 
 No complete accepted example is provided yet. The metric canaries are deliberately
 not security proofs. Baseline #0 is the next end-to-end cryptographic deliverable.
+
+## v0.21 implemented contract and blocked deployment gates
+
+`Availability.lean` reuses the signing oracle in a shared-ROM interaction with
+adaptive messages and an ordered response log. `SchemeClaim` now requires
+`adaptive_failure` and `adaptive_decay_failure` as well as the fresh-key,
+fixed-message certificate. Failure at zero-based position i means that request i
+occurs and returns `none`; absent positions are not failures. Its unconditional
+probability includes keygen, ROM and participant randomness, and is at most
+2^-128 for every permitted position: up to 2^20 requests / Q <= 2^124, and up to
+2^32 requests / Q <= 2^100. Q counts all interaction raw hashes (including keygen
+and honest signing) plus requests; it excludes final forgery verification.
+Structural query bounds quantify over every response path. Stronger thresholds
+transport, and the union bound gives at most 2^-96 over 2^32 positions, not 2^-128.
+The SUF-CMA experiment and its final-verification accounting are unchanged.
+
+Protected claim ID: `suf-cma-total-work-pk32-adaptive-availability-v2`. Historical
+receipts must be rerun, never relabeled as certificates for this claim.
+
+The runner compiles in a separate constrained systemd service, confirms the
+whole service has stopped, then captures declared regular Lean artifacts into
+`verification/`. Kernel checking, export, comparison and axiom auditing use
+`--verify-prebuilt`, which invokes no build. The verification child has no
+candidate write grants. Artifact filenames, sizes and hashes are recorded and
+rechecked before receipt publication. Source scanning rejects `eval%` and unsafe
+helpers as defense in depth; compilation can execute code even if scanning passes.
+Source pins do not authenticate precompiled dependency caches.
+
+`benchmark/resources.json` is organizer-owned. Reference execution calibration,
+verification limits, raw keygen/sign/verify caps, persistent secret and
+precomputation storage, executable size and evidence validators remain unset.
+Missing values fail closed. Execution evidence must bind algorithms, executable
+and profile, including malformed-input rejection, parsing, arithmetic, randomness,
+retries and setup. Structural raw-query certificates must include impossible-ROM
+response branches; ROM-consistent measurements alone cannot certify them.
+Storage evidence counts serialized secret/precomputation bytes and documents key
+restoration. RAM is no substitute. Independent side-channel implementation review
+must state a timing/memory-access leakage model and bind executable and profile;
+this is not a formal noninterference theorem.
+
+Executable resource validation is unimplemented: deployment eligibility remains
+false even with supplied evidence. Receipts separate mathematical verification,
+resource certification, side-channel review and deployment eligibility and keep
+`ranked: false`. Any calibrated diagnostic score is explicitly non-eligible.
+The additive organizer profile is the only scoring authority; its bandwidth
+coefficient remains null, so no scalar score is issued. Existing latency targets,
+2^-40 overrun allowances, absolute deadlines and 64 KiB RAM cap are unchanged.
+Positive metric/availability fixtures are not cryptographic baselines. Emile's
+upstream pin, OTS construction work and baseline parameters are unchanged.

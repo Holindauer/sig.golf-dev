@@ -303,7 +303,7 @@
   <h1><span class="lean">lean</span>SPHINCS</h1>
   <p class="subtitle">An open search for stateless hash-based signatures for Ethereum accounts, with Lean proofs of security in the classical, pure random-oracle model.</p>
   <div class="statusline">
-    <span><strong>DRAFT v0.20</strong></span>
+    <span><strong>DRAFT v0.21</strong></span>
     <span>2026-09-14</span>
     <span>values in <span class="tbd">amber</span> remain open</span>
   </div>
@@ -395,7 +395,8 @@
   <div class="rule" id="r8">
     <h3>R8 · Byte interface, correctness and signing failure</h3>
     <p>Messages are 32-byte digests. Public keys and signatures are actual byte strings. Every successful signature has exactly the declared length, including padding, and verifies with probability one in the fresh key-generation/signing experiment. Separately prove Pr[Sign returns ⊥] ≤ 2<sup>−128</sup> for each fixed message, over fresh key generation, signing randomness and their shared ROM. A 2<sup>−256</sup> certificate also qualifies.</p>
-    <p>This is <strong>not an adaptive lifetime-availability guarantee</strong> or a conditional guarantee for every generated key. Worst-case failure analysis is separate from work metering; stronger adaptive guarantees need a stated game and proof. Failed attempts must still fit the absolute resource caps. Exceeding the normal latency target is not itself a signing failure.</p>
+    <p>Additionally, prove <strong>adaptive availability</strong>: at every permitted request position i, the unconditional probability that request i occurs and returns ⊥ is at most 2<sup>−128</sup>. Messages may depend on the public key, earlier responses and the shared ROM. Average over key generation, the shared ROM and all participant randomness; do not condition on a key or transcript. An absent position is not a failure. This holds both for at most 2<sup>20</sup> requests with Q ≤ 2<sup>124</sup> and for at most 2<sup>32</sup> requests with Q ≤ 2<sup>100</sup>. Here Q counts keygen, participant and honest-signing raw hash calls plus all signing requests, including repeated and failed requests; final forgery verification is excluded from this availability interaction. The fresh-key, fixed-message certificate remains an additional obligation.</p>
+    <p>The lifetime union bound for 2<sup>32</sup> requests is at most 2<sup>−96</sup>, not 2<sup>−128</sup>. Worst-case failure analysis is separate from work metering. Failed attempts must still fit the absolute resource caps. Exceeding the normal latency target is not itself a signing failure.</p>
     <p>Immutable precomputation may be part of sk and must be charged to key generation and storage. There is no required separate cache or presign channel. Public disclosure or adversarial replacement of auxiliary data would require an explicitly modeled extension; it is not covered merely by calling that data non-secret.</p>
   </div>
 
@@ -409,6 +410,8 @@
     <p>Every ranked Stage 1 profile must also fix its latency guarantees and absolute budgets before admitting entries. Profiles must cap <strong>raw oracle calls</strong> by key generation, each signing invocation and verification, including repeated and empty-input calls, and keep total honest work within the nontrivial security ranges of R2/R4 or the component's pinned game. This requirement also applies to academic hash-work profiles, where a zero-length input has zero weighted cost.</p>
     <p>The signing and keygen absolute time limits are fixed above. Reference hardware calibration, raw-query caps, persistent secret/precomputation storage limits and the verification execution cap are <span class="tbd">to be pinned</span>. A fixed conversion from abstract hash units to seconds cannot establish the time guarantees. There is no separate free 4 KiB cache allowance.</p>
     <p><strong>A submission without the required resource certificates is ineligible for ranking or promotion.</strong> These resource gates are <strong>not enforced by the current statement/harness</strong>; implementing their binding to the complete executable and Lean scheme is required before opening submissions. Passing the current mathematical claim alone cannot certify competition eligibility.</p>
+    <p><strong>Deployment eligibility is blocked in this release.</strong> Organizer-owned resource profiles must calibrate reference execution, verification limits, raw keygen/sign/verify query caps, persistent secret and precomputation storage, and executable size. Unset values or absent certificate validators fail closed. Execution evidence must bind the submitted algorithms and executable, covering malformed-input rejection, parsing, arithmetic, randomness handling, retries and setup. Raw-query bounds must cover every structural response path, including impossible ROM responses; ROM-consistent runtime measurements alone do not suffice. Count serialized secret/precomputation storage and document key restoration; the 64 KiB RAM cap establishes neither.</p>
+    <p>Side-channel eligibility requires independently reviewed implementation evidence under a stated timing/memory-access leakage model, bound to the executable and resource profile. This is not a formal noninterference theorem. Executable resource validation remains unimplemented.</p>
   </div>
 
   <h3>The required theorem, in shape</h3>
@@ -455,6 +458,7 @@
 
 <section id="mvp">
   <h2><span class="secno">7</span>Research stages and implementation</h2>
+  <p>Draft v0.21 implements adaptive availability and separates hostile compilation from proof checking. Compilation runs in its own constrained service; the runner confirms process-tree termination, captures regular module artifacts into a private snapshot, and checks and exports those same read-only bytes. Receipts distinguish mathematical verification, resource certification, side-channel review and deployment eligibility. All remain unranked; diagnostic scores are explicitly non-eligible. Historical receipts must be reverified under <code>suf-cma-total-work-pk32-adaptive-availability-v2</code>, never relabeled.</p>
   <h3>Stage 1 · academic research beyond OTS</h3>
   <p>Stage 1 is the academic research track. It includes one-time and few-time primitives, message encodings, authentication structures, domain-separated composition and complete constructions. OTS is an initial experiment, not the boundary of the academic competition. Each board needs its own pinned security game, request/instance budgets and resource profile; only comparable entries share a ranking.</p>
   <p>Standard hybrid arguments can lift suitable single-instance security to multiple instances, generally with a loss. State and account for that loss and the conditions under which the argument applies. Shared random-oracle domains, seed-derived keys and the way a component is actually used in SPHINCS still need to match the reduction; an internal OTS is not automatically used as a fully black-box standalone scheme.</p>
@@ -504,7 +508,7 @@
 </section>
 
 <footer>
-  leanSPHINCS draft rules v0.20 · submissions not open · implementation and deployment review pending
+  leanSPHINCS draft rules v0.21 · submissions not open · implementation and deployment review pending
 </footer>
 
 </div>

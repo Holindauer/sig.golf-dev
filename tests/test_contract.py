@@ -35,6 +35,18 @@ class ContractTests(unittest.TestCase):
         return subprocess.run(["bash", str(ROOT / "scripts/check-submission-imports.sh"),
                                str(self.root)], capture_output=True, text=True)
 
+    def test_compile_time_io_route_rejected(self):
+        for code in ('def value : Nat := eval% (pure 1)',
+                     'unsafe def helper : IO Nat := pure 1',
+                     'unsafe def helper : IO Nat := do\n  IO.FS.writeFile "/tmp/fixture" "x"\n  pure 1\ndef value : Nat := eval% helper'):
+            self.write("Solution.lean", "import LeanSphincs.Submission.Scheme\n" + code)
+            self.assertNotEqual(self.imports().returncode, 0)
+
+    def test_no_active_product_pricing(self):
+        policy = json.loads((ROOT / "benchmark/source-policy.json").read_text())
+        self.assertNotIn("score", policy)
+        self.assertIsNone(json.loads((ROOT / "benchmark/scoring.json").read_text())["bandwidth_price"])
+
     def test_valid(self):
         source_policy.check(self.root)
         self.assertEqual(self.imports().returncode, 0)

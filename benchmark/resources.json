@@ -1,0 +1,21 @@
+{
+  "schema": "leansphincs-resources-v1",
+  "id": "uncalibrated-v0.21",
+  "reference_execution": null,
+  "verification_limit": null,
+  "raw_keygen_queries": null,
+  "raw_sign_queries": null,
+  "raw_verify_queries": null,
+  "persistent_secret_bytes": null,
+  "precomputation_bytes": null,
+  "executable_bytes": null,
+  "leakage_model": null,
+  "executable_validator": null,
+  "side_channel_validator": null,
+  "ram_bytes": 65536,
+  "keygen_target_ms": 60000,
+  "sign_target_ms": 1500,
+  "overrun_bits": 40,
+  "keygen_deadline_ms": 360000,
+  "sign_deadline_ms": 120000
+}

@@ -75,8 +75,8 @@ class WebsiteTests(unittest.TestCase):
         self.assertGreater(checked, 0)
 
     def test_version_and_additive_objective(self):
-        self.assertIn("DRAFT v0.20", self.source)
-        self.assertIn("draft rules v0.20", self.source)
+        self.assertIn("DRAFT v0.21", self.source)
+        self.assertIn("draft rules v0.21", self.source)
         self.assertIn("2026-09-14", self.source)
         self.assertIn('<span class="formula-big">minimize&nbsp;&nbsp;c × |σ| + V</span>', self.source)
         self.assertIn("Stage 1 is academic research; Stage 2 is the Ethereum selection.", self.source)
@@ -164,12 +164,20 @@ class WebsiteTests(unittest.TestCase):
                      "There is no required separate cache or presign channel",
                      "Immutable precomputation may be part of sk",
                      "exactly the declared length",
-                     "not an adaptive lifetime-availability guarantee",
+                     "adaptive availability", "An absent position is not a failure",
+                     "final forgery verification is excluded",
                      "Worst-case failure analysis is separate",
                      "not enforced by the current statement/harness"):
             self.assertIn(text, rules)
         self.assertIn("Q² / 2256", rules)
         self.assertNotIn("Public key at most 64", rules)
+
+    def test_deployment_gates(self):
+        for text in ("Deployment eligibility is blocked in this release", "Unset values",
+                     "impossible ROM responses", "key restoration", "timing/memory-access",
+                     "not a formal noninterference theorem", "2<sup>−96</sup>",
+                     "suf-cma-total-work-pk32-adaptive-availability-v2"):
+            self.assertIn(text, self.source)
 
     def test_broad_academic_track_and_composition(self):
         mvp = self.page.section_text("mvp")

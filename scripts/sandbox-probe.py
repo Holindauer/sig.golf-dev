@@ -32,6 +32,11 @@ for family, kind in [(socket.AF_INET, socket.SOCK_STREAM), (socket.AF_INET, sock
                      (socket.AF_INET6, socket.SOCK_STREAM), (socket.AF_UNIX, socket.SOCK_STREAM)]:
     denied(lambda: socket.socket(family, kind))
 for parent in ("lib/lean", "ir"):
-    (root / f".lake/build/{parent}/LeanSphincs/Submission/probe.txt").write_text("allowed")
+    artifact = root / f".lake/build/{parent}/LeanSphincs/Submission/probe.txt"
+    if sys.argv[2] == "compile":
+        artifact.write_text("allowed")
+    else:
+        denied(lambda: artifact.write_text("substituted"))
+        denied(lambda: artifact.unlink())
 print(json.dumps({"probe": "passed", "checks": ["outside_read", "protected_write", "protected_cache_write", "config_write",
-    "dependency_write", "source_write", "tcp", "udp", "ipv6", "unix_socket", "build_write"]}))
+    "dependency_write", "source_write", "tcp", "udp", "ipv6", "unix_socket", "build_write" if sys.argv[2] == "compile" else "artifact_write_denied"]}))

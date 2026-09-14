@@ -23,7 +23,9 @@ def main():
     exporter = Path(config["exporter"])
     if not command:
         raise ValueError("missing command")
-    if command[0] == "lake":
+    if command[0] in {"lake", str(lean / "bin/lake")}:
+        if config.get("verification_only"):
+            raise ValueError("build forbidden during prebuilt verification")
         if command[1:] not in (["build", config.get("challenge_module", "LeanSphincs.Benchmark.Challenge")],
                               ["build", config.get("solution_module", "LeanSphincs.Submission.Solution")]):
             raise ValueError("unexpected Lake target")

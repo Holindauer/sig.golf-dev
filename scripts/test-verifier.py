@@ -40,7 +40,7 @@ def main():
             materialize({"Scheme.lean": SCHEME.encode(), "Solution.lean": solution.encode(),
                 "sigma.txt": b"1\n", "hverify.txt": b"1\n", "bound.txt": b"[[4,1,1,0,128]]\n"}, source)
             result, output = verify(source, args.insecure_local)
-            log = output / "comparator.log"
+            log = output / ("compile.log" if name == "oracle_escape" else "comparator.log")
             if (result["status"] != "verification_failed" or "score" in result or
                     not log.exists() or expected.casefold() not in log.read_text().casefold()):
                 raise SystemExit(f"{name}: unexpected {result['status']}: {result.get('error', '')}; logs: {output}")

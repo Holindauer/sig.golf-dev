@@ -133,3 +133,8 @@ any candidate's security proof; the legacy claim still lacks K/S certificates.
 The next execution work is a
 metered encoding kernel plus exact oracle/program binding, not an aesthetic ban
 on unusual constructions or a silent switch to a different hash oracle.
+
+Draft v0.21 strengthens the enclosing SchemeClaim with adaptive availability
+and isolated prebuilt verification; deployment resource and side-channel gates
+remain blocked. This does not change the OTS construction or baseline parameters.
+See [IMPLEMENTATION.md](IMPLEMENTATION.md) for the revised contract.

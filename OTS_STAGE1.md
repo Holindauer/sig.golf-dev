@@ -229,3 +229,8 @@ Reconstruction/failure follow-up: 54 host tests pass; full Lean build passes
 (3311 jobs); both axiom audits pass. Lean fixtures cover correct reconstruction,
 reversed invalid schedules, incorrect disclosures/reference assignments, 128/256-bit
 failure envelopes, explicit exception accounting and single-request/lifetime arithmetic.
+
+Draft v0.21 strengthens the enclosing SchemeClaim with adaptive availability
+and isolated prebuilt verification; deployment resource and side-channel gates
+remain blocked. This does not change the OTS construction or baseline parameters.
+See [IMPLEMENTATION.md](IMPLEMENTATION.md) for the revised contract.

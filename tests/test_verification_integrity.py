@@ -114,12 +114,15 @@ class OrchestrationTests(unittest.TestCase):
 
             def prepare(project, bundle, rendered):
                 materialize(bundle, project / "LeanSphincs/Submission")
+                (project / ".lake/build/lib/lean/LeanSphincs/Benchmark").mkdir(parents=True)
 
             stack.enter_context(patch.object(verifier, "ROOT", root))
             stack.enter_context(patch.object(verifier.subprocess, "run",
                 return_value=subprocess.CompletedProcess([], 0, "", "")))
             stack.enter_context(patch.object(verifier.subprocess, "check_output", return_value="/lean"))
             stack.enter_context(patch.object(verifier, "harness_manifest", return_value={}))
+            stack.enter_context(patch.object(verifier, "load_resource_profile", return_value={}))
+            stack.enter_context(patch.object(verifier, "freeze_artifacts", return_value={}))
             stack.enter_context(patch.object(verifier, "load_scoring_profile", return_value={
                 "id": "test-only", "bandwidth_price": price}))
             stack.enter_context(patch.object(verifier, "check_dependencies", return_value={}))
@@ -134,7 +137,7 @@ class OrchestrationTests(unittest.TestCase):
             return report, integrity.call_count
 
     def test_mock_success_waits_for_calibration(self):
-        report, checks = self.exercise([0, 0, 0])
+        report, checks = self.exercise([0, 0, 0, 0])
         self.assertEqual(checks, 1)
         self.assertEqual(report["status"], "accepted")
         self.assertNotIn("score", report)
@@ -142,22 +145,22 @@ class OrchestrationTests(unittest.TestCase):
         self.assertIn("lake", report["tools"])
 
     def test_mock_success_scores_only_after_integrity(self):
-        report, checks = self.exercise([0, 0, 0], price={"numerator": 1, "denominator": 4})
+        report, checks = self.exercise([0, 0, 0, 0], price={"numerator": 1, "denominator": 4})
         self.assertEqual(checks, 1)
         self.assertEqual(report["score"]["value"], "7/2")
 
     def test_no_failure_path_issues_score(self):
         cases = [([1], None, "infrastructure_error", "trusted_build"),
                  ([0, 1], None, "infrastructure_error", "trusted_build"),
-                 ([0, 0, 1], None, "verification_failed", "integrity"),
-                 ([0, 0, subprocess.TimeoutExpired("comparator", 1)], None,
+                 ([0, 0, 0, 1], None, "verification_failed", "integrity"),
+                 ([0, 0, 0, subprocess.TimeoutExpired("comparator", 1)], None,
                   "infrastructure_error", "comparison"),
-                 ([0, 0, KeyboardInterrupt()], None, "interrupted", "comparison"),
-                 ([0, 0, 0], RuntimeError("tool binaries changed"),
+                 ([0, 0, 0, KeyboardInterrupt()], None, "interrupted", "comparison"),
+                 ([0, 0, 0, 0], RuntimeError("tool binaries changed"),
                   "infrastructure_error", "integrity"),
-                 ([0, 0, 0], FileNotFoundError("tool removed"),
+                 ([0, 0, 0, 0], FileNotFoundError("tool removed"),
                   "infrastructure_error", "integrity"),
-                 ([0, 0, 0], KeyboardInterrupt(), "interrupted", "integrity")]
+                 ([0, 0, 0, 0], KeyboardInterrupt(), "interrupted", "integrity")]
         for results, error, status, stage in cases:
             with self.subTest(status=status, stage=stage, error=repr(error), results=repr(results)):
                 report, _ = self.exercise(results, error)

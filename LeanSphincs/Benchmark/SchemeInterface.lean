@@ -66,4 +66,26 @@ def HasPublicKeySize (S : SigScheme) (size : Nat) : Prop :=
 def HasVerificationBound (S : SigScheme) (budget : Nat) : Prop :=
   ∀ pk message signature, HasVerifyCost (S.verify pk message signature) budget
 
+/-! Structural raw hash-query caps. These are conclusions the scheme must prove,
+not hypotheses of the security clause. `HasHashQueryBound` is a bound over every
+response pattern, including answers the lazy random oracle can never return, so a
+branch that pads with 2^128 queries only when two answers to one input differ has
+probability zero at runtime yet forces every admissible whole-game budget past
+2^128. Runtime measurements, latency tails and probability-one caps cannot see
+such a branch; only a structural cap on each honest algorithm can. -/
+
+/-- Raw hash calls made by key generation on every structural path. -/
+def HasKeygenQueryBound (S : SigScheme) (cap : Nat) : Prop :=
+  S.keygen.IsQueryBoundP (· matches .inr _) cap
+
+/-- Raw hash calls made by one signing request, for every secret-key value and
+message, not only keys in the support of key generation. -/
+def HasSignQueryBound (S : SigScheme) (cap : Nat) : Prop :=
+  ∀ sk message, (S.sign sk message).IsQueryBoundP (· matches .inr _) cap
+
+/-- Raw verification calls, including malformed inputs and empty-input calls that
+the weighted meter charges zero. -/
+def HasVerifyQueryBound (S : SigScheme) (cap : Nat) : Prop :=
+  ∀ pk message signature, (S.verify pk message signature).IsQueryBoundP (fun _ => True) cap
+
 end LeanSphincs.Benchmark

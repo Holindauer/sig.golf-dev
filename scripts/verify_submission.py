@@ -15,6 +15,8 @@ import sys
 import tempfile
 import time
 
+from artifact_snapshot import capture_artifacts, freeze_artifacts
+from eligibility import deployment_gates, load_resource_profile
 from benchmark_contract import metrics, render
 from oracle_meter import meter_metadata
 from scoring_policy import CLAIM_ID, load_scoring_profile, score_entry
@@ -74,6 +76,8 @@ def check_integrity(project: Path, report: dict, tool_paths: dict[str, Path]) ->
     """
     if manifest(capture(project / "LeanSphincs/Submission")) != report["submission"]:
         raise RuntimeError("snapshot changed during verification; no score issued")
+    if "artifacts" in report and manifest(capture_artifacts(project, report["artifact_modules"])) != report["artifacts"]:
+        raise RuntimeError("artifact snapshot changed during verification")
     if harness_manifest() != report["harness"]:
         raise RuntimeError("harness changed during verification; no score issued")
     if check_dependencies() != report["dependencies"]:
@@ -140,19 +144,39 @@ def run(command: list[str], project: Path, env: dict, log: Path, timeout: int = 
                                    start_new_session=True)
         try:
             return process.wait(timeout=timeout)
-        except (subprocess.TimeoutExpired, KeyboardInterrupt):
-            units = [arg.removeprefix("--unit=") for arg in command if arg.startswith("--unit=leansphincs-")]
+        finally:
             try:
-                for unit in units:
-                    subprocess.run(["systemctl", "--user", "stop", unit], env=dict(os.environ),
-                                   stdin=subprocess.DEVNULL, stdout=output, stderr=subprocess.STDOUT, timeout=15)
+                for unit in [arg.removeprefix("--unit=") for arg in command
+                             if arg.startswith("--unit=leansphincs-")]:
+                    stop_service(unit, output)
             finally:
                 try:
                     os.killpg(process.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
                 process.wait()
-            raise
+
+
+def stop_service(unit, output):
+    """A successful client exit alone does not establish descendant termination."""
+    subprocess.run(["systemctl", "--user", "stop", unit], env=dict(os.environ),
+                   stdin=subprocess.DEVNULL, stdout=output, stderr=subprocess.STDOUT, timeout=15)
+    state = subprocess.run(["systemctl", "--user", "show", unit,
+        "--property=LoadState,ActiveState,ControlGroup"], env=dict(os.environ),
+        capture_output=True, text=True, timeout=15)
+    fields = dict(line.split("=", 1) for line in state.stdout.splitlines() if "=" in line)
+    if fields.get("LoadState") == "not-found":
+        return  # systemd collected a terminated transient cgroup
+    if state.returncode or fields.get("ActiveState") not in {"inactive", "failed"}:
+        raise RuntimeError("service cleanup uncertain: " + unit)
+    group = fields.get("ControlGroup")
+    if group:
+        events = Path("/sys/fs/cgroup") / group.lstrip("/") / "cgroup.events"
+        try:
+            if "populated 0" not in events.read_text().splitlines():
+                raise RuntimeError("service descendants remain: " + unit)
+        except FileNotFoundError:
+            pass  # kernel has removed the stopped cgroup
 
 
 def verify(submission: Path, insecure: bool = False) -> tuple[dict, Path]:
@@ -165,6 +189,8 @@ def verify(submission: Path, insecure: bool = False) -> tuple[dict, Path]:
         now = int(time.time())
         report = {"schema": "leansphincs-verification-v1", "ranked": False,
                   "claim_version": CLAIM_ID,
+              "mathematical_verification": False, "resource_certification": False,
+              "side_channel_review": False, "deployment_eligible": False,
                   "hash_meter": meter_metadata(),
                   "profile": "insecure-local" if insecure else "leansphincs-linux-v1",
                   "status": "worker_busy", "stage": "admission", "retryable": True,
@@ -182,6 +208,8 @@ def _verify_admitted(submission: Path, insecure: bool = False) -> tuple[dict, Pa
     os.chmod(directory, 0o700)
     report = {"schema": "leansphincs-verification-v1", "ranked": False,
               "claim_version": CLAIM_ID,
+              "mathematical_verification": False, "resource_certification": False,
+              "side_channel_review": False, "deployment_eligible": False,
               "hash_meter": meter_metadata(),
               "profile": "insecure-local" if insecure else "leansphincs-linux-v1",
               "status": "infrastructure_error", "started_unix": int(time.time())}
@@ -199,6 +227,8 @@ def _verify_admitted(submission: Path, insecure: bool = False) -> tuple[dict, Pa
         report["metrics"] = {"sigma": sigma, "hverify": hverify, "bound": bound}
         stage = "setup"
         report["harness"] = harness_manifest()
+        report["resource_profile"] = load_resource_profile(ROOT / "benchmark/resources.json")
+        report["deployment_gates"] = deployment_gates(report["resource_profile"])
         report["scoring_profile"] = load_scoring_profile(ROOT / "benchmark/scoring.json")
         report["dependencies"] = check_dependencies()
         lean = Path(subprocess.check_output(["lean", "--print-prefix"], cwd=ROOT, text=True).strip())
@@ -233,18 +263,44 @@ def _verify_admitted(submission: Path, insecure: bool = False) -> tuple[dict, Pa
         env.update(COMPARATOR_LEAN4EXPORT=str(tool_paths["exporter"]),
                    COMPARATOR_LANDRUN=str(COMPARATOR / "scripts/fake-landrun.sh") if insecure
                    else str(project / "strict-landrun.py"))
-        stage = "comparison"
-        command = [str(lean / "bin/lake"), "env", str(tool_paths["comparator"]), "comparator.json"]
+        stage = "compilation"
+        compile_command = [str(lean / "bin/lake"), "build", "LeanSphincs.Submission.Solution"]
         if not insecure:
-            command = systemd_command(command, project, env)
-        # Only the trusted systemd client needs the user's bus locator. The
-        # service itself starts through env -i with the explicit clean env.
-        code = run(command, project, env if insecure else dict(os.environ), directory / "comparator.log")
+            compile_command = [str(project / "strict-landrun.py"), "--"] + compile_command
+            compile_command = systemd_command(compile_command, project, env)
+        code = run(compile_command, project, env if insecure else dict(os.environ), directory / "compile.log")
+        report["compilation_exit"] = code
+        if code:
+            report["status"] = "verification_failed"
+        else:
+            stage = "artifact_capture"
+            frozen = directory / "verification"
+            prepare_project(frozen, bundle, render(sigma, hverify, bound))
+            # Only trusted outputs are copied from the build project outside the
+            # candidate write grants. Never copy its configuration or IR.
+            for name in ("Benchmark",):
+                shutil.copytree(project / ".lake/build/lib/lean/LeanSphincs" / name,
+                                frozen / ".lake/build/lib/lean/LeanSphincs" / name, dirs_exist_ok=True)
+            report["artifact_modules"] = sorted(Path(n).stem for n in bundle if n.endswith(".lean"))
+            report["artifacts"] = freeze_artifacts(project, frozen, report["artifact_modules"])
+            (frozen / "sandbox.json").write_text(json.dumps({"lean_prefix": str(lean),
+                "exporter": str(tool_paths["exporter"]), "landrun": str(landrun), "verification_only": True}))
+            project = frozen
+            env["HOME"] = str(project / "home")
+            if not insecure:
+                env["COMPARATOR_LANDRUN"] = str(project / "strict-landrun.py")
+            stage = "comparison"
+            command = [str(lean / "bin/lake"), "env", str(tool_paths["comparator"]),
+                       "comparator.json", "--verify-prebuilt"]
+            if not insecure:
+                command = systemd_command(command, project, env)
+            code = run(command, project, env if insecure else dict(os.environ), directory / "comparator.log")
         report["comparator_exit"] = code
         stage = "integrity"
         check_integrity(project, report, tool_paths)
         report["status"] = "accepted" if code == 0 else "verification_failed"
         if code == 0:
+            report["mathematical_verification"] = True
             score = score_entry(report["scoring_profile"], sigma, hverify)
             if score is None:
                 report["score_pending"] = "bandwidth coefficient not calibrated"

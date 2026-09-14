@@ -1,6 +1,6 @@
 # Statement and harness implementation contract
 
-Status: implementation contract accompanying draft v0.20, 2026-09-14.
+Status: implementation contract accompanying draft v0.21, 2026-09-14.
 This is not a frozen competition, an accepted cryptographic baseline or a
 deployment certificate. Historical decisions and validation snapshots are retained
 in [SCHEMECLAIM_PLAN.md](SCHEMECLAIM_PLAN.md).
@@ -31,7 +31,7 @@ verifying output in the fresh-key experiment. Independently,
 `HasSigningFailureBound S 128` bounds failure for every fixed message, averaged
 over key generation, signing randomness and their shared ROM. The proved
 `.mono` lemma transports a 256-bit certificate to the 128-bit gate.
-This is not a per-key conditional or adaptive lifetime-availability guarantee.
+This fixed-message certificate is additional to the adaptive predicate below; neither conditions on a key or transcript.
 
 Exact signature size covers every successful output on every path from a
 generated key; public keys are bounded by **32 bytes** on every keygen path.
@@ -88,7 +88,14 @@ Late completion is separate from failure. Any signing timeout at the absolute
 limit returns explicit failure and must be covered by R8's existing 2^-128
 fresh-key/fixed-message bound. The full security proof must cover slow paths;
 the 2^-40 latency allowance is not an extra permitted forgery probability.
-The current `SchemeClaim` has no resource fields or executable binding yet.
+`SchemeClaim` now carries three structural raw hash-query fields:
+`keygen_queries` (`HasKeygenQueryBound S rawKeygenCap`), `sign_queries`
+(`HasSignQueryBound S rawSignCap`, for every secret-key value and message) and
+`verify_raw_queries` (`HasVerifyQueryBound S rawVerifyCap`, malformed inputs and
+zero-weight empty calls included). They are conclusions the scheme proves, not
+hypotheses of the security clause, and they bound every structural response
+path, including answers the lazy random oracle can never return. Runtime and
+executable binding remain unimplemented.
 
 The whole-experiment accounting permits a vacuous security slope if honest work
 already consumes the entire security range. With keygen fixed at 2^128 raw calls,
@@ -105,9 +112,26 @@ validation must keep that overhead within the nontrivial security ranges,
 in addition to latency-tail and absolute runtime/memory checks. These raw caps
 bound every path, including late executions. For the complete-scheme target, check
 K + 2^20*(S+1) + V < 2^124 and K + 2^32*(S+1) + V < 2^100.
-Actual calibrated raw-query caps remain open; no arbitrary raw-call-to-seconds
-conversion certifies the fixed runtime limits. The same requirement applies
-to ranked academic profiles under their own pinned games.
+The pinned placeholders are `rawKeygenCap = 2^38`, `rawSignCap = 2^36` and
+`rawVerifyCap = 2^24`; `honestWork_lt_floor` and `honestWork_lt_decay_floor`
+check both inequalities in Lean. Calibration against the reference execution
+profile remains open; no arbitrary raw-call-to-seconds conversion certifies the
+fixed runtime limits. The same requirement applies to ranked academic profiles
+under their own pinned games.
+
+The caps close vacuity but not slack. Because Q counts honest work, the certified
+bound for a low-effort adversary is B(K + qS*(S+1) + V), about 2^-68 at 2^20
+requests and 2^-32 at 2^32 requests under these placeholders, not B(1). Tighter
+calibrated caps, or a bound stated over adversarial queries, would reduce that
+slack; this remains an organizer decision.
+
+`LeanSphincsTest/DeadBranch.lean` is the regression: a scheme accepting every
+signature whose keygen hashes the empty input twice and pads with 2^128 queries
+only when the answers differ. `keygen_runtime` proves the padding is absent from
+the random-oracle semantics, `almost_claim` proves every other clause, including
+both adaptive availability clauses vacuously, and `no_claim` proves the keygen cap
+rejects it. Before this field existed the local verifier issued an `accepted`
+receipt for that scheme in both profiles.
 
 Before opening ranking/promotion, bind these limits to the actual implementation
 and add regressions for huge setup, signing and verification, including padding
@@ -210,3 +234,52 @@ The full executable binding, 1.5 s signing / 60 s keygen / 64 KiB RAM gates,
 persistent storage profile, execution cap and price calibration remain unfinished.
 No fixed hash-unit-to-seconds conversion is asserted. Independent verifier
 registration, audit, governance and promotion still precede launch.
+
+## v0.21 implemented contract and blocked deployment gates
+
+`Availability.lean` reuses the signing oracle in a shared-ROM interaction with
+adaptive messages and an ordered response log. `SchemeClaim` now requires
+`adaptive_failure` and `adaptive_decay_failure` as well as the fresh-key,
+fixed-message certificate. Failure at zero-based position i means that request i
+occurs and returns `none`; absent positions are not failures. Its unconditional
+probability includes keygen, ROM and participant randomness, and is at most
+2^-128 for every permitted position: up to 2^20 requests / Q <= 2^124, and up to
+2^32 requests / Q <= 2^100. Q counts all interaction raw hashes (including keygen
+and honest signing) plus requests; it excludes final forgery verification.
+Structural query bounds quantify over every response path. Stronger thresholds
+transport, and the union bound gives at most 2^-96 over 2^32 positions, not 2^-128.
+The SUF-CMA experiment and its final-verification accounting are unchanged.
+
+Protected claim ID: `suf-cma-total-work-pk32-adaptive-availability-v2`. Historical
+receipts must be rerun, never relabeled as certificates for this claim.
+
+The runner compiles in a separate constrained systemd service, confirms the
+whole service has stopped, then captures declared regular Lean artifacts into
+`verification/`. Kernel checking, export, comparison and axiom auditing use
+`--verify-prebuilt`, which invokes no build. The verification child has no
+candidate write grants. Artifact filenames, sizes and hashes are recorded and
+rechecked before receipt publication. Source scanning rejects `eval%` and unsafe
+helpers as defense in depth; compilation can execute code even if scanning passes.
+Source pins do not authenticate precompiled dependency caches.
+
+`benchmark/resources.json` is organizer-owned. Reference execution calibration,
+verification limits, raw keygen/sign/verify caps, persistent secret and
+precomputation storage, executable size and evidence validators remain unset.
+Missing values fail closed. Execution evidence must bind algorithms, executable
+and profile, including malformed-input rejection, parsing, arithmetic, randomness,
+retries and setup. Structural raw-query certificates must include impossible-ROM
+response branches; ROM-consistent measurements alone cannot certify them.
+Storage evidence counts serialized secret/precomputation bytes and documents key
+restoration. RAM is no substitute. Independent side-channel implementation review
+must state a timing/memory-access leakage model and bind executable and profile;
+this is not a formal noninterference theorem.
+
+Executable resource validation is unimplemented: deployment eligibility remains
+false even with supplied evidence. Receipts separate mathematical verification,
+resource certification, side-channel review and deployment eligibility and keep
+`ranked: false`. Any calibrated diagnostic score is explicitly non-eligible.
+The additive organizer profile is the only scoring authority; its bandwidth
+coefficient remains null, so no scalar score is issued. Existing latency targets,
+2^-40 overrun allowances, absolute deadlines and 64 KiB RAM cap are unchanged.
+Positive metric/availability fixtures are not cryptographic baselines. Emile's
+upstream pin, OTS construction work and baseline parameters are unchanged.

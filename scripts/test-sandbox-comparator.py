@@ -13,6 +13,8 @@ import shutil
 import subprocess
 import tempfile
 
+from artifact_snapshot import capture_artifacts, freeze_artifacts
+from source_bundle import manifest
 from sandbox_profile import systemd_command
 from verify_submission import ROOT, COMPARATOR, prepare_project, run
 
@@ -56,10 +58,33 @@ def main():
         (project / "sandbox.json").write_text(json.dumps({"lean_prefix": str(lean), "exporter": str(exporter),
             "landrun": str(landrun), "submission_prefix": "LeanSphincsTest.Submission",
             "challenge_module": config["challenge_module"], "solution_module": config["solution_module"]}))
+        compile_command = systemd_command([str(project / "strict-landrun.py"), "--",
+            "lake", "build", config["solution_module"]], project, env)
+        if run(compile_command, project, dict(os.environ), directory / f"{case}-compile.log"):
+            raise RuntimeError(f"canary compilation failed: {case}")
+        frozen = directory / (case + "-verification")
+        prepare_project(frozen, {}, "import LeanSphincs.Benchmark.Target\n")
+        shutil.copytree(ROOT / "LeanSphincsTest", frozen / "LeanSphincsTest")
+        for namespace in ("LeanSphincs/Benchmark", "LeanSphincsTest"):
+            shutil.copytree(project / ".lake/build/lib/lean" / namespace,
+                frozen / ".lake/build/lib/lean" / namespace, dirs_exist_ok=True,
+                ignore=shutil.ignore_patterns("Submission"))
+        (frozen / ".lake/build/lib/lean/LeanSphincsTest/Submission").mkdir()
+        modules = [p.stem for p in (ROOT / "LeanSphincsTest/Submission").glob("*.lean")]
+        artifacts = freeze_artifacts(project, frozen, modules, "LeanSphincsTest.Submission")
+        sandbox_config = json.loads((project / "sandbox.json").read_text())
+        sandbox_config["verification_only"] = True
+        (frozen / "sandbox.json").write_text(json.dumps(sandbox_config))
+        (frozen / "comparator.json").write_text(json.dumps(config))
+        frozen_env = env | {"HOME": str(frozen / "home"),
+                            "COMPARATOR_LANDRUN": str(frozen / "strict-landrun.py")}
         command = systemd_command([str(lean / "bin/lake"), "env",
-            str(COMPARATOR / ".lake/build/bin/comparator"), "comparator.json"], project, env)
+            str(COMPARATOR / ".lake/build/bin/comparator"), "comparator.json", "--verify-prebuilt"],
+            frozen, frozen_env)
         log = directory / f"{case}.log"
-        code = run(command, project, dict(os.environ), log)
+        code = run(command, frozen, dict(os.environ), log)
+        if artifacts != manifest(capture_artifacts(frozen, modules, "LeanSphincsTest.Submission")):
+            raise RuntimeError("canary artifact snapshot drift")
         if (code == 0) != (case == "Good") or expected not in log.read_text():
             raise SystemExit(f"{case}: unexpected result; see {log}")
         print(f"sandboxed {case}: expected {'acceptance' if case == 'Good' else 'rejection'}", flush=True)

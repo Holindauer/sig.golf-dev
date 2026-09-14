@@ -1,15 +1,20 @@
 {
-  "version": "leansphincs-mvp-ws5-v1",
+  "version": "leansphincs-source-v2",
   "submission_root": "LeanSphincs/Submission",
   "layout": "flat",
   "max_files": 1000,
   "max_file_bytes": 4194304,
   "max_total_bytes": 10485760,
   "max_depth": 0,
-  "allowed_suffixes": [".lean"],
+  "allowed_suffixes": [
+    ".lean"
+  ],
   "lean_filename_regex": "[A-Za-z_][A-Za-z0-9_]*\\.lean",
   "lean_encoding": "UTF-8, no NUL",
-  "allowed_files": ["sigma.txt", "hverify.txt", "bound.txt"],
-  "score": {"direction": "minimize", "formula": "sigma * hverify", "tie_break": "sigma"},
+  "allowed_files": [
+    "sigma.txt",
+    "hverify.txt",
+    "bound.txt"
+  ],
   "status": "staged isolated verifier; independent verifier registration pending"
 }

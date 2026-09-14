@@ -1,5 +1,5 @@
 diff --git a/Main.lean b/Main.lean
-index f77c3a1..516b06e 100644
+index f77c3a1..0382491 100644
 --- a/Main.lean
 +++ b/Main.lean
 @@ -150,6 +150,25 @@ def safeExport (module : Lean.Name) (decls : Array Lean.Name) : M String := do
@@ -65,32 +65,11 @@ index f77c3a1..516b06e 100644
  
  def primitiveTargets : M (Array Lean.Name) := do
    -- The challenge needs to have all the built-in constants of the kernel, as the
-@@ -284,16 +279,17 @@ def verifyMatch (challengeExport : String) (solutionExport : String) :
-   if let some error := result then
-     throw <| IO.userError error
- 
--def compareIt : M Unit := do
-+def compareIt (prebuilt : Bool := false) : M Unit := do
-   let exportTargets := (← builtinTargets) ++ (← getTheoremNames) ++ (← getLegalAxioms)
-     ++ (← primitiveTargets) ++ (← getDefinitionNames)
- 
-   let challengeModule ← getChallengeModule
--  safeLakeBuild challengeModule
-+  unless prebuilt do safeLakeBuild challengeModule
-   let challengeExport ← safeExport challengeModule exportTargets
+@@ -294,6 +289,7 @@ def compareIt : M Unit := do
  
    let solutionModule ← getSolutionModule
--  safeLakeBuild solutionModule
-+  unless prebuilt do safeLakeBuild solutionModule
+   safeLakeBuild solutionModule
 +  safeLeanCheck solutionModule.getPrefix
    let solutionExport ← safeExport solutionModule exportTargets
  
    verifyMatch challengeExport solutionExport
-@@ -338,4 +334,6 @@ def main (args : List String) : IO Unit := do
-     | throw <| .userError "Expected config file path as first argument."
-   let content ← IO.FS.readFile configPath
-   let config ← IO.ofExcept <| Lean.FromJson.fromJson? <| ← IO.ofExcept <| Lean.Json.parse content
--  Comparator.M.run Comparator.compareIt config
-+  unless args.length == 1 || args == [configPath, "--verify-prebuilt"] do
-+    throw <| .userError "Expected optional --verify-prebuilt"
-+  Comparator.M.run (Comparator.compareIt (args.length == 2)) config

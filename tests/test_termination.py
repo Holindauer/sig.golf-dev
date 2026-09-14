@@ -90,6 +90,7 @@ with termination_as_interrupt():
                     events.append(("stop", command))
                     if stop_error:
                         raise stop_error
+                    return subprocess.CompletedProcess(command, 0, "LoadState=not-found\n", "")
 
                 with patch.object(verify_submission.subprocess, "Popen", return_value=worker), \
                      patch.object(verify_submission.subprocess, "run", side_effect=stop), \
@@ -99,9 +100,10 @@ with termination_as_interrupt():
                         verify_submission.run(
                             ["systemd-run", "--unit=leansphincs-test.service", "--", "worker"],
                             Path(directory), {}, Path(directory) / "log")
-                self.assertEqual(events, [
-                    ("stop", ["systemctl", "--user", "stop", "leansphincs-test.service"]),
-                    ("kill", (12345, signal.SIGKILL))])
+                self.assertEqual(events[0],
+                    ("stop", ["systemctl", "--user", "stop", "leansphincs-test.service"]))
+                self.assertEqual(events[-1], ("kill", (12345, signal.SIGKILL)))
+                self.assertEqual(len(events), 2 if stop_error else 3)
                 self.assertEqual(worker.wait.call_count, 2)
 
 

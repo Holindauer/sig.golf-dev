@@ -1,9 +1,23 @@
 # SchemeClaim: current plan and decision history
 
-Status: draft v0.20 rules and implementation plan, 2026-09-14. The
+Status: draft v0.21 rules and implementation plan, 2026-09-14. The
 [public rules](https://nconsigny.github.io/leansphincs/) and
 [implementation contract](IMPLEMENTATION.md) describe the current target.
 Historical notes below are snapshots, not competing current instructions.
+
+## Structural raw-query caps as claim fields (2026-09-14, current)
+
+An always-accepting scheme obtained `accepted` receipts in both verifier profiles
+at df3d0b3: its keygen queried the empty input twice and padded with 2^128 queries
+only when the answers differed, a branch with probability zero under the lazy ROM
+but present in the structural `HasHashQueryBound` hypothesis. Decision: raw caps
+are conclusions of `SchemeClaim` (`keygen_queries`, `sign_queries`,
+`verify_raw_queries`) over every structural path, with placeholders 2^38, 2^36 and
+2^24 checked against both security ranges in Lean; hypotheses of the security and
+availability clauses constrain only adversary-controlled computations through the
+honest caps. Regression: `LeanSphincsTest/DeadBranch.lean`. Calibration, the
+adversarial-query slack of about 2^-32 at 2^32 requests, and the rules page text
+for R9 remain open.
 
 ## Latency-tail and absolute-limit decision (2026-09-14, current)
 
@@ -113,7 +127,7 @@ revision replaces the ambiguous “intended limits” wording with a mandatory r
    No mandatory separate cache/presign channel. Any public disclosure/replacement
    extension requires its own model; it is no longer on the core critical path.
 8. Correctness on success and fixed-message fresh-key failure <= 2^-128 remain
-   separate. Stronger 2^-256 certificates qualify. Adaptive lifetime availability
+   separate. Stronger 2^-256 certificates qualify. Adaptive lifetime availability (superseded by v0.21 below)
    is not inferred from this clause.
 9. Academic Stage 1 is broader than OTS: few-time components, encodings,
    authentication, composition and complete constructions are also in scope.
@@ -330,3 +344,57 @@ Verified again on 2026-09-07 after the previous session was cut off: the protect
 The WS2 block convention is now pinned to `ceil(inputBytes / 64)`, charging all supplied bytes, including domain separation, with zero weight for empty input. This supersedes the staged 32-byte input unit and one-unit minimum. The canonical GitHub spec source is v0.15 (2026-09-10), retaining the signing-failure decision introduced in v0.13. Repo home and merge rights remain deferred.
 
 [leanVM-b PR #19](https://github.com/leanEthereum/leanVM-b/pull/19) supplies an additional, directly relevant stateless SUF-CMA proof route: a public 126-bit statement at 2²⁴ signing requests, with the same whole-experiment ROM accounting. See [PR19_REVIEW.md](PR19_REVIEW.md). It can shorten WS6 without waiting for WS1, but needs serialization, game/cap transport and block-weighted verification proofs. Its signer returns `Option Signature` after bounded grinding. Following discussion with Emile and organizer approval on 2026-09-06, the staged contract now admits explicit signing failure, with separate correctness-on-success and failure-probability ≤ 2⁻¹²⁸ obligations. This is a per-fixed-message, fresh-key/shared-ROM gate, not an adaptive lifetime guarantee. Baseline transport and production validation remain; the contract is not yet frozen for submissions.
+
+## v0.21 audit hardening (2026-09-14)
+
+Earlier fixed-message-only availability and combined build/check descriptions
+are historical and superseded by this revision.
+
+## v0.21 implemented contract and blocked deployment gates
+
+`Availability.lean` reuses the signing oracle in a shared-ROM interaction with
+adaptive messages and an ordered response log. `SchemeClaim` now requires
+`adaptive_failure` and `adaptive_decay_failure` as well as the fresh-key,
+fixed-message certificate. Failure at zero-based position i means that request i
+occurs and returns `none`; absent positions are not failures. Its unconditional
+probability includes keygen, ROM and participant randomness, and is at most
+2^-128 for every permitted position: up to 2^20 requests / Q <= 2^124, and up to
+2^32 requests / Q <= 2^100. Q counts all interaction raw hashes (including keygen
+and honest signing) plus requests; it excludes final forgery verification.
+Structural query bounds quantify over every response path. Stronger thresholds
+transport, and the union bound gives at most 2^-96 over 2^32 positions, not 2^-128.
+The SUF-CMA experiment and its final-verification accounting are unchanged.
+
+Protected claim ID: `suf-cma-total-work-pk32-adaptive-availability-v2`. Historical
+receipts must be rerun, never relabeled as certificates for this claim.
+
+The runner compiles in a separate constrained systemd service, confirms the
+whole service has stopped, then captures declared regular Lean artifacts into
+`verification/`. Kernel checking, export, comparison and axiom auditing use
+`--verify-prebuilt`, which invokes no build. The verification child has no
+candidate write grants. Artifact filenames, sizes and hashes are recorded and
+rechecked before receipt publication. Source scanning rejects `eval%` and unsafe
+helpers as defense in depth; compilation can execute code even if scanning passes.
+Source pins do not authenticate precompiled dependency caches.
+
+`benchmark/resources.json` is organizer-owned. Reference execution calibration,
+verification limits, raw keygen/sign/verify caps, persistent secret and
+precomputation storage, executable size and evidence validators remain unset.
+Missing values fail closed. Execution evidence must bind algorithms, executable
+and profile, including malformed-input rejection, parsing, arithmetic, randomness,
+retries and setup. Structural raw-query certificates must include impossible-ROM
+response branches; ROM-consistent measurements alone cannot certify them.
+Storage evidence counts serialized secret/precomputation bytes and documents key
+restoration. RAM is no substitute. Independent side-channel implementation review
+must state a timing/memory-access leakage model and bind executable and profile;
+this is not a formal noninterference theorem.
+
+Executable resource validation is unimplemented: deployment eligibility remains
+false even with supplied evidence. Receipts separate mathematical verification,
+resource certification, side-channel review and deployment eligibility and keep
+`ranked: false`. Any calibrated diagnostic score is explicitly non-eligible.
+The additive organizer profile is the only scoring authority; its bandwidth
+coefficient remains null, so no scalar score is issued. Existing latency targets,
+2^-40 overrun allowances, absolute deadlines and 64 KiB RAM cap are unchanged.
+Positive metric/availability fixtures are not cryptographic baselines. Emile's
+upstream pin, OTS construction work and baseline parameters are unchanged.

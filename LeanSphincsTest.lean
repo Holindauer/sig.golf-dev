@@ -3,6 +3,7 @@ import LeanSphincsTest.Contract
 import LeanSphincsTest.SigningFailure
 import LeanSphincsTest.OracleMeter
 import LeanSphincsTest.ReviewRules
+import LeanSphincsTest.DeadBranch
 import LeanSphincsTest.OTSScore
 import LeanSphincsTest.OTSGraph
 import LeanSphincsTest.OTSEvaluate

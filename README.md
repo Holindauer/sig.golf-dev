@@ -1,7 +1,7 @@
 # leanSPHINCS
 
 The [competition rules](https://nconsigny.github.io/leansphincs/) are draft
-**v0.20**, with latency guarantees and absolute resource limits. Stage 1 covers academic research
+**v0.21**, with latency guarantees and absolute resource limits. Stage 1 covers academic research
 beyond OTS: primitives, encodings, authentication, composition and complete
 constructions. Stage 2 evaluates complete stateless Ethereum account signatures,
 complementing the leanSig consensus track.
@@ -21,8 +21,10 @@ including all setup and failed retries; even rare query padding must not make
 the security bound vacuous. Lateness is separate from signing failure, whose
 existing bound remains 2^-128. A union bound over 2^32 requests permits at most
 1/256 probability of any late signature, not a lifetime 2^-40 guarantee.
-The performance game, calibrated raw-query caps and protected
-executable binding remain to implement before ranking or promotion.
+Structural raw hash-query caps on keygen, signing and verification are fields
+of the claim with uncalibrated placeholder values. The performance game, cap
+calibration and protected executable binding remain to implement before ranking
+or promotion.
 
 ## What is implemented
 
@@ -40,7 +42,8 @@ executable binding remain to implement before ranking or promotion.
   **124 bits at up to 2^20 requests and 100 bits at up to 2^32**, for the same
   scheme, parameters and bound. No constants-dropping eligibility gate.
 - Separate correctness-on-success and fresh-key, fixed-message signing failure
-  probability at most 2^-128. This is not adaptive lifetime availability.
+  probability at most 2^-128, plus adaptive per-position availability in both
+  budget regimes. The 2^32-request lifetime union bound is 2^-96.
 - A private-snapshot verifier, protected comparator, axiom checks and content-bound,
   explicitly unranked receipts. The organizer-owned
   [scoring profile](benchmark/scoring.json) is included in receipt provenance.

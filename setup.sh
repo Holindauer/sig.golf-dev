@@ -16,15 +16,17 @@ clone_at() {
     echo "tool checkout at unexpected revision: $destination" >&2
     exit 1
   }
-  if [[ "$destination" == "$comparator_dir" ]] &&
-      git -C "$destination" apply --reverse --check "$PWD/benchmark/comparator-leanchecker.patch" 2>/dev/null; then
-    [[ "$(git -C "$destination" diff -- Main.lean)" == "$(<benchmark/comparator-leanchecker.patch)" ]] || {
-      echo "unexpected comparator edits" >&2; exit 1;
-    }
-    [[ -z "$(git -C "$destination" status --porcelain -- . ':!Main.lean')" ]] || {
-      echo "unexpected comparator files" >&2; exit 1;
-    }
-    return
+  if [[ "$destination" == "$comparator_dir" ]]; then
+    for patch in comparator-leanchecker.patch comparator-leanchecker-v1.patch; do
+      if [[ "$(git -C "$destination" diff -- Main.lean)" == "$(<"benchmark/$patch")" ]] &&
+          [[ -z "$(git -C "$destination" status --porcelain -- . ':!Main.lean')" ]] &&
+          [[ -z "$(git -C "$destination" diff --cached)" ]]; then
+        if [[ "$patch" == comparator-leanchecker-v1.patch ]]; then
+          git -C "$destination" apply --reverse "$PWD/benchmark/$patch"
+        fi
+        return
+      fi
+    done
   fi
   [[ -z "$(git -C "$destination" status --porcelain)" ]] || {
     echo "tool checkout contains local changes: $destination" >&2

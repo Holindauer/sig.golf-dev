@@ -123,8 +123,10 @@ while IFS= read -r -d '' source; do
   fi
   # Reject build-time code execution and kernel-bypass constructs. Custom
   # elaborators, macros, and run_tac can execute after the audited import block
-  # and dynamically load another challenge, so they are forbidden too.
-  if printf '%s\n' "${code}" | grep -qE '(^|[^[:alnum:]_])(run_cmd|run_elab|initialize|implemented_by|extern|native_decide)([^[:alnum:]_]|$)|#eval|#exit|debug\.skipKernelTC'; then
+  # and dynamically load another challenge, so they are forbidden too. The
+  # `@[init f]` / `attribute [init f]` forms run `f : IO _` whenever a dependent
+  # module is compiled, without any of the other keywords.
+  if printf '%s\n' "${code}" | grep -qE '(^|[^[:alnum:]_])(unsafe|run_cmd|run_elab|initialize|implemented_by|extern|native_decide)([^[:alnum:]_]|$)|eval[[:space:]]*%|#eval|#exit|debug\.skipKernelTC|\[[[:space:]]*(init|builtin_init)([[:space:]]|\])'; then
     echo "${source} uses build-time execution or kernel-bypass constructs, which submissions may not use" >&2
     exit 1
   fi

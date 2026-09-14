@@ -5,7 +5,7 @@ import json
 
 from oracle_meter import METER_ID
 
-CLAIM_ID = "suf-cma-total-work-pk32-decay-v1"
+CLAIM_ID = "suf-cma-total-work-pk32-adaptive-availability-v2"
 
 
 def additive_score(size, verification, bandwidth_price):
@@ -41,5 +41,5 @@ def score_entry(profile, sigma, verification):
     if price is None:
         return None
     value = additive_score(sigma, verification, Fraction(price["numerator"], price["denominator"]))
-    return {"value": str(value), "objective": "c * signatureBytes + verification",
+    return {"value": str(value), "eligible": False, "diagnostic": True, "objective": "c * signatureBytes + verification",
             "profile_id": profile["id"], "direction": "minimize", "tie_break": sigma}
