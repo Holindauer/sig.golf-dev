@@ -1,6 +1,6 @@
 # leanSPHINCS
 
-The [competition rules](https://leanethereum.github.io/leansphincs/) are draft
+The [competition rules](https://leanethereum.github.io/leanSphincs/) are draft
 **v0.22**, with latency guarantees and absolute resource limits. Stage 1 covers academic research
 beyond OTS: primitives, encodings, authentication, composition and complete
 constructions. Stage 2 evaluates complete stateless Ethereum account signatures,
