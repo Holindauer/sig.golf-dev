@@ -74,17 +74,17 @@ class WebsiteTests(unittest.TestCase):
                 checked += 1
         self.assertGreater(checked, 0)
 
-    def test_version_and_additive_objective(self):
-        self.assertIn("DRAFT v0.21", self.source)
-        self.assertIn("draft rules v0.21", self.source)
-        self.assertIn("2026-09-14", self.source)
-        self.assertIn('<span class="formula-big">minimize&nbsp;&nbsp;c × |σ| + V</span>', self.source)
+    def test_version_and_product_objective(self):
+        self.assertIn("DRAFT v0.22", self.source)
+        self.assertIn("draft rules v0.22", self.source)
+        self.assertIn("2026-09-15", self.source)
+        self.assertIn('<span class="formula-big">minimize&nbsp;&nbsp;|σ| × V</span>', self.source)
         self.assertIn("Stage 1 is academic research; Stage 2 is the Ethereum selection.", self.source)
         objective = self.page.section_text("objective")
         self.assertIn("both stages", objective)
-        self.assertIn("positive coefficient c", objective)
-        self.assertIn("no scalar ranking until that coefficient is pinned", objective)
-        self.assertIn("not a submission parameter", objective)
+        self.assertIn("byte × verification-work units", objective)
+        self.assertIn("No bandwidth price or conversion coefficient", objective)
+        self.assertIn("full Pareto frontier", objective)
         self.assertIn("not directly comparable", objective)
         self.assertIn("1.5 s signing, 1 minute keygen", objective)
         self.assertIn("worst-case cap", objective)
@@ -117,7 +117,7 @@ class WebsiteTests(unittest.TestCase):
         mvp = self.page.section_text("mvp")
         for text in ("explicitly unranked", "does not yet bind the signing and keygen budget certificates",
                      "sigma.txt", "hverify.txt", "bound.txt", "No cryptographic baseline yet",
-                     "not in a fourth entrant file", "With c unset it issues no scalar score"):
+                     "not in a fourth entrant file", "diagnostic product score"):
             self.assertIn(text, mvp)
         cost = self.page.section_text("costmodels")
         self.assertIn("would not alone prove a worst-case bound", cost)

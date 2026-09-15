@@ -303,8 +303,8 @@
   <h1><span class="lean">lean</span>SPHINCS</h1>
   <p class="subtitle">An open search for stateless hash-based signatures for Ethereum accounts, with Lean proofs of security in the classical, pure random-oracle model.</p>
   <div class="statusline">
-    <span><strong>DRAFT v0.21</strong></span>
-    <span>2026-09-14</span>
+    <span><strong>DRAFT v0.22</strong></span>
+    <span>2026-09-15</span>
     <span>values in <span class="tbd">amber</span> remain open</span>
   </div>
 </header>
@@ -312,7 +312,7 @@
 <section id="implementation-status">
   <h2>Two research stages · not open for submissions</h2>
   <p><strong>Stage 1 is academic research; Stage 2 is the Ethereum selection.</strong> Academic research includes one-time and few-time signatures, encodings, authentication structures, composition and complete constructions. Stage 2 evaluates complete stateless account signatures against every deployment gate. Improving a component does not automatically improve the resulting signature scheme: authentication paths, key derivation, domain separation and serialization must be included when evaluating the complete construction.</p>
-  <p>The <a href="https://github.com/nconsigny/leansphincs">leanSPHINCS repository</a> contains the protected pure-ROM statement, a working local verification harness and experimental OTS foundations. The statement enforces a 32-byte public-key cap, exact signature size, weighted verification work, total-query security floors and same-scheme lifetime decay. <strong>No complete OTS security certificate or accepted SPHINCS⁻ baseline #0 exists yet.</strong> Full-program metering, signing/keygen budget certificates, the calibrated bandwidth price, external audit and registered verification remain launch work. Local receipts are unranked; an unset price produces no scalar score.</p>
+  <p>The <a href="https://github.com/nconsigny/leansphincs">leanSPHINCS repository</a> contains the protected pure-ROM statement, a working local verification harness and experimental OTS foundations. The statement enforces a 32-byte public-key cap, exact signature size, weighted verification work, total-query security floors and same-scheme lifetime decay. <strong>No complete OTS security certificate or accepted SPHINCS⁻ baseline #0 exists yet.</strong> Full-program metering, signing/keygen budget certificates, external audit and registered verification remain launch work. Local receipts are unranked; product scores are diagnostic and confer no deployment eligibility.</p>
   <p><a href="https://github.com/nconsigny/leansphincs/blob/main/SCHEMECLAIM_PLAN.md">Workstream plan</a> · <a href="https://github.com/nconsigny/leansphincs/blob/main/IMPLEMENTATION.md">Implementation contract</a> · <a href="https://github.com/nconsigny/leansphincs/blob/main/HARNESS_SECURITY.md">Harness evidence and launch gates</a></p>
 </section>
 
@@ -330,7 +330,7 @@
     <li><strong>Proof and statement.</strong> Build against pinned dependencies; compare the exported theorem with the protected target; check the axiom closure of the theorem and algorithms. Only the scheme definition is a comparator hole.</li>
     <li><strong>Eligibility.</strong> Check the certified security bound, sizes and resource obligations required by the selected stage and profile. Unimplemented gates cannot be replaced by declarations.</li>
     <li><strong>Metrics.</strong> Retain exact size and proved work bounds, plus execution and memory evidence linked to the same implementation.</li>
-    <li><strong>Score and promotion.</strong> Once the profile is frozen and all gates are implemented, compute its additive score automatically and retain its nondominated cost frontier.</li>
+    <li><strong>Score and promotion.</strong> Once the profile is frozen and all gates are implemented, compute its product score automatically and retain its nondominated cost frontier.</li>
   </ol>
   <p><strong>Numerical ranking is automatic; research credit is human-curated.</strong> Organizers may credit useful lemmas, attacks, negative results and lower bounds separately, with reasons and the model/family to which each result applies. A checked impossibility theorem does not make its relevance a machine-decided question. These credits do not change a submission's numerical score.</p>
   <p>The harness needs an external audit before launch and a rules-exploit reporting process. The <a href="https://blog.zksecurity.xyz/posts/zkgolf/">zk.golf launch discussion</a> illustrates why carefully specifying the optimization target matters. Proof checking is not a substitute for reviewing that specification. Human review remains required before any award or adoption.</p>
@@ -339,10 +339,10 @@
 <section id="objective">
   <h2><span class="secno">3</span>The objective</h2>
   <div class="objective">
-    <span class="formula-big">minimize&nbsp;&nbsp;c × |σ| + V</span>
+    <span class="formula-big">minimize&nbsp;&nbsp;|σ| × V</span>
   </div>
-  <p>For both stages, |σ| is the complete signature size in bytes and V is verification work in the selected profile. The positive coefficient c prices one transmitted byte in the same units as verification work. This additive model represents transmission plus verification cost; it does not multiply two costs that are paid separately.</p>
-  <p><strong>c = <span class="tbd">pending bandwidth/execution calibration</span>.</strong> It is an exact positive rational fixed by the organizers, not a submission parameter. There is no default c = 1 and no scalar ranking until that coefficient is pinned. Reports can already retain the size/verification Pareto frontier and explore explicitly labeled prices. Different security games, meters or prices are not directly comparable.</p>
+  <p>For both stages, |σ| is the complete signature size in bytes and V is verification work in the selected profile. Their product has byte × verification-work units. It measures the joint size/work trade-off: halving signature size offsets doubling verification work. This returns to the original objective and supports exploration of size/verification trade-offs.</p>
+  <p>No bandwidth price or conversion coefficient is required. The scoring rule and meter are organizer-owned. Retain both coordinates and the full Pareto frontier alongside the product: one scalar ordering does not describe every nondominated trade-off. Different security games or meters are not directly comparable. Product scores are research metrics; deployment still requires every eligibility gate.</p>
   <p>Signing and key generation are eligibility constraints. The complete account profile sets normal latency targets of <strong>1.5 s signing, 1 minute keygen</strong>: the probability of exceeding either target must be at most 2<sup>−40</sup> per operation, under the game specified in R9. Exceptionally unlucky runs may continue up to the absolute worst-case caps of <strong>2 minutes signing and 6 minutes keygen</strong>. Those absolute limits admit no overrun allowance. Working RAM remains bounded by 64 KiB on every path. Stage 1 component budgets must be stated for each experiment; the full account budget is not automatically assigned independently to every component.</p>
   <p>The academic hash-work view and full-program execution views remain separate. A Reed–Solomon encoding can improve hash work while adding substantial field arithmetic. That is useful research evidence, not a demonstrated latency improvement; the execution profile must charge that arithmetic. Preserve the frontier so the price and profile can be revisited without discarding useful constructions.</p>
 </section>
@@ -451,14 +451,14 @@
 
 <section id="scoring">
   <h2><span class="secno">6</span>Submissions, scoring and credit</h2>
-  <p>The planned <strong>Cost</strong> tab ranks <code>c * signatureBytes + verificationWork</code> using exact rationals after all profile gates pass. It remains pending until c is calibrated. The <strong>Pareto</strong> tab retains nondominated size/verification points at matched signing, keygen and memory budgets. Neither tab mixes games or metering profiles.</p>
-  <p>Keep the full keygen/signing/verification, size, memory and failure evidence with each result, along with source hashes, dependencies, verifier provenance, stage and profile. An entrant cannot set the organizer's price or promote its own receipt. Ties break by smaller signatures and then earlier accepted submission time.</p>
+  <p>The planned <strong>Cost</strong> tab ranks <code>signatureBytes * verificationWork</code> after all profile gates pass. The current hash-work profile computes the product with exact integer arithmetic. The <strong>Pareto</strong> tab retains nondominated size/verification points at matched signing, keygen and memory budgets. Neither tab mixes games or metering profiles.</p>
+  <p>Keep the full keygen/signing/verification, size, memory and failure evidence with each result, along with source hashes, dependencies, verifier provenance, stage and profile. An entrant cannot change the organizer's scoring rule or promote its own receipt. Ties break by smaller signatures and then earlier accepted submission time.</p>
   <p>Promotions are credited to the solver and, where used, the model. Research and rules-bounty credit are curated separately from numeric rank (§2). Awards and adoption require human review with published reasons. <span class="tbd">Prizes, timeline, protected-module governance and independent verifier registration remain open.</span></p>
 </section>
 
 <section id="mvp">
   <h2><span class="secno">7</span>Research stages and implementation</h2>
-  <p>Draft v0.21 implements adaptive availability and separates hostile compilation from proof checking. Compilation runs in its own constrained service; the runner confirms process-tree termination, captures regular module artifacts into a private snapshot, and checks and exports those same read-only bytes. Receipts distinguish mathematical verification, resource certification, side-channel review and deployment eligibility. All remain unranked; diagnostic scores are explicitly non-eligible. Historical receipts must be reverified under <code>suf-cma-total-work-pk32-adaptive-availability-v2</code>, never relabeled.</p>
+  <p>Draft v0.22 retains adaptive availability and separates hostile compilation from proof checking. Compilation runs in its own constrained service; the runner confirms process-tree termination, captures regular module artifacts into a private snapshot, and checks and exports those same read-only bytes. Receipts distinguish mathematical verification, resource certification, side-channel review and deployment eligibility. All remain unranked; diagnostic scores are explicitly non-eligible. Historical receipts must be reverified under <code>suf-cma-total-work-pk32-adaptive-availability-v2</code>, never relabeled.</p>
   <h3>Stage 1 · academic research beyond OTS</h3>
   <p>Stage 1 is the academic research track. It includes one-time and few-time primitives, message encodings, authentication structures, domain-separated composition and complete constructions. OTS is an initial experiment, not the boundary of the academic competition. Each board needs its own pinned security game, request/instance budgets and resource profile; only comparable entries share a ranking.</p>
   <p>Standard hybrid arguments can lift suitable single-instance security to multiple instances, generally with a loss. State and account for that loss and the conditions under which the argument applies. Shared random-oracle domains, seed-derived keys and the way a component is actually used in SPHINCS still need to match the reduction; an internal OTS is not automatically used as a fully black-box standalone scheme.</p>
@@ -466,8 +466,8 @@
   <h3>Stage 2 · complete Ethereum account signatures</h3>
   <p>Stage 2 is the Ethereum selection track. It measures complete stateless constructions, with SUF-CMA, the normal and extended-lifetime floors and all deployment gates. Size includes the whole serialized signature, not just a WOTS component or authentication fragment.</p>
   <h3>What the local harness currently verifies</h3>
-  <p>The <a href="https://github.com/nconsigny/leansphincs/blob/main/SUBMISSION.md">three-file declaration contract</a> remains <code>sigma.txt</code>, <code>hverify.txt</code> and <code>bound.txt</code>, alongside the scheme and proof sources. The revised protected statement uses total work Q, a 32-byte public key and same-scheme decay. The coefficient c is stored in organizer-owned scoring configuration, not in a fourth entrant file.</p>
-  <p>The runner is <strong>explicitly unranked</strong>, and does not yet bind the signing and keygen budget certificates or full-program execution costs. With c unset it issues no scalar score. Positive metric canaries test comparator matching only. <strong>No cryptographic baseline yet</strong>: passing those fixtures is not an accepted signature scheme or a launch decision.</p>
+  <p>The <a href="https://github.com/nconsigny/leansphincs/blob/main/SUBMISSION.md">three-file declaration contract</a> remains <code>sigma.txt</code>, <code>hverify.txt</code> and <code>bound.txt</code>, alongside the scheme and proof sources. The revised protected statement uses total work Q, a 32-byte public key and same-scheme decay. The product rule is stored in organizer-owned scoring configuration, not in a fourth entrant file.</p>
+  <p>The runner is <strong>explicitly unranked</strong>, and does not yet bind the signing and keygen budget certificates or full-program execution costs. Successful verification and integrity checks yield a diagnostic product score; resource certification, side-channel review and deployment eligibility remain separate and blocked. Positive metric canaries test comparator matching only. <strong>No cryptographic baseline yet</strong>: passing those fixtures is not an accepted signature scheme or a launch decision.</p>
 </section>
 
 <section id="baseline">
@@ -508,7 +508,7 @@
 </section>
 
 <footer>
-  leanSPHINCS draft rules v0.21 · submissions not open · implementation and deployment review pending
+  leanSPHINCS draft rules v0.22 · submissions not open · implementation and deployment review pending
 </footer>
 
 </div>

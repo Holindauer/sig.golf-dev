@@ -42,10 +42,11 @@ class ContractTests(unittest.TestCase):
             self.write("Solution.lean", "import LeanSphincs.Submission.Scheme\n" + code)
             self.assertNotEqual(self.imports().returncode, 0)
 
-    def test_no_active_product_pricing(self):
+    def test_single_product_scoring_authority(self):
         policy = json.loads((ROOT / "benchmark/source-policy.json").read_text())
         self.assertNotIn("score", policy)
-        self.assertIsNone(json.loads((ROOT / "benchmark/scoring.json").read_text())["bandwidth_price"])
+        self.assertEqual(json.loads((ROOT / "benchmark/scoring.json").read_text())["schema"],
+                         "leansphincs-product-profile-v1")
 
     def test_valid(self):
         source_policy.check(self.root)
@@ -134,8 +135,12 @@ class ContractTests(unittest.TestCase):
         result = subprocess.run(command, text=True, capture_output=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('"ranked": false', result.stdout)
-        self.assertNotIn("score", json.loads(result.stdout))
-        self.assertIn("score_pending", json.loads(result.stdout))
+        report = json.loads(result.stdout)
+        self.assertEqual(report["score"]["value"], "43008")
+        self.assertTrue(report["score"]["diagnostic"])
+        self.assertFalse(report["score"]["eligible"])
+        self.assertFalse(report["verified"])
+        self.assertNotIn("score_pending", report)
         self.write("hverify.txt", "1\n")
         result = subprocess.run(command, text=True, capture_output=True)
         self.assertNotEqual(result.returncode, 0)

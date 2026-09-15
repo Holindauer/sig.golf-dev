@@ -1,10 +1,10 @@
 # MVP submission contract
 
-Status: implementer guide for draft v0.21, not an open competition.
-The revised claim identifier is `suf-cma-total-work-pk32-decay-v1`.
+Status: implementer guide for draft v0.22, not an open competition.
+The protected claim identifier remains `suf-cma-total-work-pk32-adaptive-availability-v2`.
 The three-file format remains, but security semantics and lifetime coverage have
-changed. The additive price is organizer-owned and not yet calibrated; receipts
-remain unranked and have no scalar score while it is unset. Signing/keygen and
+changed. The organizer-owned product score needs no price coefficient; receipts
+remain diagnostic and unranked, with deployment eligibility false. Signing/keygen and
 full-program certificates remain launch work.
 
 ## Package
@@ -123,11 +123,12 @@ The fixed-cap certificate checks the whole interval starting at Q = 1, including
 infeasible Q < signingCap points. It is conservative, and evaluation is monotone
 in qS. The security theorem must cover the extended request range itself.
 
-The objective is the exact rational `c * sigma + hverify`, minimized, with
-signature size as the tie-break. c comes only from the protected organizer profile
-`benchmark/scoring.json`. It is currently null; no scalar score is emitted.
-Do not submit a price file or claim a calibrated ranking. No additional scored
-file is needed for signing availability.
+The objective is the exact integer `sigma * hverify`, minimized, with
+signature size as the tie-break. Its units are bytes × verification-work units.
+The rule comes only from `benchmark/scoring.json`; no bandwidth coefficient or
+entrant price file is admitted. Scores are diagnostic and do not establish
+deployment eligibility. Keep both coordinates for Pareto comparisons. No
+additional scored file is needed for signing availability.
 
 ## Local verification
 
@@ -152,7 +153,7 @@ competition verifier; it is for organizer-owned diagnostics only.
 No complete accepted example is provided yet. The metric canaries are deliberately
 not security proofs. Baseline #0 is the next end-to-end cryptographic deliverable.
 
-## v0.21 implemented contract and blocked deployment gates
+## Current contract: hardening retained in v0.22
 
 `Availability.lean` reuses the signing oracle in a shared-ROM interaction with
 adaptive messages and an ordered response log. `SchemeClaim` now requires
@@ -194,9 +195,10 @@ this is not a formal noninterference theorem.
 Executable resource validation is unimplemented: deployment eligibility remains
 false even with supplied evidence. Receipts separate mathematical verification,
 resource certification, side-channel review and deployment eligibility and keep
-`ranked: false`. Any calibrated diagnostic score is explicitly non-eligible.
-The additive organizer profile is the only scoring authority; its bandwidth
-coefficient remains null, so no scalar score is issued. Existing latency targets,
+`ranked: false`. Any diagnostic score is explicitly non-eligible.
+The organizer product profile is the only competition scoring authority. Successful
+verification issues an exact diagnostic size × verification-work score without
+a bandwidth coefficient; deployment remains blocked. Existing latency targets,
 2^-40 overrun allowances, absolute deadlines and 64 KiB RAM cap are unchanged.
 Positive metric/availability fixtures are not cryptographic baselines. Emile's
 upstream pin, OTS construction work and baseline parameters are unchanged.

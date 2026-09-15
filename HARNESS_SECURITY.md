@@ -15,8 +15,7 @@ their statements, compares against the rendered claim and checks axiom closure.
 Each run retains `source/`, `project/`, `verification/`, logs and `result.json` in a distinct
 mode-0700 directory under `benchmark-results/runs/`. The receipt binds filenames,
 source bytes, all three metrics, harness sources, dependency Git pins, tool-binary
-hashes and log hashes. A score is emitted only when the organizer profile has
-a calibrated price, after successful comparison and post-run source/harness,
+hashes and log hashes. A diagnostic product score is emitted only after successful comparison and post-run source/harness,
 dependency-pin/cleanliness and tool-binary integrity checks. Lake is included alongside Lean, leanchecker, exporter, comparator and
 (in the strict profile) Landrun in the recorded/rechecked tool hashes.
 Every receipt says `ranked: false`.
@@ -24,10 +23,10 @@ Every receipt says `ranked: false`.
 Historical draft v0.17 used claim identifier `suf-cma-total-work-pk32-decay-v1`,
 which cannot certify the current adaptive claim.
 Organizer-owned `benchmark/scoring.json` belongs to the protected harness
-manifest. Its current null price issues no scalar score, including on a local
-accepted result; a configured exact rational price would give c*sigma+hverify.
-No entrant-supplied price is admitted. Price calibration and complete-program
-resource gates are still launch work. Recheck old receipts under the revised
+manifest. Its product schema computes `sigma * hverify` exactly, with no
+bandwidth coefficient. Historical additive profiles are rejected rather than
+silently reinterpreted. No entrant-supplied pricing is admitted. Complete-program
+resource gates remain launch work. Recheck old receipts under the revised
 total-work, 32-byte-key, same-scheme decay claim rather than relabeling them.
 
 Receipts are written to a private temporary file, flushed and atomically renamed
@@ -189,7 +188,7 @@ against candidate subprocesses, not an independent same-user process editing
 organizer files. No cryptographic eligibility or launch readiness follows merely
 from passing the harness tests.
 
-## v0.21 implemented contract and blocked deployment gates
+## Current contract: hardening retained in v0.22
 
 `Availability.lean` reuses the signing oracle in a shared-ROM interaction with
 adaptive messages and an ordered response log. `SchemeClaim` now requires
@@ -231,9 +230,10 @@ this is not a formal noninterference theorem.
 Executable resource validation is unimplemented: deployment eligibility remains
 false even with supplied evidence. Receipts separate mathematical verification,
 resource certification, side-channel review and deployment eligibility and keep
-`ranked: false`. Any calibrated diagnostic score is explicitly non-eligible.
-The additive organizer profile is the only scoring authority; its bandwidth
-coefficient remains null, so no scalar score is issued. Existing latency targets,
+`ranked: false`. Any diagnostic score is explicitly non-eligible.
+The organizer product profile is the only competition scoring authority. Successful
+verification issues an exact diagnostic size × verification-work score without
+a bandwidth coefficient; deployment remains blocked. Existing latency targets,
 2^-40 overrun allowances, absolute deadlines and 64 KiB RAM cap are unchanged.
 Positive metric/availability fixtures are not cryptographic baselines. Emile's
 upstream pin, OTS construction work and baseline parameters are unchanged.

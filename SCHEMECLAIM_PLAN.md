@@ -1,6 +1,6 @@
 # SchemeClaim: current plan and decision history
 
-Status: draft v0.21 rules and implementation plan, 2026-09-14. The
+Status: draft v0.22 rules and implementation plan, 2026-09-15. The
 [public rules](https://nconsigny.github.io/leansphincs/) and
 [implementation contract](IMPLEMENTATION.md) describe the current target.
 Historical notes below are snapshots, not competing current instructions.
@@ -98,12 +98,12 @@ rejection fixtures. The current mathematical claim remains unchanged and cannot
 establish resource eligibility. The budget values were already decided; this
 revision replaces the ambiguous “intended limits” wording with a mandatory rule.
 
-## Current decisions: Benedikt review accepted, 2026-09-11
+## Current decisions: September 15 scoring revision and retained review requirements
 
-1. Both stages use `c * signatureBytes + verificationWork`, within separately
-   pinned games and meters. c is an organizer-owned positive rational, pending
-   calibration. No implicit price, no scalar ranking before calibration.
-   The former product and four-factor objectives are superseded.
+1. Both stages use `signatureBytes * verificationWork`, within separately
+   pinned games and meters. The organizer-owned product rule needs no bandwidth
+   coefficient. Diagnostic scores accompany both coordinates and the full Pareto
+   frontier; ranking and deployment still require every eligibility gate.
 2. Complete-account normal latency targets are 1.5 s signing and 60 s keygen,
    now with 2^-40 overrun allowance per operation (September 14 decision above).
    Absolute limits are 120 s signing / 360 s keygen; raw-query caps and 64 KiB
@@ -180,7 +180,7 @@ exercise the smaller key cap, separate decay certificate and constants ambiguity
   Keep all constants. Any future tighter feasible-budget gate requires a new
   theorem and explicit versioning, not a silent change to this certificate.
 - **WS4: claim, comparator and pricing.** Revised claim and organizer-owned
-  additive profile implemented. An unset c issues no scalar score; all local
+  product profile implemented. Exact diagnostic products need no price; all local
   receipts stay unranked. Full execution and S/K budget binding remain to add.
 - **WS5: production negative tests.** Existing real-comparator canaries and
   actual-claim rejection fixtures are diagnostic coverage. Complete the matrix
@@ -392,9 +392,25 @@ this is not a formal noninterference theorem.
 Executable resource validation is unimplemented: deployment eligibility remains
 false even with supplied evidence. Receipts separate mathematical verification,
 resource certification, side-channel review and deployment eligibility and keep
-`ranked: false`. Any calibrated diagnostic score is explicitly non-eligible.
-The additive organizer profile is the only scoring authority; its bandwidth
-coefficient remains null, so no scalar score is issued. Existing latency targets,
+`ranked: false`. Any diagnostic score is explicitly non-eligible.
+Historical v0.21 used an additive organizer profile with an unset bandwidth
+coefficient and issued no scalar score; v0.22 supersedes that scoring decision. Existing latency targets,
 2^-40 overrun allowances, absolute deadlines and 64 KiB RAM cap are unchanged.
 Positive metric/availability fixtures are not cryptographic baselines. Emile's
 upstream pin, OTS construction work and baseline parameters are unchanged.
+
+## v0.22 product objective restored (2026-09-15)
+
+The organizer restores signature bytes × verification work as the competition
+objective. The joint byte × work unit makes multiplicative trade-offs explicit;
+retain both coordinates and the full Pareto frontier, since the product alone
+does not describe every nondominated point. This supersedes the September 11
+additive-price decision and v0.21's wait for bandwidth calibration.
+
+The versioned organizer product profile is the sole scoring authority. Successful
+local proof verification and integrity checks can issue diagnostic product scores;
+`ranked: false` and all fail-closed deployment gates remain. Adaptive availability,
+artifact isolation, source policy, latency targets, overrun allowances, deadlines,
+RAM cap, upstream pins and baseline parameters are retained. Historical additive
+profiles are rejected; this scoring-only revision does not change the protected
+claim or verification meter identifiers.

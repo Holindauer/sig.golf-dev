@@ -1,14 +1,15 @@
 # leanSPHINCS
 
 The [competition rules](https://nconsigny.github.io/leansphincs/) are draft
-**v0.21**, with latency guarantees and absolute resource limits. Stage 1 covers academic research
+**v0.22**, with latency guarantees and absolute resource limits. Stage 1 covers academic research
 beyond OTS: primitives, encodings, authentication, composition and complete
 constructions. Stage 2 evaluates complete stateless Ethereum account signatures,
 complementing the leanSig consensus track.
 
-Both use **`c * signatureBytes + verificationWork`**, within separately pinned
-games and cost profiles. The positive rational bandwidth price `c` is not yet
-calibrated: no default price or scalar ranking is issued. Normal account latency
+Both use **`signatureBytes * verificationWork`**, within separately pinned
+games and cost profiles. The product has byte × verification-work units, needs
+no bandwidth coefficient, and accompanies the full size/verification Pareto frontier.
+Local scores remain diagnostic and unranked; deployment gates still apply. Normal account latency
 targets are **1.5 s signing and 60 s keygen**, each with overrun probability
 at most **2^-40 per operation**. Working RAM is bounded by **64 KiB** on every path. Complete-program
 certificates and hardware/storage calibration remain unfinished; hash throughput

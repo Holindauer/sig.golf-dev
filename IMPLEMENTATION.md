@@ -1,6 +1,6 @@
 # Statement and harness implementation contract
 
-Status: implementation contract accompanying draft v0.21, 2026-09-14.
+Status: implementation contract accompanying draft v0.22, 2026-09-15.
 This is not a frozen competition, an accepted cryptographic baseline or a
 deployment certificate. Historical decisions and validation snapshots are retained
 in [SCHEMECLAIM_PLAN.md](SCHEMECLAIM_PLAN.md).
@@ -196,17 +196,17 @@ The hash meter identifier is unchanged. Old receipts must be reverified against
 the revised claim; changed protected hashes and the claim identifier distinguish
 them. The renderer still binds all three declarations.
 
-The objective is **c * sigma + hverify** for the hash-work profile, computed
-with exact rational arithmetic. The price is read from organizer-owned
-`benchmark/scoring.json`, included in the harness manifest and integrity checks.
-The profile currently has `bandwidth_price: null`: **no scalar score is emitted**,
-even on accepted local verification. A calibrated price must be a positive
-reduced rational with bounded integer components. It is never an entrant file.
-Research experiments may explore explicitly supplied prices, always unranked.
+The objective is **sigma * hverify** for the hash-work profile, computed
+with exact integer arithmetic in byte × verification-work units. The organizer-owned
+`benchmark/scoring.json` uses schema `leansphincs-product-profile-v1` and profile
+`signature-bytes-times-hash-work-v1`, bound by the harness manifest. There is no
+bandwidth coefficient or entrant pricing. Retain both coordinates for Pareto
+exploration. Historical additive profiles are rejected by the current loader;
+the protected claim and verification meter identifiers are unchanged.
 
-A configured score is emitted only after successful comparison and post-run
+A diagnostic product score is emitted only after successful comparison and post-run
 integrity checks. Every receipt is still `ranked: false`. The declarations-only
-score helper also reports unverified/unranked status. The OTS additive Lean
+score helper also reports unverified/unranked status. The historical OTS additive Lean
 helpers prove arithmetic properties, not algorithm certificates.
 
 ## Trust boundary, provenance and launch work
@@ -235,7 +235,7 @@ persistent storage profile, execution cap and price calibration remain unfinishe
 No fixed hash-unit-to-seconds conversion is asserted. Independent verifier
 registration, audit, governance and promotion still precede launch.
 
-## v0.21 implemented contract and blocked deployment gates
+## Current contract: hardening retained in v0.22
 
 `Availability.lean` reuses the signing oracle in a shared-ROM interaction with
 adaptive messages and an ordered response log. `SchemeClaim` now requires
@@ -277,9 +277,10 @@ this is not a formal noninterference theorem.
 Executable resource validation is unimplemented: deployment eligibility remains
 false even with supplied evidence. Receipts separate mathematical verification,
 resource certification, side-channel review and deployment eligibility and keep
-`ranked: false`. Any calibrated diagnostic score is explicitly non-eligible.
-The additive organizer profile is the only scoring authority; its bandwidth
-coefficient remains null, so no scalar score is issued. Existing latency targets,
+`ranked: false`. Any diagnostic score is explicitly non-eligible.
+The organizer product profile is the only competition scoring authority. Successful
+verification issues an exact diagnostic size × verification-work score without
+a bandwidth coefficient; deployment remains blocked. Existing latency targets,
 2^-40 overrun allowances, absolute deadlines and 64 KiB RAM cap are unchanged.
 Positive metric/availability fixtures are not cryptographic baselines. Emile's
 upstream pin, OTS construction work and baseline parameters are unchanged.

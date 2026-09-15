@@ -106,7 +106,7 @@ class PublicationTests(unittest.TestCase):
 
 
 class OrchestrationTests(unittest.TestCase):
-    def exercise(self, results, integrity_error=None, price=None):
+    def exercise(self, results, integrity_error=None):
         with tempfile.TemporaryDirectory() as directory, ExitStack() as stack:
             root = Path(directory)
             source = root / "input"
@@ -124,7 +124,7 @@ class OrchestrationTests(unittest.TestCase):
             stack.enter_context(patch.object(verifier, "load_resource_profile", return_value={}))
             stack.enter_context(patch.object(verifier, "freeze_artifacts", return_value={}))
             stack.enter_context(patch.object(verifier, "load_scoring_profile", return_value={
-                "id": "test-only", "bandwidth_price": price}))
+                "id": "test-only"}))
             stack.enter_context(patch.object(verifier, "check_dependencies", return_value={}))
             stack.enter_context(patch.object(verifier, "digest", return_value="mock digest"))
             stack.enter_context(patch.object(verifier, "prepare_project", side_effect=prepare))
@@ -136,21 +136,23 @@ class OrchestrationTests(unittest.TestCase):
             self.assertFalse(report["ranked"])
             return report, integrity.call_count
 
-    def test_mock_success_waits_for_calibration(self):
+    def test_mock_success_issues_only_diagnostic_product(self):
         report, checks = self.exercise([0, 0, 0, 0])
         self.assertEqual(checks, 1)
         self.assertEqual(report["status"], "accepted")
         self.assertTrue(report["mathematical_verification"])
         self.assertFalse(report["deployment_eligible"])
         self.assertNotIn("current mathematical certificate missing", report["deployment_gates"]["reasons"])
-        self.assertNotIn("score", report)
-        self.assertIn("coefficient", report["score_pending"])
+        self.assertEqual(report["score"]["value"], "6")
+        self.assertFalse(report["score"]["eligible"])
+        self.assertTrue(report["score"]["diagnostic"])
+        self.assertNotIn("score_pending", report)
         self.assertIn("lake", report["tools"])
 
     def test_mock_success_scores_only_after_integrity(self):
-        report, checks = self.exercise([0, 0, 0, 0], price={"numerator": 1, "denominator": 4})
+        report, checks = self.exercise([0, 0, 0, 0])
         self.assertEqual(checks, 1)
-        self.assertEqual(report["score"]["value"], "7/2")
+        self.assertEqual(report["score"]["value"], "6")
 
     def test_no_failure_path_issues_score(self):
         cases = [([1], None, "infrastructure_error", "trusted_build"),

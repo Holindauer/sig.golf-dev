@@ -303,11 +303,7 @@ def _verify_admitted(submission: Path, insecure: bool = False) -> tuple[dict, Pa
         report["status"] = "accepted" if code == 0 else "verification_failed"
         if code == 0:
             report["mathematical_verification"] = True
-            score = score_entry(report["scoring_profile"], sigma, hverify)
-            if score is None:
-                report["score_pending"] = "bandwidth coefficient not calibrated"
-            else:
-                report["score"] = score
+            report["score"] = score_entry(report["scoring_profile"], sigma, hverify)
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
         report.pop("score", None)
         report["status"] = "source_rejected" if stage in {"capture", "source_policy"} else "infrastructure_error"

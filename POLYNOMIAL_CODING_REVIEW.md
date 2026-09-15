@@ -80,11 +80,12 @@ python3 -m unittest discover -s tests -v
   correctness, leakage and instruction-cost proofs; direct pure-ROM scheme
   submissions must remain an alternative to templates.
 
-## Current reviewed decisions (updated 2026-09-14)
+## Current reviewed decisions (updated 2026-09-15)
 
-Both stages use `c * signatureBytes + verificationWork` within matched games
-and profiles. The organizer-owned rational price c is pending calibration; no
-scalar ranking is issued until then. The Pareto frontier remains useful meanwhile.
+Both stages use `signatureBytes * verificationWork` within matched games
+and profiles, in byte × verification-work units. No bandwidth coefficient is
+needed. Keep the full Pareto frontier alongside diagnostic product scores;
+ranking and deployment still require every eligibility gate.
 Stage 1 is broader than OTS and does not assume components are used fully black-box.
 
 The September 14 latency-tail decision keeps normal targets of 1.5 s signing and

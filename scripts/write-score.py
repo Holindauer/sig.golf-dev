@@ -25,9 +25,5 @@ report = {
     "hash_meter": meter_metadata(),
     "sigma": sigma, "hverify": hverify, "bound": bound,
 }
-score = score_entry(profile, sigma, hverify)
-if score is None:
-    report["score_pending"] = "bandwidth coefficient not calibrated"
-else:
-    report["score"] = score
+report["score"] = score_entry(profile, sigma, hverify)
 print(json.dumps(report))

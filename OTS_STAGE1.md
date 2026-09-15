@@ -1,6 +1,6 @@
 # Experimental OTS foundations within the academic track
 
-Status: experimental implementation, updated 2026-09-14. Not an open competition,
+Status: experimental implementation, updated 2026-09-15. Not an open competition,
 protected OTS security claim or accepted scheme. Stage 1 also covers few-time
 components, encodings, authentication, composition and complete constructions.
 This document describes only the current OTS research tools. Emile's construction
@@ -8,10 +8,10 @@ interface and the audited SPHINCS reference pin are unchanged.
 
 ## Current objective and experiment semantics
 
-The rules use **c * signatureBytes + verificationWork**, with signing and keygen
-subject to latency and absolute resource constraints. The positive rational c belongs to a calibrated
-organizer profile. No official price has been selected and no scalar leaderboard
-exists yet. Account normal latency targets are 1.5 s signing / 60 s keygen, each
+The rules use **signatureBytes * verificationWork**, in byte × verification-work
+units, with signing and keygen subject to latency and absolute resource constraints.
+No bandwidth coefficient is required. Product scores accompany the full Pareto
+frontier; local diagnostics do not establish ranking or deployment eligibility. Account normal latency targets are 1.5 s signing / 60 s keygen, each
 with overrun probability <= 2^-40. Account absolute limits are 120 s signing and
 360 s keygen, with no probabilistic exception; RAM stays bounded by 64 KiB on
 every path. Component allocations, hardware calibration and full-program
@@ -25,23 +25,25 @@ security proof. Signing failure stays a separate 2^-128 gate; latency overrun
 does not automatically cause failure. The current research declarations and
 counting experiments do not provide those eligibility certificates.
 
-`LeanSphincs/OTS/Score.lean` defines exact additive arithmetic, positivity and
+`LeanSphincs/OTS/Score.lean` retains historical additive arithmetic, positivity and
 monotonicity. `stage1RankKey price` and `stage2RankKey price` use that same
-formula, not the same security game or metric profile. None of these arithmetic
-lemmas certifies an algorithm's costs.
+formula for reproducing the earlier scoring experiments. The current competition
+product is defined by the organizer profile. None of these arithmetic lemmas
+certifies an algorithm's costs.
 
 The experiment CLI defaults to the size/verification **Pareto frontier**.
 An explicit `--bandwidth-price 1/8`, for example, explores a hypothetical
-additive price using exact rationals; it does not set the competition price.
+additive price using exact rationals; it does not change the competition product.
 Signing work and its semantics remain required research inputs, with
-`budget_certified: false`. No official scalar score is emitted without a price.
+`budget_certified: false`. These CLI results are unranked research diagnostics.
 
 Historical decisions: the organizer approved the four-factor formula
 `size * signing * verification * keygen^(1/4)` on September 9, then the
-`size * verification` objective on September 10. Both are superseded by the
-September 11 additive rule. `rankKey`, quarter-weight arithmetic and explicit
-`selection="product"` helpers remain for reproducing those research snapshots;
-they are not current stage rankers. The CLI no longer has a beta default.
+`size * verification` objective on September 10 and the additive rule on September
+11. The September 15 decision restores the product and retains all hardening.
+`rankKey` and quarter-weight arithmetic remain historical research helpers;
+`selection="product"` computes product-selected examples, still without a
+security or deployment certificate. The CLI has no beta default.
 
 Emile's polynomial-coding annex reinforces why we retain separate hash and
 execution views. Field operations, codebook decoding and preprocessing must be
@@ -84,8 +86,8 @@ annex's complete signer/verifier, establish global optimality or certify budgets
 - `scripts/ots_experiments.py`: exact integer polynomial counting for the four
   fixed graph shapes in *looking for the optimal hash-based one-time signature*.
   It searches reconstruction-cost layers and disclosure-size caps, selects the
-  size/verification frontier by default, or the additive-minimizing pair at an
-  explicit research price. Keygen is fixed per graph and the explicit
+  size/verification frontier by default, or, for historical research comparisons only, the additive-minimizing pair
+  at an explicit research price. These exploratory prices are not competition scoring. Keygen is fixed per graph and the explicit
   signing metric is common across these codebooks. This is not exhaustive graph
   synthesis or a global optimality result.
 - `scripts/check-ots-axioms.lean`: audit every declaration under `LeanSphincs.OTS`,
@@ -134,8 +136,8 @@ values, the historical product-selected points for the fixed graph shapes were:
 | Pairwise shared seeds | 1744 | 220 | 101 |
 | Four-way shared seeds | 1824 | 329 | 123 |
 
-These rows are historical product-selected examples, not current additive
-winners. Signing work was stipulated, not proved. These shapes no longer meet the note's keygen
+These rows remain historical product-selected examples, not certified current
+entries or evidence that the full Pareto frontier has been explored. Signing work was stipulated, not proved. These shapes no longer meet the note's keygen
 budget of 168 under this meter. That budget is not adopted as a Stage 1 rule.
 This reversal is not a general impossibility result for branching/shared seeds.
 
@@ -146,11 +148,11 @@ code does not implement the decoder or prove this SUF-preserving serialization.
 
 ## Next proof milestones, in order
 
-1. Pin the first academic game, component budgets and price calibration.
+1. Pin the first academic game, component budgets and execution calibration.
    Account latency targets remain 1.5 s / 60 s with overrun probability <= 2^-40;
    absolute limits are 120 s signing / 360 s keygen on every path. Hardware and
    raw-query calibration remain open. No hash-unit-to-time conversion
-   certifies these guarantees and no price is inferred from historical product winners.
+   certifies these guarantees. The product objective introduces no hardware calibration.
 2. Address serialization and actual oracle evaluation/metering are implemented.
    Reconstruction against an oracle-consistent reference is now proved. Next
    construct that reference from randomized keygen and transport through the ROM; instantiate each

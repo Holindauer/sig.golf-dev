@@ -1,6 +1,5 @@
 {
-  "schema": "leansphincs-additive-profile-v1",
-  "id": "hash-work-additive-pending-calibration",
-  "verification_meter": "rom256-input64-ceil-v1",
-  "bandwidth_price": null
+  "schema": "leansphincs-product-profile-v1",
+  "id": "signature-bytes-times-hash-work-v1",
+  "verification_meter": "rom256-input64-ceil-v1"
 }
