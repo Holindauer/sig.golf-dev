@@ -64,7 +64,7 @@ class WebsiteTests(unittest.TestCase):
                 self.assertIn(unquote(href[1:]), self.page.ids)
 
     def test_linked_repo_documents_exist(self):
-        prefix = "/nconsigny/leansphincs/blob/main/"
+        prefix = "/leanEthereum/leansphincs/blob/main/"
         checked = 0
         for href in self.page.links:
             url = urlsplit(href)
@@ -94,10 +94,10 @@ class WebsiteTests(unittest.TestCase):
             self.assertNotIn(stale, self.source)
 
     def test_publication_mechanics_stay_out_of_the_rules(self):
-        self.assertIn('<link rel="canonical" href="https://nconsigny.github.io/leansphincs/">', self.source)
+        self.assertIn('<link rel="canonical" href="https://leanethereum.github.io/leansphincs/">', self.source)
         self.assertNotIn("GitHub is canonical", self.source)
         self.assertNotIn("Claude artifact", self.source)
-        self.assertIn('href="https://github.com/nconsigny/leansphincs"', self.source)
+        self.assertIn('href="https://github.com/leanEthereum/leansphincs"', self.source)
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("GitHub is canonical", agents)
         self.assertIn("frozen legacy copy", agents)

@@ -1,7 +1,7 @@
 # SchemeClaim: current plan and decision history
 
 Status: draft v0.22 rules and implementation plan, 2026-09-15. The
-[public rules](https://nconsigny.github.io/leansphincs/) and
+[public rules](https://leanethereum.github.io/leansphincs/) and
 [implementation contract](IMPLEMENTATION.md) describe the current target.
 Historical notes below are snapshots, not competing current instructions.
 
