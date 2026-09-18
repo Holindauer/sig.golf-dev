@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "_submission_rows.html" import rows %}
+{% block title %}{{ solver.login }} · sig.golf{% endblock %}
+{% block content %}
+<h1 id="solver-name">{% if solver.avatar_url %}<img class="avatar" src="{{ solver.avatar_url }}" alt="">{% endif %}{{ solver.login }}</h1>
+{% if solver.github_id %}<p><a href="https://github.com/{{ solver.login }}">github.com/{{ solver.login }}</a></p>{% endif %}
+<div class="board-scroll" role="region" tabindex="0" aria-labelledby="solver-name"><table>
+<caption class="visually-hidden">Submissions by {{ solver.login }}</caption>
+<thead><tr><th scope="col">Spacetime</th><th scope="col">σ</th><th scope="col">V</th><th scope="col">Solver</th><th scope="col">Assisted by</th><th scope="col">Status</th><th scope="col">When</th></tr></thead>
+<tbody>{{ rows(subs) }}</tbody></table>
+</div>
+{% endblock %}

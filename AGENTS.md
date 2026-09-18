@@ -39,6 +39,16 @@ edit them. Keep it short and factual.
 6. Amber `<span class="tbd">` marks a value or decision still open. Remove the
    span when the decision closes.
 
+## Submitting a scheme
+
+There is one way in: a pull request against the contract repository that changes only the track's
+submission root (`submissions/full/`, see `challenges.json`) and nothing else. Check locally first
+with `python3 scripts/verify_pr.py full --source . --json`. The hosted service (`service/`) verifies
+the pull request's head in isolation and answers as a commit status and a comment; a verified head
+becomes a record only when that exact head is merged. Admission is closed until `challenges.json`
+says `open`; do not flip it without the organizers. Website source for the service lives under
+`service/`; the rules page it serves is `index.html`.
+
 ## Checking a change
 
 ```sh

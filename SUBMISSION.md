@@ -202,3 +202,10 @@ a bandwidth coefficient; deployment remains blocked. Existing latency targets,
 2^-40 overrun allowances, absolute deadlines and 64 KiB RAM cap are unchanged.
 Positive metric/availability fixtures are not cryptographic baselines. Emile's
 upstream pin, OTS construction work and baseline parameters are unchanged.
+
+## Submitting through the site
+
+Once admission is `open` in `challenges.json`, the way in is a pull request against the contract
+repository that changes only `submissions/full/`. The hosted verifier runs `scripts/verify_pr.py`
+on the head commit and answers as a commit status and a comment; a verified head becomes a record
+only when that exact head is merged. Check locally first: `python3 scripts/verify_pr.py full --source . --json`.

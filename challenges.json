@@ -1,0 +1,56 @@
+{
+  "name": "sig.golf",
+  "contract": {
+    "version": "suf-cma-total-work-pk32-adaptive-availability-v2",
+    "statement": "LeanSphincs/Benchmark/Claim.lean",
+    "scoring": "benchmark/scoring.json",
+    "meter": "rom256-input64-ceil-v1",
+    "rules": "index.html",
+    "verifier": "scripts/verify_pr.py"
+  },
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+  "protected": [
+    "challenges.json",
+    "lakefile.toml",
+    "lake-manifest.json",
+    "lean-toolchain",
+    "LeanSphincs.lean",
+    "LeanSphincs/Benchmark/Bound.lean",
+    "LeanSphincs/Benchmark/Claim.lean",
+    "LeanSphincs/Benchmark/Game.lean",
+    "LeanSphincs/Benchmark/Oracle.lean",
+    "LeanSphincs/Benchmark/SchemeInterface.lean",
+    "LeanSphincs/Benchmark/Target.lean",
+    "benchmark/comparator.json",
+    "benchmark/scoring.json",
+    "benchmark/resources.json",
+    "benchmark/source-policy.json",
+    "scripts/verify_submission.py",
+    "scripts/verify_pr.py"
+  ],
+  "limits": {
+    "wall_clock_seconds": 5400,
+    "memory_bytes": 25769803776,
+    "max_files": 1000,
+    "max_file_bytes": 4194304,
+    "max_total_bytes": 10485760,
+    "max_metric": 4611686018427387903
+  },
+  "tracks": [
+    {
+      "slug": "full",
+      "title": "Stateless scheme",
+      "stage": 2,
+      "kind": "construction",
+      "direction": "-",
+      "objective": "sigma * hverify",
+      "objective_label": "signature bytes × verification work",
+      "submission_root": "submissions/full",
+      "module_prefix": "LeanSphincs.Submission",
+      "solution_module": "LeanSphincs.Submission.Solution",
+      "required_files": ["Scheme.lean", "Solution.lean", "sigma.txt", "hverify.txt", "bound.txt"],
+      "admission": "closed",
+      "admission_note": "Submissions are not open yet. The pipeline is exercised with organizer baselines; flip admission to open in this file when the launch gates in SCHEMECLAIM_PLAN.md are met."
+    }
+  ]
+}

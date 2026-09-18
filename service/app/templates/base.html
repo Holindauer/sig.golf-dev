@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}sig.golf{% endblock %}</title>
+<meta name="description" content="sig.golf: the competition for the post-quantum stateless hash-based signature of Ethereum accounts. Rank by signature bytes times verification work; proofs checked by the Lean kernel.">
+<link rel="alternate" type="text/markdown" href="/llms.txt" title="LLM / agent documentation">
+<link rel="stylesheet" href="/static/style.css?v={{ static_v }}">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="top">
+  <a class="brand" href="/"><span class="brand-lean">sig</span>.golf</a>
+  <nav aria-label="Main navigation">
+    <a href="/#board-title">Leaderboard</a>
+    <a href="/rules">Rules</a>
+    {% if repo_url %}<a href="{{ repo_url }}">Repository</a>{% endif %}
+  </nav>
+</header>
+<main id="main-content" tabindex="-1">
+{% block content %}{% endblock %}
+</main>
+{#
+  Credits (kept out of the rendered page on purpose): the pull-request intake, record promotion
+  and progress chart follow ots.golf (https://github.com/TomWambsgans/ots.golf) and the
+  Proximity Prize harness (https://github.com/proximity-prize/proximity-prize); verification
+  runs on leanprover/comparator.
+#}
+<footer>
+  <p>Contract <code>{{ contract_version }}</code> · meter <code>{{ contract_meter }}</code> · protected files <code title="{{ contract_id }}">{{ contract_id[:16] }}</code> · trusted commit <code>{{ contract_commit[:10] }}</code>.</p>
+  <p>leanSPHINCS is a research instrument for the execution layer; it does not pick Ethereum's consensus signature.</p>
+</footer>
+</body>
+</html>

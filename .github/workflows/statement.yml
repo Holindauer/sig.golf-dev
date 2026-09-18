@@ -25,3 +25,11 @@ jobs:
       - run: lake env lean scripts/check-ots-axioms.lean
       - run: python3 scripts/test-comparator.py
       - run: python3 scripts/test-verifier.py --insecure-local
+  service:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: cd service && uv sync --frozen
+      - run: cd service && .venv/bin/python -m unittest discover -s tests -v

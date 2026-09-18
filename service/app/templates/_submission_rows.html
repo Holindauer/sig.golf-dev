@@ -1,0 +1,53 @@
+{% macro score_cell(s) -%}
+{% if s.scored %}{{ s.score_int|num }} <span class="lb-unit">= {{ s.sigma|num }} B × {{ s.hverify|num }}</span>{% else %}–{% endif %}
+{%- endmacro %}
+
+{% macro rows(subs) -%}
+{% for s in subs %}
+<tr>
+  <td class="num"><a href="/submissions/{{ s.id }}">{% if s.scored %}{{ s.score_int|num }}{% else %}–{% endif %}</a></td>
+  <td class="num muted">{% if s.scored %}{{ s.sigma|num }} B{% else %}–{% endif %}</td>
+  <td class="num muted">{% if s.scored %}{{ s.hverify|num }}{% else %}–{% endif %}</td>
+  <td><a href="/solvers/{{ s.user.login }}">{{ s.user.login }}</a>{% if s.co_authors_list %} and {{ s.co_authors_list|length }} other{{ 's' if s.co_authors_list|length > 1 }}{% endif %}{% if s.detail_dict.get('demo') %}<span class="tag">demo</span>{% endif %}{% if s.is_record %}<span class="tag">record</span>{% endif %}</td>
+  <td class="muted">{{ s.assisted_by or '' }}</td>
+  <td><span class="status s-{{ s.status }}">{{ s.status.replace('_', ' ') }}</span></td>
+  <td class="muted nowrap">{{ (s.finished_at or s.created_at)|date }}</td>
+</tr>
+{% else %}
+<tr><td colspan="7" class="muted">Nothing yet.</td></tr>
+{% endfor %}
+{%- endmacro %}
+
+{% macro lbrow(s, rank, gain, kind, frontier_ids) -%}
+<tr class="lb-row {{ kind }}{% if rank == 1 %} current{% endif %}" data-score="{{ s.score_int if s.scored else '' }}" data-sigma="{{ s.sigma if s.scored else '' }}" data-hverify="{{ s.hverify if s.scored else '' }}" data-gain="{{ gain if gain is not none else '' }}" data-date="{{ (s.record_at or s.finished_at or s.created_at).isoformat() }}">
+  <td class="lb-solver">
+    <span class="lb-rank">{% if rank %}{{ '%02d'|format(rank) }}{% endif %}</span>
+    <span class="lb-avatar">{% if s.user.avatar_url %}<img src="{{ s.user.avatar_url }}" alt="">{% else %}<span class="lb-avatar-blank"></span>{% endif %}</span>
+    <a class="lb-login" href="/solvers/{{ s.user.login }}">{{ s.user.login }}</a>
+    {% if s.detail_dict.get('demo') %}<span class="tag">demo</span>{% endif %}
+    {% if frontier_ids and s.id in frontier_ids %}<span class="tag frontier" title="On the Pareto frontier">frontier</span>{% endif %}
+    {% if s.assisted_by %}<span class="lb-model" title="Assisted by {{ s.assisted_by }}">{{ s.assisted_by }}</span>{% endif %}
+  </td>
+  <td class="r lb-score"><a href="/submissions/{{ s.id }}">{% if s.scored %}{{ s.score_int|num }}{% else %}–{% endif %}</a></td>
+  <td class="r lb-metric">{% if s.scored %}{{ s.sigma|num }}{% else %}–{% endif %}</td>
+  <td class="r lb-metric">{% if s.scored %}{{ s.hverify|num }}{% else %}–{% endif %}</td>
+  <td class="r lb-gain">
+    {%- if kind == 'record' %}{% if gain is not none %}<span class="good">−{{ gain }}%</span>{% elif rank == 1 and not gain %}<span class="muted">record</span>{% else %}<span class="muted">frontier</span>{% endif %}
+    {%- elif kind == 'unmerged' %}<span class="status s-verified">verified · awaiting merge</span>
+    {%- else %}<span class="status s-{{ s.status }}">{{ s.status.replace('_', ' ') }}</span>{% endif -%}
+  </td>
+  <td class="r lb-date muted">{{ (s.record_at or s.finished_at or s.created_at)|date }}</td>
+</tr>
+{%- endmacro %}
+
+{% macro spacetime_rows(board) -%}
+{% for s in board.ranking %}{{ lbrow(s, loop.index, board.gains.get(s.id), 'record', board.frontier_ids) }}{% endfor %}
+{% for s in board.unmerged %}{{ lbrow(s, none, none, 'unmerged', none) }}{% endfor %}
+{% for s in board.in_flight %}{{ lbrow(s, none, none, 'pending', none) }}{% endfor %}
+{% if not board.ranking and not board.unmerged and not board.in_flight %}<tr><td colspan="6" class="muted lb-empty">No submissions yet.</td></tr>{% endif %}
+{%- endmacro %}
+
+{% macro pareto_rows(board) -%}
+{% for s in board.frontier %}{{ lbrow(s, loop.index, none, 'record', board.frontier_ids) }}{% endfor %}
+{% if not board.frontier %}<tr><td colspan="6" class="muted lb-empty">No merged record yet.</td></tr>{% endif %}
+{%- endmacro %}

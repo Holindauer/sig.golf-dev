@@ -83,3 +83,10 @@ See [submission format](SUBMISSION.md), [implementation contract](IMPLEMENTATION
 [polynomial-coding review](POLYNOMIAL_CODING_REVIEW.md) and
 [harness trust boundary and launch gates](HARNESS_SECURITY.md).
 Publication mechanics and agent conventions live in [AGENTS.md](AGENTS.md).
+
+## Website and pull-request intake
+
+The competition site (`service/`) shows the Spacetime ranking and the Pareto frontier, serves
+`index.html` as the rules, and verifies pull requests that change only `submissions/full/` with
+`scripts/verify_pr.py`. Admission is controlled by `challenges.json` and is closed until launch.
+See [service/README.md](service/README.md) and [llms.txt](llms.txt).
