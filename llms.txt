@@ -6,7 +6,7 @@
 > SUF-CMA statement in the random-oracle model.
 
 - Rules (the draft specification, canonical): index.html in this repository, published at
-  https://leanethereum.github.io/leanSphincs/
+  https://leanethereum.github.io/sig.golf/
 - Submission contract and file format: SUBMISSION.md
 - Editing conventions and publication mechanics for agents: AGENTS.md
 - Track metadata, limits and protected files: challenges.json

@@ -10,7 +10,7 @@ never sees a credential.
 1. As root:
 
    ```sh
-   SIG_REPO_URL=https://github.com/leanEthereum/leanSphincs SIG_DOMAIN=sig.golf bash service/deploy/setup-server.sh
+   SIG_REPO_URL=https://github.com/leanEthereum/sig.golf SIG_DOMAIN=sig.golf bash service/deploy/setup-server.sh
    ```
 
    It installs the tools, clones the contract repository, builds the comparator at its pinned

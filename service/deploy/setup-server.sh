@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # One-shot setup of the sig.golf verifier + site on a fresh Ubuntu 24.04 host (run as root once).
 #
-#   SIG_REPO_URL=https://github.com/leanEthereum/leanSphincs SIG_DOMAIN=sig.golf bash service/deploy/setup-server.sh
+#   SIG_REPO_URL=https://github.com/leanEthereum/sig.golf SIG_DOMAIN=sig.golf bash service/deploy/setup-server.sh
 #
 # Creates the unprivileged users `sig` (verifier) and `sig-web` (site), installs elan, Go (for
 # landrun), uv and Caddy, clones the contract repository, builds the comparator tools and the warm

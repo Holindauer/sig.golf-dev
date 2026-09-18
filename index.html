@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>leanSPHINCS</title>
 <meta name="description" content="Draft rules for a machine-judged competition to find the post-quantum hash-based signature for Ethereum accounts.">
-<link rel="canonical" href="https://leanethereum.github.io/leanSphincs/">
+<link rel="canonical" href="https://leanethereum.github.io/sig.golf/">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦋</text></svg>">
 <style>
   :root {
@@ -312,8 +312,8 @@
 <section id="implementation-status">
   <h2>Two research stages · not open for submissions</h2>
   <p><strong>Stage 1 is academic research; Stage 2 is the Ethereum selection.</strong> Academic research includes one-time and few-time signatures, encodings, authentication structures, composition and complete constructions. Stage 2 evaluates complete stateless account signatures against every deployment gate. Improving a component does not automatically improve the resulting signature scheme: authentication paths, key derivation, domain separation and serialization must be included when evaluating the complete construction.</p>
-  <p>The <a href="https://github.com/leanEthereum/leanSphincs">leanSPHINCS repository</a> contains the protected pure-ROM statement, a working local verification harness and experimental OTS foundations. The statement enforces a 32-byte public-key cap, exact signature size, weighted verification work, total-query security floors and same-scheme lifetime decay. <strong>No complete OTS security certificate or accepted SPHINCS⁻ baseline #0 exists yet.</strong> Full-program metering, signing/keygen budget certificates, external audit and registered verification remain launch work. Local receipts are unranked; product scores are diagnostic and confer no deployment eligibility.</p>
-  <p><a href="https://github.com/leanEthereum/leanSphincs/blob/main/SCHEMECLAIM_PLAN.md">Workstream plan</a> · <a href="https://github.com/leanEthereum/leanSphincs/blob/main/IMPLEMENTATION.md">Implementation contract</a> · <a href="https://github.com/leanEthereum/leanSphincs/blob/main/HARNESS_SECURITY.md">Harness evidence and launch gates</a></p>
+  <p>The <a href="https://github.com/leanEthereum/sig.golf">leanSPHINCS repository</a> contains the protected pure-ROM statement, a working local verification harness and experimental OTS foundations. The statement enforces a 32-byte public-key cap, exact signature size, weighted verification work, total-query security floors and same-scheme lifetime decay. <strong>No complete OTS security certificate or accepted SPHINCS⁻ baseline #0 exists yet.</strong> Full-program metering, signing/keygen budget certificates, external audit and registered verification remain launch work. Local receipts are unranked; product scores are diagnostic and confer no deployment eligibility.</p>
+  <p><a href="https://github.com/leanEthereum/sig.golf/blob/main/SCHEMECLAIM_PLAN.md">Workstream plan</a> · <a href="https://github.com/leanEthereum/sig.golf/blob/main/IMPLEMENTATION.md">Implementation contract</a> · <a href="https://github.com/leanEthereum/sig.golf/blob/main/HARNESS_SECURITY.md">Harness evidence and launch gates</a></p>
 </section>
 
 <section id="background">
@@ -415,7 +415,7 @@
   </div>
 
   <h3>The required theorem, in shape</h3>
-  <p>This is an explanatory summary, not Lean source. The normative implemented structure is <a href="https://github.com/leanEthereum/leanSphincs/blob/main/LeanSphincs/Benchmark/Claim.lean">SchemeClaim</a>; it also includes the correctness, failure, size and verification obligations above.</p>
+  <p>This is an explanatory summary, not Lean source. The normative implemented structure is <a href="https://github.com/leanEthereum/sig.golf/blob/main/LeanSphincs/Benchmark/Claim.lean">SchemeClaim</a>; it also includes the correctness, failure, size and verification obligations above.</p>
   <pre><code>for the same scheme S and fixed bound B:
   for every adversary with raw whole-game hash budget qH
       and signing-request budget qS ≤ 2^32:
@@ -462,24 +462,24 @@
   <h3>Stage 1 · academic research beyond OTS</h3>
   <p>Stage 1 is the academic research track. It includes one-time and few-time primitives, message encodings, authentication structures, domain-separated composition and complete constructions. OTS is an initial experiment, not the boundary of the academic competition. Each board needs its own pinned security game, request/instance budgets and resource profile; only comparable entries share a ranking.</p>
   <p>Standard hybrid arguments can lift suitable single-instance security to multiple instances, generally with a loss. State and account for that loss and the conditions under which the argument applies. Shared random-oracle domains, seed-derived keys and the way a component is actually used in SPHINCS still need to match the reduction; an internal OTS is not automatically used as a fully black-box standalone scheme.</p>
-  <p><a href="https://github.com/leanEthereum/leanSphincs/blob/main/OTS_STAGE1.md">The experimental OTS library</a> supplies graph evaluation, reconstruction, cost arithmetic and conditional failure envelopes. It is not a protected OTS security target. Direct pure-ROM proofs must remain possible beyond any optional construction template; lower-bound results must name the family and cost model they cover.</p>
+  <p><a href="https://github.com/leanEthereum/sig.golf/blob/main/OTS_STAGE1.md">The experimental OTS library</a> supplies graph evaluation, reconstruction, cost arithmetic and conditional failure envelopes. It is not a protected OTS security target. Direct pure-ROM proofs must remain possible beyond any optional construction template; lower-bound results must name the family and cost model they cover.</p>
   <h3>Stage 2 · complete Ethereum account signatures</h3>
   <p>Stage 2 is the Ethereum selection track. It measures complete stateless constructions, with SUF-CMA, the normal and extended-lifetime floors and all deployment gates. Size includes the whole serialized signature, not just a WOTS component or authentication fragment.</p>
   <h3>What the local harness currently verifies</h3>
-  <p>The <a href="https://github.com/leanEthereum/leanSphincs/blob/main/SUBMISSION.md">three-file declaration contract</a> remains <code>sigma.txt</code>, <code>hverify.txt</code> and <code>bound.txt</code>, alongside the scheme and proof sources. The revised protected statement uses total work Q, a 32-byte public key and same-scheme decay. The product rule is stored in organizer-owned scoring configuration, not in a fourth entrant file.</p>
+  <p>The <a href="https://github.com/leanEthereum/sig.golf/blob/main/SUBMISSION.md">three-file declaration contract</a> remains <code>sigma.txt</code>, <code>hverify.txt</code> and <code>bound.txt</code>, alongside the scheme and proof sources. The revised protected statement uses total work Q, a 32-byte public key and same-scheme decay. The product rule is stored in organizer-owned scoring configuration, not in a fourth entrant file.</p>
   <p>The runner is <strong>explicitly unranked</strong>, and does not yet bind the signing and keygen budget certificates or full-program execution costs. Successful verification and integrity checks yield a diagnostic product score; resource certification, side-channel review and deployment eligibility remain separate and blocked. Positive metric canaries test comparator matching only. <strong>No cryptographic baseline yet</strong>: passing those fixtures is not an accepted signature scheme or a launch decision.</p>
 </section>
 
 <section id="baseline">
   <h2><span class="secno">8</span>Baseline #0</h2>
-  <p>The intended first accepted entry is a SPHINCS⁻ variant meeting these requirements. The <a href="https://github.com/leanEthereum/leanSphincs/blob/main/PR19_REVIEW.md">pinned PR #19 review and local reproduction</a> establish a useful 126-bit classical SUF-CMA theorem at up to 2<sup>24</sup> signing requests, not an accepted competition entry.</p>
+  <p>The intended first accepted entry is a SPHINCS⁻ variant meeting these requirements. The <a href="https://github.com/leanEthereum/sig.golf/blob/main/PR19_REVIEW.md">pinned PR #19 review and local reproduction</a> establish a useful 126-bit classical SUF-CMA theorem at up to 2<sup>24</sup> signing requests, not an accepted competition entry.</p>
   <p>The adapter still needs byte serialization, game/query transport, weighted verification and signing-failure certificates. In particular, a theorem capped at 2<sup>24</sup> requests does not establish R4 at 2<sup>32</sup>; the same-scheme extended-lifetime proof is additional work. Seed derivation, storage and wallet bounds also remain. Upstream work stays coordinated with Emile rather than silently changing the audited revision.</p>
 </section>
 
 <section id="tricks">
   <h2><span class="secno">9</span>Research directions</h2>
   <p>Useful directions include incomparable encodings, bounded grinding, coded disclosures, few-time components, authentication multiproofs, tree layouts, tighter reductions and lower bounds in explicit models. Every claimed security improvement retains its constants; every practical improvement retains the full execution and storage costs.</p>
-  <p>Emile's polynomial-coding exploration motivates keeping the model open to unusual constructions. The <a href="https://github.com/leanEthereum/leanSphincs/blob/main/POLYNOMIAL_CODING_REVIEW.md">technical annex review</a> records the supplied construction, re-metering assumptions and unproved obligations. A shape that wins in one abstract cost model is not thereby globally optimal or deployable.</p>
+  <p>Emile's polynomial-coding exploration motivates keeping the model open to unusual constructions. The <a href="https://github.com/leanEthereum/sig.golf/blob/main/POLYNOMIAL_CODING_REVIEW.md">technical annex review</a> records the supplied construction, re-metering assumptions and unproved obligations. A shape that wins in one abstract cost model is not thereby globally optimal or deployable.</p>
 </section>
 
 <section id="questions">

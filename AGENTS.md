@@ -7,10 +7,10 @@ edit them. Keep it short and factual.
 
 - **GitHub is canonical** (organizer decision, 2026-09-10). `index.html` on `main`
   is the single source of the competition rules, published unchanged to GitHub
-  Pages at https://leanethereum.github.io/leanSphincs/.
-- The repository moved from `nconsigny/leansphincs` to `leanEthereum/leanSphincs`
-  on 2026-09-15 and was renamed `leanSphincs` the same day to match the
-  organization's naming. GitHub redirects both old repository URLs; the old Pages
+  Pages at https://leanethereum.github.io/sig.golf/.
+- The repository moved from `nconsigny/leansphincs` to `leanEthereum/sig.golf`
+  on 2026-09-15, was renamed `leanSphincs` the same day, and became `sig.golf` on
+  2026-09-18 when the website and pull-request intake landed. GitHub redirects both old repository URLs; the old Pages
   address `nconsigny.github.io/leansphincs` is not redirected and must not be cited.
 - The earlier Claude artifact
   (https://claude.ai/code/artifact/44cc19cb-44bb-475b-a1c0-e4aad483010a) is a
