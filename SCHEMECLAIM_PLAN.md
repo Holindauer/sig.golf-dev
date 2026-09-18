@@ -5,6 +5,24 @@ Status: draft v0.22 rules and implementation plan, 2026-09-15. The
 [implementation contract](IMPLEMENTATION.md) describe the current target.
 Historical notes below are snapshots, not competing current instructions.
 
+## Cap tightening, sampling caps, cross-link and format hardening (2026-09-14, current)
+
+Follow-up to the raw-query-cap fix, addressing the five residual items from the
+re-analysis. (1) Hash caps tightened to realistic placeholders 2^28/2^20/2^16 so
+the honest-work slack shrinks: certified floors near 2^-84 at 2^20 and 2^-48 at
+2^32 instead of 2^-68/2^-32; the residual slack is inherent to counting honest
+work in Q. (2) Uniform-sampling caps `sampleKeygenCap = 2^28`, `sampleSignCap = 2^20`
+bound the `.inl` randomness draw, which is outside qH; verification cannot sample.
+(3) `eligibility.STATEMENT_RAW_CAPS` mirrors the five Lean constants and
+`load_resource_profile` rejects any disagreeing calibrated cap; a host test keeps
+the mirror in sync. (4) The source policy's `@[init]` guard is anchored on the
+attribute openers so an array literal `#[init]` or a GetElem `arr[init]` is no
+longer falsely rejected. (5) Bound exponents capped at work 32 / sign 64 (usable
+values are 8 / 32) so the floor certificate's kernel arithmetic stays small; the
+general expensive-proof surface remains bounded by the sandbox caps. Regression
+coverage extended in `LeanSphincsTest/DeadBranch.lean`, `tests/test_raw_caps.py`
+and `tests/test_contract.py`.
+
 ## Structural raw-query caps as claim fields (2026-09-14, current)
 
 An always-accepting scheme obtained `accepted` receipts in both verifier profiles

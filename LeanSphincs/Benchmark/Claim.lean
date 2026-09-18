@@ -18,10 +18,21 @@ def signingFailureBits : Nat := 128
 /-! Placeholder structural raw hash-query caps, uncalibrated. They bound every
 structural path of the honest algorithms so that honest work
 K + qS * (S + 1) + V stays inside both nontrivial security ranges; they do not
-certify seconds. Calibration against the reference execution profile is open. -/
-def rawKeygenCap : Nat := 2 ^ 38
-def rawSignCap : Nat := 2 ^ 36
-def rawVerifyCap : Nat := 2 ^ 24
+certify seconds. The values are chosen with generous headroom over a SPHINCS-scale
+construction (keygen/sign/verify well under 2^28/2^20/2^16 hash calls) so that the
+honest-work contribution to Q is small: at 2^20 requests it is about 2^40, and at
+2^32 requests about 2^52, leaving the certified floor near 2^-84 and 2^-48 for a
+zero-effort adversary rather than the vacuous slope a 2^128 pad would force.
+Calibration against the reference execution profile is open, and these constants
+must equal the raw-query caps mirrored in `benchmark/resources.json`. -/
+def rawKeygenCap : Nat := 2 ^ 28
+def rawSignCap : Nat := 2 ^ 20
+def rawVerifyCap : Nat := 2 ^ 16
+
+/-! Structural uniform-sampling caps, uncalibrated. Uniform draws are outside qH
+and so do not affect the security floor, but bound working RAM and runtime. -/
+def sampleKeygenCap : Nat := 2 ^ 28
+def sampleSignCap : Nat := 2 ^ 20
 
 noncomputable def boundProbability (coeffs : BoundCoeffs) (qW qS : Nat) : ℝ≥0∞ :=
   ENNReal.ofReal (evalBound coeffs qW qS : ℝ)
@@ -40,6 +51,8 @@ structure SchemeClaim (S : SigScheme) (sigmaBytes hVerify : Nat) (coeffs : Bound
   keygen_queries : HasKeygenQueryBound S rawKeygenCap
   sign_queries : HasSignQueryBound S rawSignCap
   verify_raw_queries : HasVerifyQueryBound S rawVerifyCap
+  keygen_samples : HasKeygenSampleBound S sampleKeygenCap
+  sign_samples : HasSignSampleBound S sampleSignCap
   security : ∀ (A : Adversary) (qH qS : Nat), qS ≤ extendedSigningBudget →
     HasHashQueryBound S A qH → HasSigningQueryBound A qS →
       sufAdvantage S A ≤ boundProbability coeffs (qH + qS) qS

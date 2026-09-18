@@ -80,12 +80,18 @@ class ContractTests(unittest.TestCase):
             parse_bound(self.root / "bound.txt")
 
     def test_fixed_bound_term_limit(self):
-        terms = [[1, 1, exponent, 0, 128] for exponent in range(128)]
+        terms = [[1, 1, 1, 0, k] for k in range(128)]
         self.write("bound.txt", json.dumps(terms))
         self.assertEqual(len(parse_bound(self.root / "bound.txt")), 128)
-        self.write("bound.txt", json.dumps(terms + [[1, 1, 128, 0, 128]]))
+        self.write("bound.txt", json.dumps(terms + [[1, 1, 1, 0, 128]]))
         with self.assertRaises(ValueError):
             parse_bound(self.root / "bound.txt")
+
+    def test_oversized_exponents_rejected(self):
+        for term in ([[1, 1, 33, 0, 128]], [[1, 1, 1, 65, 128]], [[1, 1, 1, 0, 1025]]):
+            self.write("bound.txt", json.dumps(term))
+            with self.assertRaises(ValueError):
+                parse_bound(self.root / "bound.txt")
 
     def test_entrant_cannot_supply_scoring_profile(self):
         self.write("scoring.json", '{"bandwidth_price": 1}')

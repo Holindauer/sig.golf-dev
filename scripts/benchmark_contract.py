@@ -43,8 +43,14 @@ def parse_bound(path: Path) -> list[list[int]]:
         num, den, a, b, d = term
         if not num or not den or Fraction(num, den).denominator != den:
             raise ValueError("coefficients must be positive reduced fractions")
-        if max(a, b, d) > 1024:
-            raise ValueError("bound exponents exceed 1024")
+        # Cap work/sign exponents so kernel evaluation of the floor certificate
+        # (which reduces qW^a with qW up to 2^124, and qS^b with qS up to 2^32)
+        # cannot be driven to pathological bignum sizes. Usable exponents are far
+        # smaller: the floor B(2^b,S) <= 1 with k <= 1024 forces workExponent <= 8
+        # and signExponent <= 32, so 32/64 are generous. This bounds only the
+        # declared bound; a general expensive proof is bounded by the sandbox caps.
+        if a > 32 or b > 64 or d > 1024:
+            raise ValueError("bound exponents exceed limits: work<=32, sign<=64, k<=1024")
         key = (a, b, d)
         if previous is not None and key <= previous:
             raise ValueError("monomials must be unique and sorted by (a,b,d)")

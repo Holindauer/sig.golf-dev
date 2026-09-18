@@ -1,9 +1,11 @@
 """Structural raw-query caps: Lean constants, nontrivial ranges and profile binding."""
 
+import importlib.util
 import json
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -11,7 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 CLAIM = ROOT / "LeanSphincs/Benchmark/Claim.lean"
 PROFILE = ROOT / "benchmark/resources.json"
 LEAN_KEYS = {"rawKeygenCap": "raw_keygen_queries", "rawSignCap": "raw_sign_queries",
-             "rawVerifyCap": "raw_verify_queries"}
+             "rawVerifyCap": "raw_verify_queries", "sampleKeygenCap": "raw_keygen_samples",
+             "sampleSignCap": "raw_sign_samples"}
 
 
 def lean_caps():
@@ -47,6 +50,15 @@ class RawCapTests(unittest.TestCase):
             value = profile.get(key)
             if value is not None:
                 self.assertEqual(value, caps[lean_name], key)
+
+    def test_statement_caps_match_eligibility_mirror(self):
+        spec = importlib.util.spec_from_file_location("eligibility", ROOT / "scripts/eligibility.py")
+        module = importlib.util.module_from_spec(spec)
+        sys.path.insert(0, str(ROOT / "scripts"))
+        spec.loader.exec_module(module)
+        caps = lean_caps()
+        expected = {key: caps[name] for name, key in LEAN_KEYS.items()}
+        self.assertEqual(module.STATEMENT_RAW_CAPS, expected)
 
     def test_init_attribute_rejected_by_source_policy(self):
         with tempfile.TemporaryDirectory() as directory:

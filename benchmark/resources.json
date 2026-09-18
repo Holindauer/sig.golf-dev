@@ -6,6 +6,8 @@
   "raw_keygen_queries": null,
   "raw_sign_queries": null,
   "raw_verify_queries": null,
+  "raw_keygen_samples": null,
+  "raw_sign_samples": null,
   "persistent_secret_bytes": null,
   "precomputation_bytes": null,
   "executable_bytes": null,

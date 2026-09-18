@@ -22,8 +22,9 @@ including all setup and failed retries; even rare query padding must not make
 the security bound vacuous. Lateness is separate from signing failure, whose
 existing bound remains 2^-128. A union bound over 2^32 requests permits at most
 1/256 probability of any late signature, not a lifetime 2^-40 guarantee.
-Structural raw hash-query caps on keygen, signing and verification are fields
-of the claim with uncalibrated placeholder values. The performance game, cap
+Structural raw hash-query and uniform-sampling caps on keygen, signing and
+verification are fields of the claim with uncalibrated placeholder values,
+mirrored by the organizer resource profile. The performance game, cap
 calibration and protected executable binding remain to implement before ranking
 or promotion.
 

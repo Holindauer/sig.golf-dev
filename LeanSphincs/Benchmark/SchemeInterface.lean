@@ -88,4 +88,20 @@ the weighted meter charges zero. -/
 def HasVerifyQueryBound (S : SigScheme) (cap : Nat) : Prop :=
   ∀ pk message signature, (S.verify pk message signature).IsQueryBoundP (fun _ => True) cap
 
+/-! Structural uniform-sampling (randomness) caps. Uniform queries are the `.inl`
+side of `OracleWorld` and are excluded from the security budget qH, so the hash
+caps above do not see them. A construction could draw unbounded randomness on a
+probability-zero path, inflating working RAM and runtime without touching qH.
+These caps bound that draw structurally, on every path. Verification is
+`HashSpec`-only and cannot sample, so it has no sampling cap. -/
+
+/-- Uniform-sampling queries made by key generation on every structural path. -/
+def HasKeygenSampleBound (S : SigScheme) (cap : Nat) : Prop :=
+  S.keygen.IsQueryBoundP (· matches .inl _) cap
+
+/-- Uniform-sampling queries made by one signing request, for every secret-key
+value and message. -/
+def HasSignSampleBound (S : SigScheme) (cap : Nat) : Prop :=
+  ∀ sk message, (S.sign sk message).IsQueryBoundP (· matches .inl _) cap
+
 end LeanSphincs.Benchmark

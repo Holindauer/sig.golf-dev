@@ -54,11 +54,14 @@ are rejected. All theorem/algorithm axiom closures must stay within `propext`,
 - Both endpoint predicates on the same scheme and bound: 124 bits at 2^20
   requests and 100 bits at 2^32. No reparameterization or constants dropping.
 - Structural raw hash-query caps on every response path, including responses
-  the random oracle never returns: key generation at most `rawKeygenCap = 2^38`
-  calls, each signing request at most `rawSignCap = 2^36` for every secret-key
-  value and message, verification at most `rawVerifyCap = 2^24` including empty
-  calls. Straight-line algorithms discharge these with `isQueryBoundP_pure` and
-  the bind lemmas; data-dependent loops need a fixed iteration cap.
+  the random oracle never returns: key generation at most `rawKeygenCap = 2^28`
+  calls, each signing request at most `rawSignCap = 2^20` for every secret-key
+  value and message, verification at most `rawVerifyCap = 2^16` including empty
+  calls. Two uniform-sampling caps bound the randomness draw: key generation at
+  most `sampleKeygenCap = 2^28` and each signing request at most `sampleSignCap = 2^20`
+  uniform queries (verification cannot sample). Straight-line algorithms discharge
+  all of these with `isQueryBoundP_pure` and the bind lemmas; data-dependent loops
+  need a fixed iteration cap.
 
 Failed signing responses are visible and count against the signing-query budget.
 Only an exact successful message/signature pair is a replay. qH counts raw
@@ -113,8 +116,8 @@ for this still-unimplemented interface.
 
 Each term `[numerator, denominator, a, b, k]` denotes
 `(numerator / denominator) * Q^a * qS^b / 2^k`. Fractions must be positive and
-reduced; exponents are natural numbers ≤ 1024; terms are unique and sorted by
-`(a,b,k)`. In Lean, the example is `[⟨4, 0, 1, 0, 128⟩]` because the denominator
+reduced; exponents are bounded by work `a ≤ 32`, sign `b ≤ 64` and `k ≤ 1024`;
+terms are unique and sorted by `(a,b,k)`. In Lean, the example is `[⟨4, 0, 1, 0, 128⟩]` because the denominator
 uses predecessor encoding. It represents a 126-bit total-work slope, but
 declaring it is not a proof that your scheme satisfies it at either lifetime.
 The list length, coefficients and exponents must be fixed independently of Q/qS.

@@ -112,18 +112,27 @@ validation must keep that overhead within the nontrivial security ranges,
 in addition to latency-tail and absolute runtime/memory checks. These raw caps
 bound every path, including late executions. For the complete-scheme target, check
 K + 2^20*(S+1) + V < 2^124 and K + 2^32*(S+1) + V < 2^100.
-The pinned placeholders are `rawKeygenCap = 2^38`, `rawSignCap = 2^36` and
-`rawVerifyCap = 2^24`; `honestWork_lt_floor` and `honestWork_lt_decay_floor`
-check both inequalities in Lean. Calibration against the reference execution
-profile remains open; no arbitrary raw-call-to-seconds conversion certifies the
-fixed runtime limits. The same requirement applies to ranked academic profiles
+The pinned placeholders are `rawKeygenCap = 2^28`, `rawSignCap = 2^20` and
+`rawVerifyCap = 2^16`, chosen with generous headroom over a SPHINCS-scale
+construction; `honestWork_lt_floor` and `honestWork_lt_decay_floor` check both
+inequalities in Lean. Two structural uniform-sampling caps, `sampleKeygenCap = 2^28`
+and `sampleSignCap = 2^20`, bound the randomness draw of key generation and signing;
+uniform queries are the `.inl` side of the oracle, outside qH, so the hash caps do
+not see them, and a probability-zero path could otherwise draw unbounded randomness.
+Verification is `HashSpec`-only and cannot sample. Calibration against the reference
+execution profile remains open; no arbitrary raw-call-to-seconds conversion certifies
+the fixed runtime limits. These five statement constants are mirrored by
+`eligibility.STATEMENT_RAW_CAPS`, and `load_resource_profile` rejects any calibrated
+`benchmark/resources.json` cap that disagrees with them, so the profile can never
+drift from the proved caps. The same requirement applies to ranked academic profiles
 under their own pinned games.
 
-The caps close vacuity but not slack. Because Q counts honest work, the certified
-bound for a low-effort adversary is B(K + qS*(S+1) + V), about 2^-68 at 2^20
-requests and 2^-32 at 2^32 requests under these placeholders, not B(1). Tighter
-calibrated caps, or a bound stated over adversarial queries, would reduce that
-slack; this remains an organizer decision.
+The tightened caps close vacuity and shrink the slack. Because Q counts honest work,
+the certified bound for a low-effort adversary is B(K + qS*(S+1) + V): honest work is
+about 2^40 at 2^20 requests and about 2^52 at 2^32 requests, giving certified floors
+near 2^-84 and 2^-48 rather than the vacuous slope a 2^128 pad would force. A residual
+slack remains inherent to counting honest work in Q; tighter calibrated caps, or a
+bound stated over adversarial queries, would reduce it further, an organizer decision.
 
 `LeanSphincsTest/DeadBranch.lean` is the regression: a scheme accepting every
 signature whose keygen hashes the empty input twice and pads with 2^128 queries
@@ -187,7 +196,11 @@ Algorithm and theorem axiom closures are audited.
 The three declarations remain `sigma.txt`, `hverify.txt` and `bound.txt`.
 The first two contain canonical positive integers <= 2^63-1.
 Each bound row is `[numerator, denominator, a, b, k]`, with positive reduced
-fraction, natural exponents <= 1024, and distinct monomials sorted by `(a,b,k)`.
+fraction, distinct monomials sorted by `(a,b,k)`, and exponents bounded by
+work `a <= 32`, sign `b <= 64` and `k <= 1024`. Usable exponents are far smaller
+(the floor forces `a <= 8`, `b <= 32`), so these caps reject no feasible bound while
+bounding the kernel arithmetic the floor certificate reduces during rechecking; a
+general expensive proof is bounded instead by the sandbox memory and runtime caps.
 The first exponent now applies to total work Q. Numeric format compatibility
 does not imply statement-semantic compatibility.
 

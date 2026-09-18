@@ -138,6 +138,44 @@ theorem adaptive_vacuous (cap work : ℕ) (hw : work < padBudget) :
   have := interactionBound_forces A qH hh
   omega
 
+/-- The padding is pure hashing: no path draws uniform randomness. -/
+theorem pad_noSample : ∀ N, IsQueryBoundP (pad N) (· matches (Sum.inl _ : ℕ ⊕ Bytes)) 0 := by
+  intro N
+  induction N with
+  | zero => exact isQueryBoundP_pure _ _ _
+  | succ N ih =>
+    have h : IsQueryBoundP (liftM (OracleWorld.query (Sum.inr ([] : Bytes))) >>= fun _ => pad N)
+        (· matches (Sum.inl _ : ℕ ⊕ Bytes)) 0 := by
+      rw [isQueryBoundP_query_bind_iff]
+      refine ⟨Or.inl (by decide), fun _ => ?_⟩
+      rw [if_neg (by decide)]
+      exact ih
+    exact h
+
+theorem deadBranch_noSample :
+    IsQueryBoundP deadBranch (· matches (Sum.inl _ : ℕ ⊕ Bytes)) 0 := by
+  have h : IsQueryBoundP (liftM (OracleWorld.query (Sum.inr ([] : Bytes))) >>= fun a =>
+      liftM (OracleWorld.query (Sum.inr ([] : Bytes))) >>= fun b =>
+        (if a = b then pure () else pad padBudget))
+      (· matches (Sum.inl _ : ℕ ⊕ Bytes)) 0 := by
+    rw [isQueryBoundP_query_bind_iff]
+    refine ⟨Or.inl (by decide), fun a => ?_⟩
+    rw [if_neg (by decide), isQueryBoundP_query_bind_iff]
+    refine ⟨Or.inl (by decide), fun b => ?_⟩
+    by_cases hab : a = b
+    · rw [if_pos hab]; exact isQueryBoundP_pure _ _ _
+    · rw [if_neg hab]; exact pad_noSample padBudget
+  exact h
+
+theorem keygen_samples : HasKeygenSampleBound cheat sampleKeygenCap := by
+  have key : IsQueryBoundP (deadBranch >>= fun _ => pure (([] : Bytes), ()))
+      (· matches (Sum.inl _ : ℕ ⊕ Bytes)) (0 + 0) :=
+    isQueryBoundP_bind deadBranch_noSample (fun _ _ => isQueryBoundP_pure _ _ _)
+  exact key.mono (Nat.zero_le sampleKeygenCap)
+
+theorem sign_samples : HasSignSampleBound cheat sampleSignCap :=
+  fun _ _ => isQueryBoundP_pure _ _ _
+
 theorem sigma_size : HasSignatureSize cheat 1 := by
   intro _ _ _ signature h
   have h' := OracleComp.eq_of_mem_support_pure _ h
@@ -181,6 +219,7 @@ theorem almost_claim :
       signingFailureBits ∧
     HasSignatureSize cheat 1 ∧ HasPublicKeySize cheat 32 ∧ HasVerificationBound cheat 1 ∧
     HasSignQueryBound cheat rawSignCap ∧ HasVerifyQueryBound cheat rawVerifyCap ∧
+    HasKeygenSampleBound cheat sampleKeygenCap ∧ HasSignSampleBound cheat sampleSignCap ∧
     (∀ (A : Adversary) (qH qS : ℕ), qS ≤ extendedSigningBudget →
       HasHashQueryBound cheat A qH → HasSigningQueryBound A qS →
         sufAdvantage cheat A ≤ boundProbability coeffs (qH + qS) qS) ∧
@@ -189,6 +228,7 @@ theorem almost_claim :
   ⟨correct, signing_failure, adaptive_vacuous _ _ (by decide), adaptive_vacuous _ _ (by decide),
     sigma_size, public_key_size, fun _ _ _ => HasVerifyCost.pure _ _,
     fun _ _ => isQueryBoundP_pure _ _ _, fun _ _ _ => isQueryBoundP_pure _ _ _,
+    keygen_samples, sign_samples,
     fun A qH qS _ hH _ => security_vacuous A qH qS hH,
     by norm_num [MeetsFloor, coeffs, evalBound, BoundTerm.weight, signingBudget, securityFloor],
     by norm_num [MeetsFloor, coeffs, evalBound, BoundTerm.weight, extendedSigningBudget,
@@ -214,5 +254,7 @@ private def straightLine : SigScheme where
 example : HasKeygenQueryBound straightLine rawKeygenCap := isQueryBoundP_pure _ _ _
 example : HasSignQueryBound straightLine rawSignCap := fun _ _ => isQueryBoundP_pure _ _ _
 example : HasVerifyQueryBound straightLine rawVerifyCap := fun _ _ _ => isQueryBoundP_pure _ _ _
+example : HasKeygenSampleBound straightLine sampleKeygenCap := isQueryBoundP_pure _ _ _
+example : HasSignSampleBound straightLine sampleSignCap := fun _ _ => isQueryBoundP_pure _ _ _
 
 end LeanSphincsTest.DeadBranch

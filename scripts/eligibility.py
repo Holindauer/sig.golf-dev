@@ -14,11 +14,21 @@ import json
 from scoring_policy import CLAIM_ID
 
 CAPS = ('reference_execution', 'verification_limit', 'raw_keygen_queries',
-        'raw_sign_queries', 'raw_verify_queries', 'persistent_secret_bytes',
+        'raw_sign_queries', 'raw_verify_queries', 'raw_keygen_samples',
+        'raw_sign_samples', 'persistent_secret_bytes',
         'precomputation_bytes', 'executable_bytes', 'leakage_model',
         'executable_validator', 'side_channel_validator')
 FIXED = dict(ram_bytes=65536, keygen_target_ms=60000, sign_target_ms=1500,
              overrun_bits=40, keygen_deadline_ms=360000, sign_deadline_ms=120000)
+# These raw-query and uniform-sampling caps mirror the protected statement's
+# structural caps in LeanSphincs/Benchmark/Claim.lean (rawKeygenCap, rawSignCap,
+# rawVerifyCap, sampleKeygenCap, sampleSignCap). The profile leaves them null
+# until calibrated, but any value it does set must equal the statement, so a
+# calibrated profile can never disagree with the proved caps. A host test keeps
+# this mirror in sync with the Lean constants.
+STATEMENT_RAW_CAPS = {'raw_keygen_queries': 2 ** 28, 'raw_sign_queries': 2 ** 20,
+                      'raw_verify_queries': 2 ** 16, 'raw_keygen_samples': 2 ** 28,
+                      'raw_sign_samples': 2 ** 20}
 
 
 def load_resource_profile(path):
@@ -36,6 +46,9 @@ def load_resource_profile(path):
                     raise ValueError('invalid resource profile field: ' + key)
             elif type(value) is not int or value <= 0:
                 raise ValueError('invalid resource cap: ' + key)
+    for key, expected in STATEMENT_RAW_CAPS.items():
+        if profile[key] is not None and profile[key] != expected:
+            raise ValueError('resource cap disagrees with protected statement: ' + key)
     return profile
 
 
