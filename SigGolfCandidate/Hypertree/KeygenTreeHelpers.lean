@@ -86,4 +86,45 @@ theorem skip_code : Signing.captureModeCode keygen 0x1078 92 := by
   simp only [fetch,pc]
   fin_cases i <;> decide
 
+theorem low_ne_word (a : Word) (low : a.toNat < 0x80000)
+    (base n : Nat) (lower : 0x80000 ≤ base) (upper : base+8*n < 2^64) (i : Fin n) :
+    a ≠ Signing.wordAddress base i.val := by
+  intro eq
+  have h := congrArg BitVec.toNat eq
+  have hi := i.isLt
+  change a.toNat = (base+8*i.val)%2^64 at h
+  omega
+
+theorem low_outside_leaf (side : Bool) (a : Word) (low : a.toNat < 0x80000) :
+    KeygenLeafCall.Outside side a := by
+  have ne (n : Nat) (hn : 0x80000 ≤ n) (small : n < 2^64) : a ≠ BitVec.ofNat 64 n := by
+    intro eq
+    have h := congrArg BitVec.toNat eq
+    simp only [BitVec.toNat_ofNat, Nat.mod_eq_of_lt small] at h
+    omega
+  unfold KeygenLeafCall.Outside KeygenLeafLoop.Outside KeygenChainLoop.Outside
+  refine ⟨ne _ (by decide) (by decide), ⟨ne _ (by decide) (by decide),
+    ⟨ne _ (by decide) (by decide), ?_, ?_, ?_⟩, ?_⟩, ?_, ?_⟩
+  · exact low_ne_word a low _ _ (by decide) (by decide)
+  · exact low_ne_word a low _ _ (by decide) (by decide)
+  · exact low_ne_word a low _ _ (by decide) (by decide)
+  · exact low_ne_word a low _ _ (by decide) (by decide)
+  · exact low_ne_word a low _ _ (by decide) (by decide)
+  · cases side <;> exact low_ne_word a low _ _ (by decide) (by decide)
+
+theorem left_low_frame (s : MachineState) (sp : s.getReg .x2=0x1000000)
+    (a : Word) (low : a.toNat < 0x80000) : (leftState s).getMem a=s.getMem a := by
+  have hs : a ≠ 0xfffff0 := by intro eq; rw [eq] at low; change 0xfffff0 < 0x80000 at low; omega
+  have hl : a ≠ 0x80428 := by intro eq; rw [eq] at low; change 0x80428 < 0x80000 at low; omega
+  rw [leftState,KeygenTreeControl.mem,if_neg hl,entered,enter_mem,sp]
+  exact if_neg hs
+
+theorem start_framed (s : MachineState) (pc : s.pc=0x1048) (sp : s.getReg .x2=0x1000000)
+    (level tree : Nat) (seed : Seed) (ctx : Context level tree false seed s) :
+    ∃ ready, OrdinarySteps keygen s 7 ready ∧ ready.pc=0x11cc ∧ ready.getReg .x1=0x1064 ∧
+      ready.getReg .x2=0xfffff0 ∧ ready.getMem 0xfffff0=s.getReg .x1 ∧ Context level tree false seed ready ∧
+      (∀ a, a.toNat < 0x80000 → ready.getMem a=s.getMem a) := by
+  exact ⟨leftState s,left_block s pc sp,left_pc s pc,left_ra s pc,left_sp s sp,left_saved s sp,
+    left_context s sp level tree seed ctx,left_low_frame s sp⟩
+
 end SigGolfCandidate.Hypertree.KeygenTree

@@ -5,14 +5,15 @@ open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 OracleComp Keygen KeygenSecretStart
 set_option maxRecDepth 4096
 
 /-- The exact generated keygen tree call refines the reference root for every hash and seed. -/
-theorem execute (hash : Hash) (s : MachineState) (pc : s.pc=0x1048)
+theorem execute_framed (hash : Hash) (s : MachineState) (pc : s.pc=0x1048)
     (sp : s.getReg .x2=0x1000000) (level tree : Nat) (seed : Seed)
     (nonzero : BitVec.ofNat 64 level ≠ 0) (context : Context level tree false seed s) :
     ∃ final, Trace hash keygen s 75969 81318 739 761 final ∧
       final.pc=s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2=s.getReg .x2 ∧
-      ∀ i : Fin 2, final.getMem (Signing.wordAddress 0x80500 i.val) =
-        (Reference.treeRoot hash seed level tree).extractLsb' (64*i.val) 64 := by
-  obtain ⟨ready,pre,rpc,rra,rsp,saved,rctx⟩ := start s pc sp level tree seed context
+      (∀ i : Fin 2, final.getMem (Signing.wordAddress 0x80500 i.val) =
+        (Reference.treeRoot hash seed level tree).extractLsb' (64*i.val) 64) ∧
+      (∀ a, a.toNat < 0x80000 → final.getMem a=s.getMem a) := by
+  obtain ⟨ready,pre,rpc,rra,rsp,saved,rctx,preFrame⟩ := start_framed s pc sp level tree seed context
   obtain ⟨left,leftTrace,leftPC,leftSP,leftWords,leftFrame⟩ :=
     KeygenLeafCall.execute hash ready rpc rsp level tree false seed nonzero rctx
   have leftRet : left.pc=0x1064 := by rw [leftPC,rra]; decide
@@ -61,9 +62,26 @@ theorem execute (hash : Hash) (s : MachineState) (pc : s.pc=0x1048)
     KeygenNode.compute_return keygen hash 0x10e0 KeygenNode.keygen_body_code keygen_tree_return nodeReady npc
       level tree (Reference.leafRoot hash seed level tree false) (Reference.leafRoot hash seed level tree true)
       levelEq indexEq children (by rw [nsp]; decide) (by rw [nsp]; decide) (by rw [nsp]; decide) (by rw [nsp]; decide)
-  refine ⟨final,pre.trace.trans (leftTrace.trans (rightPre.trace.trans (rightTrace.trans (skip.trace.trans tail)))),?_,?_,words⟩
+  refine ⟨final,pre.trace.trans (leftTrace.trans (rightPre.trace.trans (rightTrace.trans (skip.trace.trans tail)))),?_,?_,words,?_⟩
   · rw [fpc,nsp,nsaved]
   · rw [fsp,nsp,sp]; rfl
+
+  · intro a low
+    have hl : a ≠ 0x80428 := by intro eq; rw [eq] at low; change 0x80428 < 0x80000 at low; omega
+    rw [frame a (low_ne_word a low _ _ (by decide) (by decide))
+      (low_ne_word a low _ _ (by decide) (by decide)) (low_ne_word a low _ _ (by decide) (by decide)),
+      nodeMem,rightFrame a (low_outside_leaf true a low),KeygenTreeControl.mem,if_neg hl,
+      leftFrame a (low_outside_leaf false a low),preFrame a low]
+
+theorem execute (hash : Hash) (s : MachineState) (pc : s.pc=0x1048)
+    (sp : s.getReg .x2=0x1000000) (level tree : Nat) (seed : Seed)
+    (nonzero : BitVec.ofNat 64 level ≠ 0) (context : Context level tree false seed s) :
+    ∃ final, Trace hash keygen s 75969 81318 739 761 final ∧
+      final.pc=s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2=s.getReg .x2 ∧
+      ∀ i : Fin 2, final.getMem (Signing.wordAddress 0x80500 i.val) =
+        (Reference.treeRoot hash seed level tree).extractLsb' (64*i.val) 64 := by
+  obtain ⟨final,run,fpc,fsp,words,frame⟩ := execute_framed hash s pc sp level tree seed nonzero context
+  exact ⟨final,run,fpc,fsp,words⟩
 
 /-- info: 'SigGolfCandidate.Hypertree.KeygenTree.execute' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
