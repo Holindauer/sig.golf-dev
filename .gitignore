@@ -1,8 +1,9 @@
-.lake/
-.benchmark-tools/
+formal/.lake/
+formal/LeanSphincs/Benchmark/Challenge.lean
+formal/LeanSphincs/Submission/
+formal/Submissions/
+verifier/.tools/
 benchmark-results/
-LeanSphincs/Benchmark/Challenge.lean
-LeanSphincs/Submission/
 __pycache__/
 service/.venv/
 service/data/

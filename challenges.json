@@ -2,31 +2,33 @@
   "name": "sig.golf",
   "contract": {
     "version": "suf-cma-total-work-pk32-adaptive-availability-v2",
-    "statement": "LeanSphincs/Benchmark/Claim.lean",
-    "scoring": "benchmark/scoring.json",
+    "statement": "formal/LeanSphincs/Benchmark/Claim.lean",
+    "pin_file": "verifier/protected.sha256",
+    "scoring": "verifier/scoring.json",
     "meter": "rom256-input64-ceil-v1",
     "rules": "index.html",
-    "verifier": "scripts/verify_pr.py"
+    "verifier": "verifier/verify.py"
   },
   "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
   "protected": [
     "challenges.json",
-    "lakefile.toml",
-    "lake-manifest.json",
-    "lean-toolchain",
-    "LeanSphincs.lean",
-    "LeanSphincs/Benchmark/Bound.lean",
-    "LeanSphincs/Benchmark/Claim.lean",
-    "LeanSphincs/Benchmark/Game.lean",
-    "LeanSphincs/Benchmark/Oracle.lean",
-    "LeanSphincs/Benchmark/SchemeInterface.lean",
-    "LeanSphincs/Benchmark/Target.lean",
-    "benchmark/comparator.json",
-    "benchmark/scoring.json",
-    "benchmark/resources.json",
-    "benchmark/source-policy.json",
-    "scripts/verify_submission.py",
-    "scripts/verify_pr.py"
+    "formal/lakefile.toml",
+    "formal/lake-manifest.json",
+    "formal/lean-toolchain",
+    "formal/LeanSphincs.lean",
+    "formal/LeanSphincs/Benchmark/Availability.lean",
+    "formal/LeanSphincs/Benchmark/Bound.lean",
+    "formal/LeanSphincs/Benchmark/Claim.lean",
+    "formal/LeanSphincs/Benchmark/Game.lean",
+    "formal/LeanSphincs/Benchmark/Oracle.lean",
+    "formal/LeanSphincs/Benchmark/SchemeInterface.lean",
+    "formal/LeanSphincs/Benchmark/Target.lean",
+    "verifier/comparator.json",
+    "verifier/scoring.json",
+    "verifier/resources.json",
+    "verifier/source-policy.json",
+    "verifier/verify_submission.py",
+    "verifier/verify.py"
   ],
   "limits": {
     "wall_clock_seconds": 5400,
@@ -36,6 +38,7 @@
     "max_total_bytes": 10485760,
     "max_metric": 4611686018427387903
   },
+  "lean_root": "formal",
   "tracks": [
     {
       "slug": "full",
@@ -45,12 +48,15 @@
       "direction": "-",
       "objective": "sigma * hverify",
       "objective_label": "signature bytes × verification work",
-      "submission_root": "submissions/full",
+      "submission_root": "formal/Submissions/Full",
       "module_prefix": "LeanSphincs.Submission",
       "solution_module": "LeanSphincs.Submission.Solution",
+      "challenge_module": "LeanSphincs.Benchmark.Challenge",
+      "comparator_config": "verifier/comparator.json",
       "required_files": ["Scheme.lean", "Solution.lean", "sigma.txt", "hverify.txt", "bound.txt"],
+      "optional_files": ["NOTES.md", "README.md"],
       "admission": "closed",
-      "admission_note": "Submissions are not open yet. The pipeline is exercised with organizer baselines; flip admission to open in this file when the launch gates in SCHEMECLAIM_PLAN.md are met."
+      "admission_note": "Submissions are not open yet. The pipeline is exercised with organizer baselines; flip admission to open in this file when the launch gates in docs/SCHEMECLAIM_PLAN.md are met."
     }
   ]
 }
