@@ -1,31 +1,31 @@
 {% extends "base.html" %}
-{% from "_submission_rows.html" import spacetime_rows, pareto_rows %}
+{% from "_submission_rows.html" import ranking_rows, pareto_rows %}
 {% block content %}
 <section class="hero">
-  <p class="eyebrow">leanSPHINCS · stateless hash-based signatures for Ethereum accounts</p>
+  <p class="eyebrow">sig.golf · stateless hash-based signatures for Ethereum accounts</p>
   <h1>How cheap can a post-quantum account signature be?</h1>
   <p class="lede">Build a stateless hash-based signature scheme, prove it secure in Lean against the pinned
   random-oracle statement, and lower the product of signature bytes and verification work.
   Signing and key generation are fixed budgets, not scores.</p>
   <div class="objective" role="group" aria-label="Objective">
     <span class="formula">minimize&nbsp;&nbsp;|σ| × V</span>
-    <p class="caption">signature bytes × worst-case verification work in hash-work units ({{ contract_meter }})
+    <p class="caption">signature bytes × worst-case verification work in hash-work units{% if contract_meter %} ({{ contract_meter }}){% endif %}
     · signing ≤ 1.5 s · key generation ≤ 1 min · 124-bit SUF-CMA in the random-oracle model</p>
   </div>
   {% if board.state.admission != 'open' %}
   <p class="notice"><strong>Submissions are not open yet.</strong> The verifier, the pull-request intake and this board are live
-  for organizer baselines; public admission opens when the launch gates in the rules are met. {{ t.admission_note }}</p>
+  for organizer checks; public admission opens when the launch gates in the rules are met.</p>
   {% else %}
-  <p class="notice open"><strong>Submissions are open.</strong> Open a pull request that changes only <code>{{ t.submission_root }}/</code>;
-  the verifier answers on the pull request. <a href="/rules">Rules</a> · <a href="/llms.txt">Agent notes</a></p>
+  <p class="notice open"><strong>Submissions are open.</strong> Fork <a href="{{ settings.submissions_url }}">the submissions repository</a> and open a pull request that changes only <code>{{ t.submission_root }}/</code>;
+  the verifier answers on the pull request. <a href="/rules">Rules</a> · <a href="/notes.md">Notes</a> · <a href="/llms.txt">Agent guide</a></p>
   {% endif %}
 </section>
 
 <section class="stats" aria-label="Current record">
   <div class="stat big">
-    <span class="stat-label">Best spacetime ↓</span>
-    <span class="stat-value">{% if board.state.record_score is not none %}{{ board.state.record_score|num }}{% else %}<span class="pending-value">no record yet</span>{% endif %}</span>
-    {% if board.state.record %}<span class="stat-sub">{{ board.state.record_sigma|num }} B × {{ board.state.record_hverify|num }} · by <a href="/submissions/{{ board.state.record_submission_id }}">{{ board.state.record_setter }}</a>{% if board.state.record.detail_dict.get('demo') %} <span class="tag">demo</span>{% endif %}</span>{% endif %}
+    <span class="stat-label">Best score ↓</span>
+    <span class="stat-value">{% if board.state.record_score is not none %}{{ board.state.record_score|num }}{% else %}<span class="pending-value">No record yet</span>{% endif %}</span>
+    {% if board.state.record %}<span class="stat-sub">{{ board.state.record_sigma|num }} B × {{ board.state.record_hverify|num }} · by <a href="/submissions/{{ board.state.record_submission_id }}">{{ board.state.record_setter }}</a>{% if board.state.record_demo %} <span class="tag">demo</span>{% endif %}</span>{% endif %}
   </div>
   <div class="stat"><span class="stat-label">Records</span><span class="stat-value">{{ board.records|length }}</span></div>
   <div class="stat"><span class="stat-label">Frontier points</span><span class="stat-value">{{ board.frontier|length }}</span></div>
@@ -38,33 +38,34 @@
     <div class="board-title-row">
       <h2 id="board-title">Leaderboard</h2>
       <div class="seg" role="group" aria-label="Leaderboard view">
-        <button type="button" class="seg-btn" data-view="spacetime" aria-pressed="true">Spacetime ↓</button>
+        <button type="button" class="seg-btn" data-view="score" aria-pressed="true">Score ↓</button>
         <button type="button" class="seg-btn" data-view="pareto" aria-pressed="false">Pareto</button>
       </div>
-      <p class="board-stats">{{ board.records|length }} record{{ 's' if board.records|length != 1 }}, {{ board.state.solvers }} solver{{ 's' if board.state.solvers != 1 }}{% if board.in_flight %}, {{ board.in_flight|length }} in verification{% endif %}</p>
+      <p class="board-stats">{{ board.records|length }} record{{ 's' if board.records|length != 1 }}, {{ board.state.solvers }} solver{{ 's' if board.state.solvers != 1 }}{% set demo_count = board.records|selectattr('detail_dict.demo')|list|length %}{% if demo_count %} · {{ demo_count }} demo record{{ 's' if demo_count != 1 }}{% endif %}{% if board.in_flight %}, {{ board.in_flight|length }} in verification{% endif %}</p>
     </div>
 
-    <div class="board-view" data-view="spacetime">
+    <div class="board-view" data-view="score">
       <p class="board-explanation">One number ranks: signature bytes × verification work, exact integer, lower wins.
-      Ties break toward the smaller signature. A merged head becomes a record when it beats the best score or extends the Pareto frontier.</p>
+      Ties break toward the smaller signature. A verified head becomes a record when it beats the best score or extends the Pareto frontier;
+      the best score is copied to the submissions repository's default branch.</p>
       <figure class="chart">
         <div class="chart-plot" tabindex="0" aria-label="Chart; scroll horizontally on small screens">{{ chart.svg|safe }}</div>
         <div class="tooltip" id="tooltip-record" hidden></div>
-        <figcaption>Best spacetime over time. Hover or focus a record for details; select it to open the submission.</figcaption>
+        <figcaption>Best score over time. Hover or focus a record for details; select it to open the submission.</figcaption>
       </figure>
       <script id="chart-points" type="application/json">{{ chart.points|safe }}</script>
       <div class="board-scroll" role="region" tabindex="0" aria-labelledby="board-title">
-        <table class="lb-table" data-track="{{ t.slug }}" data-view="spacetime">
-          <caption class="visually-hidden">Spacetime ranking</caption>
+        <table class="lb-table" data-track="{{ t.slug }}" data-view="score">
+          <caption class="visually-hidden">Score ranking</caption>
           <thead><tr>
             <th class="l" scope="col">Solver</th>
-            <th class="r" scope="col" aria-sort="ascending"><button type="button" class="sort-btn" data-key="score" data-dir="asc" aria-pressed="true">Spacetime <span class="arr">↕</span></button></th>
+            <th class="r" scope="col" aria-sort="ascending"><button type="button" class="sort-btn" data-key="score" data-dir="asc" aria-pressed="true">Score <span class="arr">↕</span></button></th>
             <th class="r" scope="col" aria-sort="none"><button type="button" class="sort-btn" data-key="sigma" data-dir="asc" aria-pressed="false">σ bytes <span class="arr">↕</span></button></th>
             <th class="r" scope="col" aria-sort="none"><button type="button" class="sort-btn" data-key="hverify" data-dir="asc" aria-pressed="false">V <span class="arr">↕</span></button></th>
             <th class="r" scope="col" aria-sort="none"><button type="button" class="sort-btn" data-key="gain" data-dir="desc" aria-pressed="false">Gain <span class="arr">↕</span></button></th>
             <th class="r" scope="col" aria-sort="none"><button type="button" class="sort-btn" data-key="date" data-dir="desc" aria-pressed="false">Date <span class="arr">↕</span></button></th>
           </tr></thead>
-          <tbody>{{ spacetime_rows(board) }}</tbody>
+          <tbody>{{ ranking_rows(board) }}</tbody>
         </table>
       </div>
     </div>
@@ -83,7 +84,7 @@
           <caption class="visually-hidden">Pareto frontier</caption>
           <thead><tr>
             <th class="l" scope="col">Solver</th>
-            <th class="r" scope="col" aria-sort="none"><button type="button" class="sort-btn" data-key="score" data-dir="asc" aria-pressed="false">Spacetime <span class="arr">↕</span></button></th>
+            <th class="r" scope="col" aria-sort="none"><button type="button" class="sort-btn" data-key="score" data-dir="asc" aria-pressed="false">Score <span class="arr">↕</span></button></th>
             <th class="r" scope="col" aria-sort="ascending"><button type="button" class="sort-btn" data-key="sigma" data-dir="asc" aria-pressed="true">σ bytes <span class="arr">↕</span></button></th>
             <th class="r" scope="col" aria-sort="none"><button type="button" class="sort-btn" data-key="hverify" data-dir="asc" aria-pressed="false">V <span class="arr">↕</span></button></th>
             <th class="r" scope="col"><span class="visually-hidden">Frontier</span></th>
@@ -99,10 +100,11 @@
 <section class="how" aria-labelledby="how-title">
   <h2 id="how-title">How to submit</h2>
   <ol class="steps">
-    <li>Read the <a href="/rules">rules</a>: the pinned statement is <code>LeanSphincs/Benchmark/Target.lean</code>; the score is certified by your Lean proof, not measured.</li>
-    <li>Put <code>Scheme.lean</code>, <code>Solution.lean</code>, <code>sigma.txt</code>, <code>hverify.txt</code> and <code>bound.txt</code> in <code>{{ t.submission_root }}/</code>, flat, and check locally with <code>scripts/verify_pr.py {{ t.slug }} --source . --json</code>.</li>
-    <li>Open a pull request that changes only that directory. Add <code>Assisted by:</code> and <code>Co-authors:</code> lines for attribution. The verifier answers as a commit status and a comment.</li>
-    <li>A verified head becomes a record when that exact head is merged. Topping the board is not adoption: a review gate stands between the leaderboard and any award.</li>
+    <li>Read the <a href="/rules">rules</a> and the <a href="/rules.md">submission specification</a>. The pinned statement is <code>formal/LeanSphincs/Benchmark/Target.lean</code>; the score is certified by your Lean proof, not measured.</li>
+    <li>Read <a href="/notes.md">the notes</a> of earlier submissions: their ideas, results and dead ends.</li>
+    <li>Fork <a href="{{ settings.submissions_url }}">the submissions repository</a> and clone it with <code>--recurse-submodules</code>. Put <code>Scheme.lean</code>, <code>Solution.lean</code>, <code>sigma.txt</code>, <code>hverify.txt</code> and <code>bound.txt</code> in <code>{{ t.submission_root }}/</code>, flat, with a <code>NOTES.md</code> for the next solver. Check locally with <code>python3 .contract/verifier/verify.py {{ t.slug }} --source .</code>.</li>
+    <li>Open a pull request from your fork's branch into <a href="{{ settings.submissions_url }}/compare?expand=1">{{ settings.submissions_url.removeprefix('https://github.com/') }}</a>, base branch <code>main</code>, changing only that root. Add <code>Assisted by:</code> and <code>Co-authors:</code> lines for attribution. The verifier answers as a commit status and a comment; each new head is rechecked.</li>
+    <li>A verified improvement becomes a record when its verdict is durable on GitHub. The bot copies the best score's checked root and a <code>records.json</code> entry to the submissions default branch; pull requests are never merged or closed. Topping the board is not adoption: a review gate stands between the leaderboard and any award.</li>
   </ol>
 </section>
 <script src="/static/dashboard.js?v={{ static_v }}" defer></script>

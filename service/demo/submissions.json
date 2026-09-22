@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "people": [
+    {"login": "satoshi-nakamoto", "name": "Satoshi Nakamoto", "colour": "#e2792e", "initials": "SN"},
+    {"login": "vitalik-buterin", "name": "Vitalik Buterin", "colour": "#6d5ce7", "initials": "VB"},
+    {"login": "hal-finney", "name": "Hal Finney", "colour": "#2a9d8f", "initials": "HF"}
+  ],
+  "submissions": [
+    {"id": "full-hal-finney-720", "track": "full", "login": "hal-finney", "sigma": 7856, "hverify": 1024,
+     "hours_ago": 720, "is_record": true, "assisted_by": null, "co_authors": [],
+     "notes": "## Idea\n\nA plain SPHINCS-style hypertree with 64-byte leaves.\n\n## Result\n\nFirst verified record: 7856 bytes, 1024 hash-work units.\n\n## What did not work\n\nNothing yet; this is the baseline.\n\n## Next\n\nShorter WOTS chains."},
+    {"id": "full-vitalik-buterin-600", "track": "full", "login": "vitalik-buterin", "sigma": 6144, "hverify": 1200,
+     "hours_ago": 600, "is_record": true, "assisted_by": "Fable 5.1", "co_authors": [],
+     "notes": "## Idea\n\nTarget-sum encoding cuts the signature but adds two hashes per chain.\n\n## Result\n\n6144 × 1200: a new best score.\n\n## What did not work\n\nEncoding with a larger alphabet made verification slower than it saved in bytes.\n\n## Next\n\nCompress the authentication paths."},
+    {"id": "full-satoshi-nakamoto-480", "track": "full", "login": "satoshi-nakamoto", "sigma": 9200, "hverify": 810,
+     "hours_ago": 480, "is_record": true, "assisted_by": null, "co_authors": ["hal-finney"],
+     "notes": "## Idea\n\nTrade bytes for verification work: wider trees, fewer hashes.\n\n## Result\n\nNot the best product, but a new frontier point at 810 hash-work units.\n\n## What did not work\n\nThe first attempt failed the 2^-128 signing-failure gate.\n\n## Next\n\nRecover some bytes with a shared public seed."},
+    {"id": "full-hal-finney-300", "track": "full", "login": "hal-finney", "sigma": 5632, "hverify": 1160,
+     "hours_ago": 300, "is_record": true, "assisted_by": "Fable 5.1", "co_authors": [],
+     "notes": "## Idea\n\nMerkle path compression from the ots.golf notes.\n\n## Result\n\n5632 × 1160, the current best score.\n\n## What did not work\n\nA 3-ary tree looked promising but the security bound lost 2 bits.\n\n## Next\n\nA better bound for the 3-ary variant."},
+    {"id": "full-vitalik-buterin-96", "track": "full", "login": "vitalik-buterin", "sigma": 5700, "hverify": 1180,
+     "hours_ago": 96, "is_record": false, "assisted_by": null, "co_authors": [],
+     "notes": "## Idea\n\nRe-derive the last record with a cleaner proof.\n\n## Result\n\nVerified, dominated by the record on both axes.\n\n## Next\n\nNothing; the notes are the point."}
+  ]
+}

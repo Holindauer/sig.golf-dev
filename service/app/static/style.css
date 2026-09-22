@@ -163,3 +163,10 @@ pre.why { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
   .chart { padding: 8px 4px; }
   .chart-plot .record-chart, .chart-plot .pareto-chart { min-width: 720px; }
 }
+
+/* two-repository intake */
+.launch-notice { margin: 0; padding: 6px 16px; text-align: center; font-size: 13px; color: var(--tbd); background: var(--tbd-bg); border-bottom: 1px solid var(--line); }
+.back { text-decoration: none; }
+.s-policy_rejected, .s-admitting, .s-publishing { color: var(--ink-2); border-color: var(--line); }
+.s-policy_rejected { color: var(--critical); border-color: var(--critical); }
+.s-admitting, .s-publishing { color: var(--accent-ink); border-color: var(--accent); }

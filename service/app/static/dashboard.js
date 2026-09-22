@@ -61,9 +61,9 @@
   }
   buttons.forEach(function (button) { button.addEventListener('click', function () { show(button.dataset.view, true); }); });
   function fromHash() {
-    var view = location.hash === '#pareto' ? 'pareto' : 'spacetime';
+    var view = location.hash === '#pareto' ? 'pareto' : 'score';
     show(view, false);
-    if (location.hash === '#pareto' || location.hash === '#spacetime') {
+    if (location.hash === '#pareto' || location.hash === '#score') {
       var title = document.getElementById('board-title');
       if (title) title.scrollIntoView();
     }

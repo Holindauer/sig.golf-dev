@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 import fcntl
+import hashlib
 import json
+import re
+import shlex
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 
-from sqlalchemy import BigInteger, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, create_engine, event
+from sqlalchemy import BigInteger, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, create_engine, event, inspect
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
 
 from .config import settings
@@ -16,6 +19,22 @@ from .config import settings
 def utcnow() -> datetime:
     """Naive UTC, which is what every backend stores faithfully."""
     return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def stable_id(*parts: str) -> str:
+    """A submission id that depends only on what was submitted, so every page link survives
+    rebuilding the database from GitHub."""
+    return hashlib.sha256("\x1f".join(parts).encode()).hexdigest()[:32]
+
+
+def pr_submission_id(pr_repository: str, pr_number: int, commit: str, epoch: str | None = None) -> str:
+    from . import contract
+    return stable_id("pr", pr_repository.lower(), str(pr_number), commit.lower(),
+                     contract.contract_id() if epoch is None else epoch)
+
+
+def legacy_pr_submission_id(pr_repository: str, pr_number: int, commit: str) -> str:
+    return stable_id("pr", pr_repository.lower(), str(pr_number), commit.lower())
 
 
 class Base(DeclarativeBase):
@@ -34,7 +53,7 @@ class User(Base):
 
 
 class Submission(Base):
-    """One verified-or-not head. Score is the exact integer sigma * hverify, kept as a decimal string
+    """One checked head. The score is the exact integer sigma * hverify, kept as a decimal string
     because it can exceed 64 bits; ordering is done in Python on the small record set."""
     __tablename__ = "submissions"
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: uuid.uuid4().hex)
@@ -48,7 +67,6 @@ class Submission(Base):
     status: Mapped[str] = mapped_column(String(20), default="pending", index=True)
     is_record: Mapped[bool] = mapped_column(Boolean, default=False)
     record_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    baseline: Mapped[bool] = mapped_column(Boolean, default=False)
     assisted_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     co_authors: Mapped[str] = mapped_column(Text, default="[]")
@@ -66,12 +84,14 @@ class Submission(Base):
     def score_int(self) -> int | None:
         try:
             return int(self.score) if self.score is not None else None
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
     @property
     def scored(self) -> bool:
-        return self.score_int is not None and self.sigma is not None and self.hverify is not None
+        """Metrics are consistent: positive integers whose exact product is the stored score."""
+        return (type(self.sigma) is int and type(self.hverify) is int and self.sigma > 0 and self.hverify > 0
+                and self.score_int is not None and self.score_int == self.sigma * self.hverify)
 
     @property
     def co_authors_list(self) -> list[str]:
@@ -90,9 +110,61 @@ class Submission(Base):
             return {}
 
     @property
+    def current_contract(self) -> bool:
+        from . import contract
+        return (self.detail_dict.get("contract") == contract.contract_id()
+                or (self.status == "verified"
+                    and contract.compatible_result(self.track, self.detail_dict.get("contract"))))
+
+    @property
+    def notes(self) -> str | None:
+        """The submitter's `NOTES.md`, as read by the verifier from the checked head."""
+        value = self.detail_dict.get("notes")
+        return value if isinstance(value, str) and value.strip() else None
+
+    @property
+    def archive_url(self) -> str | None:
+        """The immutable snapshot captured before verification, when its object is retained."""
+        from . import source_archive
+        if self.detail_dict.get("demo") or not source_archive.is_available(self):
+            return None
+        return f"{settings.base_url}/submissions/{self.id}/source.zip"
+
+    @property
+    def source_url(self) -> str | None:
+        """Browse the retained, exact submitted root even if the local ZIP cache is absent."""
+        from . import github, source_archive
+        detail = self.detail_dict
+        receipt = detail.get("receipt") or {}
+        root = receipt.get("submission_root") if isinstance(receipt, dict) else None
+        repo = self.pr_repository
+        if (detail.get("demo") or not repo or not github.SHA_RE.fullmatch(self.commit or "")
+                or detail.get("source_ref") != f"{github.SOURCE_TAGS}{self.id}"
+                or not isinstance(root, str) or not source_archive.archives.ROOT.fullmatch(root)):
+            return None
+        return f"https://github.com/{repo}/tree/{self.commit}/{root}"
+
+    @property
+    def fetch_command(self) -> str | None:
+        """Retrieve exact admitted files; no moving pull-request ref is involved."""
+        url = self.archive_url
+        if not url:
+            return None
+        return f"curl --fail --location {shlex.quote(url)} --output source.zip && unzip source.zip"
+
+    @property
     def commit_url(self) -> str | None:
         if self.source_repo.startswith("https://github.com/"):
             return f"{self.source_repo.removesuffix('.git')}/commit/{self.commit}"
+        return None
+
+    @property
+    def pr_repository(self) -> str | None:
+        """The PR's base repository, retained in its URL even after configuration changes."""
+        match = re.fullmatch(r"https://github\.com/([A-Za-z0-9][A-Za-z0-9-]{0,38}/"
+                             r"[A-Za-z0-9_.-]{1,100})/pull/([1-9][0-9]*)", self.pr_url or "")
+        if match and int(match[2]) == self.pr_number:
+            return match[1]
         return None
 
 
@@ -132,11 +204,15 @@ SessionLocal = sessionmaker(engine, expire_on_commit=False)
 
 
 @contextmanager
-def local_lock(name: str, *, blocking: bool = True):
-    """Serialize one-host service work across threads and processes. Keep the lock file in place:
-    unlinking a locked inode would let another worker bypass it. Locks die with the process."""
+def local_lock(name: str, *, blocking: bool = True, shared: bool = False):
+    """Lock one-host service work across threads and processes; shared readers may coexist.
+
+    Keep the lock file in place: unlinking a locked inode would let another worker bypass it.
+    Locks are released automatically when a process dies.
+    """
     with (settings.data_dir / f"{name}.lock").open("a") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
+        fcntl.flock(lock, (fcntl.LOCK_SH if shared else fcntl.LOCK_EX) |
+                    (0 if blocking else fcntl.LOCK_NB))
         try:
             yield
         finally:
@@ -146,6 +222,10 @@ def local_lock(name: str, *, blocking: bool = True):
 def init_db() -> None:
     with local_lock("schema"):
         Base.metadata.create_all(engine)
+        with engine.begin() as conn:
+            # The single-repository service stored a NOT NULL `baseline` flag that new rows no longer fill.
+            if "baseline" in {c["name"] for c in inspect(conn).get_columns("submissions")}:
+                conn.exec_driver_sql("ALTER TABLE submissions DROP COLUMN baseline")
 
 
 def get_session():
