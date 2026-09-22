@@ -1,9 +1,10 @@
-<!-- A submission changes exactly one submission root under submissions/ (today: submissions/full)
-     and nothing else. The verifier fetches this pull request's head commit, keeps only that root,
-     runs the isolated checker, and answers below as a commit status and a comment.
-     Keep the two lines below; the rest is your description. -->
+<!-- This repository develops the statement, verifier and website.
+     Submit competition schemes to https://github.com/leanEthereum/sig.golf-submissions. -->
 
-Assisted by:
-Co-authors:
+## Change
 
-<!-- What the scheme is, what changed, and how it was proved. Markdown is fine. -->
+<!-- Describe the problem and resulting behavior. -->
+
+## Validation
+
+<!-- List the relevant checks and results. -->

@@ -1,93 +1,126 @@
-# leanSPHINCS
+# sig.golf
 
-The [competition rules](https://leanethereum.github.io/sig.golf/) are draft
-**v0.22**, with latency guarantees and absolute resource limits. Stage 1 covers academic research
-beyond OTS: primitives, encodings, authentication, composition and complete
-constructions. Stage 2 evaluates complete stateless Ethereum account signatures,
-complementing the leanSig consensus track.
+Which stateless hash-based signature should a quantum-resistant Ethereum account use?
 
-Both use **`signatureBytes * verificationWork`**, within separately pinned
-games and cost profiles. The product has byte × verification-work units, needs
-no bandwidth coefficient, and accompanies the full size/verification Pareto frontier.
-Local scores remain diagnostic and unranked; deployment gates still apply. Normal account latency
-targets are **1.5 s signing and 60 s keygen**, each with overrun probability
-at most **2^-40 per operation**. Working RAM is bounded by **64 KiB** on every path. Complete-program
-certificates and hardware/storage calibration remain unfinished; hash throughput
-does not certify seconds.
+[sig.golf](https://sig.golf) is a competition in which every claim is a Lean proof about a pinned
+contract: a complete stateless signature scheme, proved strongly unforgeable in the classical pure
+random-oracle model, scored by signature bytes times worst-case verification work. This repository,
+**sig.golf-dev**, is the core: the protected Lean statement, the isolated verifier and the website.
+It holds no accepted scheme; schemes are submitted as pull requests to
+[sig.golf-submissions](https://github.com/leanEthereum/sig.golf-submissions).
 
-R9 permits exceptionally slow runs up to absolute limits of **2 minutes signing
-and 6 minutes keygen**, with no overrun allowance at those limits.
-Absolute runtime/raw-query caps apply on every path,
-including all setup and failed retries; even rare query padding must not make
-the security bound vacuous. Lateness is separate from signing failure, whose
-existing bound remains 2^-128. A union bound over 2^32 requests permits at most
-1/256 probability of any late signature, not a lifetime 2^-40 guarantee.
-Structural raw hash-query and uniform-sampling caps on keygen, signing and
-verification are fields of the claim with uncalibrated placeholder values,
-mirrored by the organizer resource profile. The performance game, cap
-calibration and protected executable binding remain to implement before ranking
-or promotion.
+**Rules:** read them at [leanethereum.github.io/sig.golf-dev](https://leanethereum.github.io/sig.golf-dev/),
+the draft rules page (`index.html`) that the live site serves at `/rules`. [AGENTS.md](AGENTS.md)
+is the precise specification: exact exports, submission-root rules, limits and the submission
+workflow. **Submissions are not open**: admission stays `closed` in [`challenges.json`](challenges.json)
+until the launch gates in [docs/SCHEMECLAIM_PLAN.md](docs/SCHEMECLAIM_PLAN.md) are met. The
+`sig.golf` domain is pending; until the service is deployed, GitHub Pages serves the rules.
 
-## What is implemented
+## Tracks
 
-- A scheme-parametric, classical **pure-ROM SUF-CMA** claim with no additional
-  cryptographic assumptions.
-- Byte-level algorithms: keygen returns `(pk, sk)`, signing returns `Option Bytes`,
-  verification consumes bytes. Immutable precomputation may live in `sk`; there
-  is no mandatory auxiliary cache/presign interface.
-- **32-byte public keys**, exact successful signature size, and a worst-case
-  weighted verification bound including malformed inputs.
-- **Total query work `Q = qH + qS`**. Raw `qH` includes challenger keygen,
-  signing and final verification as well as adversarial hashes; `qS` includes
-  failed and repeated signing requests.
-- A fixed explicit exact-rational bound with proved endpoint certificates:
-  **124 bits at up to 2^20 requests and 100 bits at up to 2^32**, for the same
-  scheme, parameters and bound. No constants-dropping eligibility gate.
-- Separate correctness-on-success and fresh-key, fixed-message signing failure
-  probability at most 2^-128, plus adaptive per-position availability in both
-  budget regimes. The 2^32-request lifetime union bound is 2^-96.
-- A private-snapshot verifier, protected comparator, axiom checks and content-bound,
-  explicitly unranked receipts. The organizer-owned
-  [scoring profile](benchmark/scoring.json) is included in receipt provenance.
+| Track | Folder | Check it with |
+|---|---|---|
+| Stateless scheme (`full`) | `formal/Submissions/Full/` | `verify.py full` |
 
-The oracle accepts arbitrary bytes and returns 32 bytes. Meter
-`rom256-input64-ceil-v1` charges `ceil(inputBytes / 64)` **per call**, including
-supplied domain tags. Empty input costs zero weighted work but one raw security
-query. Full-program arithmetic and memory costs are separate.
+The root lives at `formal/Submissions/Full/` in the submissions repository. The current record is
+on [sig.golf](https://sig.golf). The submissions repository's `main` carries the current record
+root and `records.json`, which links the record to its original checked commit, PR and trusted
+core. After publishing a new record's verdict, the bot copies its checked root into `main` with a
+separate commit; proof PRs are never merged or closed. Each submission's **Code** link opens its
+folder on GitHub at the original checked SHA, independent of later `main` updates.
 
-## Development and remaining gates
+## Quick start
+
+Build the statement and check a submission root from a submissions checkout next to this one:
 
 ```sh
-python3 -m unittest discover -s tests
-lake build LeanSphincs LeanSphincsTest
-lake env lean scripts/check-axioms.lean
-lake env lean scripts/check-ots-axioms.lean
-python3 scripts/test-comparator.py
+verifier/setup_tools.sh
+(cd formal && lake exe cache get && lake build LeanSphincs && lake env lean scripts/check-axioms.lean)
+python3 verifier/verify.py full --source ../sig.golf-submissions
 ```
 
-For the strict Linux submission path, run `bash setup.sh`, then
-`python3 scripts/test-verifier.py` and
-`bash benchmark.sh /absolute/path/to/candidate`.
-Landlock ABI >= 8, a user systemd manager and passing active boundary probes are
-required. `BENCHMARK_INSECURE_LOCAL=1` is an explicit organizer-only diagnostic,
-never an automatic fallback.
+`verify.py` takes only the track's root from `--source`; the contract and tooling come from this
+checkout. A real check needs Linux with Landlock ABI 8 or newer, a user systemd manager and passing
+boundary probes; `--insecure-local` is an organizer-only diagnostic and never a fallback. The
+verifier's trust boundary and launch gates are in [docs/HARNESS_SECURITY.md](docs/HARNESS_SECURITY.md).
 
-**Submissions are not open. No cryptographic baseline is accepted yet.**
-Positive comparator fixtures prove metric matching only. Baseline #0 is intended
-to be an eligible SPHINCS⁻ variant; the pinned 126-bit proof at 2^24 requests still
-needs an extended-lifetime argument for the same scheme at 2^32, in addition to
-serialization, game/cost transport and signing-failure proofs.
+Development checks:
 
-See [submission format](SUBMISSION.md), [implementation contract](IMPLEMENTATION.md),
-[workstream plan and decision history](SCHEMECLAIM_PLAN.md),
-[PR #19 review](PR19_REVIEW.md), [experimental OTS foundations](OTS_STAGE1.md),
-[polynomial-coding review](POLYNOMIAL_CODING_REVIEW.md) and
-[harness trust boundary and launch gates](HARNESS_SECURITY.md).
-Publication mechanics and agent conventions live in [AGENTS.md](AGENTS.md).
+```sh
+python3 tools/check_repo.py --formal
+(cd formal && lake env lean scripts/check-ots-axioms.lean)
+python3 verifier/test-comparator.py
+```
 
-## Website and pull-request intake
+For optional local website development, see [service/README.md](service/README.md); the demo
+fixtures are opt-in with `SIG_PHONY=1`.
 
-The competition site (`service/`) shows the Spacetime ranking and the Pareto frontier, serves
-`index.html` as the rules, and verifies pull requests that change only `submissions/full/` with
-`scripts/verify_pr.py`. Admission is controlled by `challenges.json` and is closed until launch.
-See [service/README.md](service/README.md) and [llms.txt](llms.txt).
+## What the statement pins
+
+- A scheme-parametric, classical **pure-ROM SUF-CMA** claim with no additional cryptographic
+  assumptions: `SchemeClaim` in `formal/LeanSphincs/Benchmark/Claim.lean`, claim identifier
+  `suf-cma-total-work-pk32-adaptive-availability-v2`.
+- Byte-level algorithms: `keygen` returns `(pk, sk)`, `sign` returns `Option Bytes`, `verify`
+  consumes bytes. Immutable precomputation may live in `sk`; there is no auxiliary cache or presign
+  interface.
+- **32-byte public keys**, exact successful signature size, and a worst-case weighted verification
+  bound including malformed inputs.
+- **Total query work `Q = qH + qS`**: raw hash queries across the whole experiment plus every
+  signing request. A fixed explicit exact-rational bound with proved endpoint certificates,
+  **124 bits at up to 2^20 requests and 100 bits at up to 2^32**, for the same scheme, parameters
+  and bound; no constants-dropping gate.
+- Correctness on success, fresh-key fixed-message signing failure at most 2^-128, adaptive
+  per-position availability in both budget regimes (lifetime union bound 2^-96 over 2^32
+  requests), and structural raw-query and sampling caps on every response path.
+- The oracle accepts arbitrary bytes and returns 32 bytes. Meter `rom256-input64-ceil-v1` charges
+  `ceil(inputBytes / 64)` per call, including domain tags; the empty input costs zero weighted
+  work but one raw security query.
+
+## Remaining gates
+
+Rule R9's latency guarantees (1.5 s signing and 60 s keygen with overrun probability at most 2^-40
+per operation, absolute limits of 120 s and 360 s, 64 KiB working RAM) and the executable
+resource, storage and side-channel certificates are not bound by the current statement. Receipts
+say `ranked: false`; scores are diagnostic; deployment eligibility stays false. Baseline #0 is
+intended to be an eligible SPHINCS⁻ variant; its pinned 126-bit proof at 2^24 requests still needs
+an extended-lifetime argument at 2^32, serialization, game/cost transport and signing-failure
+proofs. Positive comparator fixtures prove metric matching only. The workstream plan and decision
+history are in [docs/SCHEMECLAIM_PLAN.md](docs/SCHEMECLAIM_PLAN.md).
+
+## Live service and recovery
+
+Maintainer updates follow commit, push, then deployment; no localhost preview is required.
+Production shows real submissions only (`SIG_PHONY=0`). GitHub retains each admitted commit under
+`refs/tags/sig-source/<submission-id>` and stores frozen receipt/verdict comments. The server is
+disposable: `python -m app.rebuild` restores metadata; retained tags and verdict comments remain the
+history authority; the current-record snapshot on submissions `main` can be republished from
+checked sources. GitHub retries do not rerun a finished proof. Original logs are disposable. See the
+[deployment guide](service/deploy/README.md) for the host requirements, the credentialed rebuild,
+source-tag protection and launch checks.
+
+## Repository map
+
+| Path | Contents |
+|---|---|
+| [`AGENTS.md`](AGENTS.md) | submission specification, served as `/rules.md` |
+| [`index.html`](index.html) | the draft rules page, served as `/rules` and published to GitHub Pages |
+| [`llms.txt`](llms.txt) | agent guide, served as `/llms.txt` |
+| [`challenges.json`](challenges.json) | track metadata, limits, protected files, admission |
+| [`formal/LeanSphincs/Benchmark/`](formal/LeanSphincs/Benchmark/) | the contract: [`Oracle.lean`](formal/LeanSphincs/Benchmark/Oracle.lean), [`SchemeInterface.lean`](formal/LeanSphincs/Benchmark/SchemeInterface.lean), [`Game.lean`](formal/LeanSphincs/Benchmark/Game.lean), [`Bound.lean`](formal/LeanSphincs/Benchmark/Bound.lean), [`Availability.lean`](formal/LeanSphincs/Benchmark/Availability.lean), [`Claim.lean`](formal/LeanSphincs/Benchmark/Claim.lean), [`Target.lean`](formal/LeanSphincs/Benchmark/Target.lean) |
+| [`formal/LeanSphincs/OTS/`](formal/LeanSphincs/OTS/) | experimental one-time-signature library ([docs/OTS_STAGE1.md](docs/OTS_STAGE1.md)); not a track |
+| [`formal/LeanSphincsTest/`](formal/LeanSphincsTest/) | statement regressions and comparator canary fixtures |
+| [`verifier/`](verifier/) | [`verify.py`](verifier/verify.py), [`verify_submission.py`](verifier/verify_submission.py), policy checks, contract pin, comparator and profile configs, host tests |
+| [`service/`](service/README.md) | website and hosted verifier; [deployment](service/deploy/README.md) |
+| [`docs/`](docs/README.md) | implementation contract, harness security profile, plans and reviews, repository setup |
+| [`tools/`](tools/README.md) | research scripts, repository checks, submissions-repo preparation |
+
+See [repository setup](docs/repositories.md) for how the core and submissions repositories fit
+together.
+
+## Credits
+
+The competition follows [ots.golf](https://ots.golf), which shares its intake, record and
+publication model, and draws on [better.codes](https://better.codes)' protected-target harness
+and [zk.golf](https://zk.golf)'s specification discussion. It complements
+[leanSig](https://eprint.iacr.org/2025/1332) on the consensus layer. Third-party source notices are
+in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). License: Apache 2.0.
