@@ -13,7 +13,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import verify_submission as verifier
 from source_bundle import manifest, materialize
 
@@ -46,6 +46,26 @@ class IntegrityTests(unittest.TestCase):
 
     def test_unchanged_evidence_passes(self):
         self.check()
+
+    def test_docs_are_bound_by_the_receipt_but_absent_from_the_project(self):
+        documented = BUNDLE | {"NOTES.md": b"# idea\n", "README.md": b"readme\n"}
+        self.report["submission"] = manifest(documented)
+        self.check()
+        self.report["submission"] = manifest(documented | {"NOTES.md": b"# edited\n"})
+        self.check()  # the project cannot see the docs, so only the Lean sources are compared
+        self.report["submission"] = manifest(documented | {"Solution.lean": b"changed"})
+        with self.assertRaisesRegex(RuntimeError, "snapshot changed"):
+            self.check()
+
+    def test_time_limit_receipt_carries_the_budget(self):
+        report, _ = self.exercise_timeout()
+        self.assertEqual(report["status"], "timed_out")
+        self.assertEqual(report["limit_seconds"], 5400)
+        self.assertIn("budget", report["error"])
+        self.assertNotIn("score", report)
+
+    def exercise_timeout(self):
+        return OrchestrationTests().exercise([0, 0, subprocess.TimeoutExpired("compile", 1)])
 
     def test_changed_candidate_is_rejected(self):
         (self.root / "LeanSphincs/Submission/Solution.lean").write_bytes(b"changed")
@@ -121,6 +141,7 @@ class OrchestrationTests(unittest.TestCase):
                 return_value=subprocess.CompletedProcess([], 0, "", "")))
             stack.enter_context(patch.object(verifier.subprocess, "check_output", return_value="/lean"))
             stack.enter_context(patch.object(verifier, "harness_manifest", return_value={}))
+            stack.enter_context(patch.object(verifier, "verification_budget", return_value=5400))
             stack.enter_context(patch.object(verifier, "load_resource_profile", return_value={}))
             stack.enter_context(patch.object(verifier, "freeze_artifacts", return_value={}))
             stack.enter_context(patch.object(verifier, "load_scoring_profile", return_value={
@@ -161,7 +182,9 @@ class OrchestrationTests(unittest.TestCase):
                  ([0, 0, RuntimeError("service cleanup uncertain")], None,
                   "infrastructure_error", "compilation"),
                  ([0, 0, 0, subprocess.TimeoutExpired("comparator", 1)], None,
-                  "infrastructure_error", "comparison"),
+                  "timed_out", "comparison"),
+                 ([0, 0, subprocess.TimeoutExpired("compile", 1)], None,
+                  "timed_out", "compilation"),
                  ([0, 0, 0, KeyboardInterrupt()], None, "interrupted", "comparison"),
                  ([0, 0, 0, 0], RuntimeError("tool binaries changed"),
                   "infrastructure_error", "integrity"),

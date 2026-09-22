@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 from sandbox_profile import landlock_abi, landrun_args, systemd_command, PROFILE
 
-ROOT = Path(__file__).resolve().parents[1]
+HERE = Path(__file__).resolve().parent   # verifier/
 
 
 def check(lean: Path, exporter: Path, landrun: Path) -> dict:
@@ -30,7 +30,7 @@ def check(lean: Path, exporter: Path, landrun: Path) -> dict:
         (root / ".lake/config/protected.olean").write_text("protected")
         (root / ".lake/build/lib/lean/LeanSphincs/Benchmark/protected.olean").write_text("protected")
         (root / "LeanSphincs/Submission/Scheme.lean").write_text("protected")
-        shutil.copy2(ROOT / "scripts/sandbox-probe.py", root / "probe.py")
+        shutil.copy2(HERE / "sandbox-probe.py", root / "probe.py")
         reports = {}
         for mode in ("compile", "verify"):
             command = landrun_args(landrun, root, lean, exporter,
@@ -53,8 +53,7 @@ def check(lean: Path, exporter: Path, landrun: Path) -> dict:
 
 
 if __name__ == "__main__":
-    lean = Path(subprocess.check_output(["lean", "--print-prefix"], text=True).strip())
-    report = check(lean,
-        ROOT / ".benchmark-tools/comparator/.lake/packages/lean4export/.lake/build/bin/lean4export",
-        ROOT / ".benchmark-tools/landrun/landrun")
+    from verify_submission import COMPARATOR, FORMAL, LANDRUN
+    lean = Path(subprocess.check_output(["lean", "--print-prefix"], cwd=FORMAL, text=True).strip())
+    report = check(lean, COMPARATOR / ".lake/packages/lean4export/.lake/build/bin/lean4export", LANDRUN)
     print(json.dumps(report, sort_keys=True))

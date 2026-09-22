@@ -4,15 +4,16 @@ import subprocess
 import tempfile
 import unittest
 
-ROOT = Path(__file__).resolve().parents[1]
+VERIFIER = Path(__file__).resolve().parents[1]
+ROOT = VERIFIER.parent
 
 class SetupMigrationTests(unittest.TestCase):
     def test_recognized_previous_patch_migrates_and_other_edits_fail(self):
-        tool = ROOT / '.benchmark-tools/comparator'
+        tool = VERIFIER / '.tools/comparator'
         if not tool.exists():
             self.skipTest('pinned comparator source unavailable; setup integration required')
         original = subprocess.check_output(['git', '-C', str(tool), 'show', 'HEAD:Main.lean'])
-        setup = (ROOT / 'setup.sh').read_text()
+        setup = (VERIFIER / 'setup_tools.sh').read_text()
         function = setup[setup.index('clone_at() {'):setup.index('\nclone_at https://')]
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -31,7 +32,7 @@ class SetupMigrationTests(unittest.TestCase):
                     '\nclone_at unused "$2" "$1"\n', 'test', str(repo), revision],
                     cwd=ROOT, capture_output=True, text=True)
             for patch_name in ('comparator-leanchecker-v1.patch', 'comparator-leanchecker.patch'):
-                subprocess.run(['git', '-C', str(repo), 'apply', str(ROOT / 'benchmark' / patch_name)], check=True)
+                subprocess.run(['git', '-C', str(repo), 'apply', str(VERIFIER / patch_name)], check=True)
                 self.assertEqual(check().returncode, 0)
                 if patch_name.endswith('v1.patch'):
                     self.assertEqual((repo / 'Main.lean').read_bytes(), original)
@@ -43,6 +44,6 @@ class SetupMigrationTests(unittest.TestCase):
             self.assertNotEqual(check().returncode, 0)
             (repo / 'unexpected').unlink()
             subprocess.run(['git', '-C', str(repo), 'apply',
-                str(ROOT / 'benchmark/comparator-leanchecker-v1.patch')], check=True)
+                str(VERIFIER / 'comparator-leanchecker-v1.patch')], check=True)
             subprocess.run(['git', '-C', str(repo), 'add', 'Main.lean'], check=True)
             self.assertNotEqual(check().returncode, 0)

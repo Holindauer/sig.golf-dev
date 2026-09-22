@@ -16,14 +16,14 @@ import tempfile
 from artifact_snapshot import capture_artifacts, freeze_artifacts
 from source_bundle import manifest
 from sandbox_profile import systemd_command
-from verify_submission import ROOT, COMPARATOR, prepare_project, run
+from verify_submission import COMPARATOR, FORMAL, LANDRUN, ROOT, VERIFIER, prepare_project, run
 
 
 def main():
-    lean = Path(subprocess.check_output(["lean", "--print-prefix"], cwd=ROOT, text=True).strip())
+    lean = Path(subprocess.check_output(["lean", "--print-prefix"], cwd=FORMAL, text=True).strip())
     exporter = COMPARATOR / ".lake/packages/lean4export/.lake/build/bin/lean4export"
-    landrun = ROOT / ".benchmark-tools/landrun/landrun"
-    spec = importlib.util.spec_from_file_location("probe", ROOT / "scripts/check-sandbox.py")
+    landrun = LANDRUN
+    spec = importlib.util.spec_from_file_location("probe", VERIFIER / "check-sandbox.py")
     probe = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(probe)
     print(json.dumps(probe.check(lean, exporter, landrun)), flush=True)
@@ -34,8 +34,8 @@ def main():
     # Production candidate files are unused here. The test modules are copied
     # explicitly into the trusted organizer-only test project below.
     prepare_project(project, {}, "import LeanSphincs.Benchmark.Target\n")
-    shutil.copytree(ROOT / "LeanSphincsTest", project / "LeanSphincsTest")
-    shutil.copy2(ROOT / "LeanSphincsTest.lean", project / "LeanSphincsTest.lean")
+    shutil.copytree(FORMAL / "LeanSphincsTest", project / "LeanSphincsTest")
+    shutil.copy2(FORMAL / "LeanSphincsTest.lean", project / "LeanSphincsTest.lean")
     for facet in ("lib/lean", "ir"):
         (project / f".lake/build/{facet}/LeanSphincsTest/Submission").mkdir(parents=True)
     env = {"PATH": f"{lean}/bin:/usr/bin:/bin", "HOME": str(project / "home"),
@@ -45,7 +45,7 @@ def main():
     if run([str(lean / "bin/lake"), "build", "LeanSphincsTest.Challenge"], project,
            env, directory / "trusted-build.log"):
         raise SystemExit(f"canary build failed: {directory}")
-    config = json.loads((ROOT / "benchmark/comparator.json").read_text())
+    config = json.loads((VERIFIER / "comparator.json").read_text())
     config.update(challenge_module="LeanSphincsTest.Challenge", theorem_names=["LeanSphincsTest.candidate"],
                   definition_names=["LeanSphincsTest.Submission.scheme"])
     for case, expected in [("Good", "Your solution is okay!"),
@@ -64,13 +64,13 @@ def main():
             raise RuntimeError(f"canary compilation failed: {case}")
         frozen = directory / (case + "-verification")
         prepare_project(frozen, {}, "import LeanSphincs.Benchmark.Target\n")
-        shutil.copytree(ROOT / "LeanSphincsTest", frozen / "LeanSphincsTest")
+        shutil.copytree(FORMAL / "LeanSphincsTest", frozen / "LeanSphincsTest")
         for namespace in ("LeanSphincs/Benchmark", "LeanSphincsTest"):
             shutil.copytree(project / ".lake/build/lib/lean" / namespace,
                 frozen / ".lake/build/lib/lean" / namespace, dirs_exist_ok=True,
                 ignore=shutil.ignore_patterns("Submission"))
         (frozen / ".lake/build/lib/lean/LeanSphincsTest/Submission").mkdir()
-        modules = [p.stem for p in (ROOT / "LeanSphincsTest/Submission").glob("*.lean")]
+        modules = [p.stem for p in (FORMAL / "LeanSphincsTest/Submission").glob("*.lean")]
         artifacts = freeze_artifacts(project, frozen, modules, "LeanSphincsTest.Submission", [case])
         sandbox_config = json.loads((project / "sandbox.json").read_text())
         sandbox_config["verification_only"] = True

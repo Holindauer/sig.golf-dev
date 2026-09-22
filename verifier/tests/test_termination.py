@@ -10,7 +10,7 @@ import time
 import unittest
 from unittest.mock import MagicMock, patch
 
-SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+SCRIPTS = Path(__file__).resolve().parents[1]   # verifier/
 sys.path.insert(0, str(SCRIPTS))
 import verify_submission
 from verify_submission import termination_as_interrupt

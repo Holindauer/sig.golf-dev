@@ -14,17 +14,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: leanprover/lean-action@v1
-      - run: bash setup.sh
-      - run: python3 -m unittest discover -s tests -v
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - run: bash verifier/setup_tools.sh
+      - run: python3 -m unittest discover -s verifier/tests -v
+      - run: python3 -m unittest discover -s tools/tests -v
       - run: lake build LeanSphincsTest.AdaptiveAvailability
+        working-directory: formal
       - run: lake env lean scripts/check-availability-axioms.lean
+        working-directory: formal
       - run: lake build LeanSphincsTest.BoundExamples LeanSphincsTest.SigningFailure LeanSphincsTest.OracleMeter
+        working-directory: formal
       - run: lake build LeanSphincsTest.ReviewRules
+        working-directory: formal
       - run: lake build LeanSphincsTest.OTSScore LeanSphincsTest.OTSGraph LeanSphincsTest.OTSEvaluate
+        working-directory: formal
       - run: lake build LeanSphincsTest.OTSReconstruct LeanSphincsTest.OTSFailure
+        working-directory: formal
       - run: lake env lean scripts/check-ots-axioms.lean
-      - run: python3 scripts/test-comparator.py
-      - run: python3 scripts/test-verifier.py --insecure-local
+        working-directory: formal
+      - run: python3 verifier/test-comparator.py
+      - run: python3 verifier/test-verifier.py --insecure-local
   service:
     runs-on: ubuntu-latest
     timeout-minutes: 15

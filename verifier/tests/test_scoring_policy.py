@@ -4,15 +4,16 @@ import sys
 import tempfile
 import unittest
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scripts"))
+VERIFIER = Path(__file__).resolve().parents[1]
+ROOT = VERIFIER.parent
+sys.path.insert(0, str(VERIFIER))
 from scoring_policy import product_score, load_scoring_profile, score_entry
 from verify_submission import harness_manifest
 
 
 class ScoringPolicyTests(unittest.TestCase):
     def test_profile_is_integrity_bound(self):
-        self.assertIn("benchmark/scoring.json", harness_manifest()["files"])
+        self.assertIn("verifier/scoring.json", harness_manifest()["files"])
 
     def test_exact_product_and_tradeoffs(self):
         self.assertEqual(product_score(2, 3), 6)
@@ -21,7 +22,7 @@ class ScoringPolicyTests(unittest.TestCase):
         self.assertLess(product_score(99, 200), product_score(100, 200))
 
     def test_product_scores_without_price_but_never_confers_eligibility(self):
-        profile = load_scoring_profile(ROOT / "benchmark/scoring.json")
+        profile = load_scoring_profile(VERIFIER / "scoring.json")
         self.assertNotIn("bandwidth_price", profile)
         score = score_entry(profile, 100, 200)
         self.assertEqual(score["value"], "20000")
@@ -31,7 +32,7 @@ class ScoringPolicyTests(unittest.TestCase):
         self.assertFalse(score["eligible"])
 
     def test_old_profile_and_entrant_pricing_rejected(self):
-        base = load_scoring_profile(ROOT / "benchmark/scoring.json")
+        base = load_scoring_profile(VERIFIER / "scoring.json")
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "scoring.json"
             for changes in ({"schema": "leansphincs-additive-profile-v1"},

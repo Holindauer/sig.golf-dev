@@ -4,14 +4,15 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from eligibility import CAPS, deployment_gates, load_resource_profile, profile_digest
 from scoring_policy import CLAIM_ID
-ROOT = Path(__file__).resolve().parents[1]
+VERIFIER = Path(__file__).resolve().parents[1]
+ROOT = VERIFIER.parent
 
 class EligibilityTests(unittest.TestCase):
     def setUp(self):
-        self.profile = load_resource_profile(ROOT / 'benchmark/resources.json')
+        self.profile = load_resource_profile(VERIFIER / 'resources.json')
 
     def test_unset_caps_and_missing_evidence_fail_closed(self):
         gates = deployment_gates(self.profile)

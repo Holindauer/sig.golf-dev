@@ -9,9 +9,10 @@ import sys
 import tempfile
 import unittest
 
-ROOT = Path(__file__).resolve().parents[1]
-CLAIM = ROOT / "LeanSphincs/Benchmark/Claim.lean"
-PROFILE = ROOT / "benchmark/resources.json"
+VERIFIER = Path(__file__).resolve().parents[1]
+ROOT = VERIFIER.parent
+CLAIM = ROOT / "formal/LeanSphincs/Benchmark/Claim.lean"
+PROFILE = VERIFIER / "resources.json"
 LEAN_KEYS = {"rawKeygenCap": "raw_keygen_queries", "rawSignCap": "raw_sign_queries",
              "rawVerifyCap": "raw_verify_queries", "sampleKeygenCap": "raw_keygen_samples",
              "sampleSignCap": "raw_sign_samples"}
@@ -52,9 +53,9 @@ class RawCapTests(unittest.TestCase):
                 self.assertEqual(value, caps[lean_name], key)
 
     def test_statement_caps_match_eligibility_mirror(self):
-        spec = importlib.util.spec_from_file_location("eligibility", ROOT / "scripts/eligibility.py")
+        spec = importlib.util.spec_from_file_location("eligibility", VERIFIER / "eligibility.py")
         module = importlib.util.module_from_spec(spec)
-        sys.path.insert(0, str(ROOT / "scripts"))
+        sys.path.insert(0, str(VERIFIER))
         spec.loader.exec_module(module)
         caps = lean_caps()
         expected = {key: caps[name] for name, key in LEAN_KEYS.items()}
@@ -71,13 +72,13 @@ class RawCapTests(unittest.TestCase):
                          "attribute [init LeanSphincs.Submission.f] LeanSphincs.Submission.m\n",
                          "@[builtin_init LeanSphincs.Submission.f]\nopaque LeanSphincs.Submission.m : Unit\n"):
                 (root / "Scheme.lean").write_text("import LeanSphincs.Benchmark.Target\n" + code)
-                result = subprocess.run(["bash", str(ROOT / "scripts/check-submission-imports.sh"),
+                result = subprocess.run(["bash", str(VERIFIER / "check-submission-imports.sh"),
                                          str(root)], capture_output=True, text=True)
                 self.assertNotEqual(result.returncode, 0, code)
                 self.assertIn("build-time execution", result.stderr)
             (root / "Scheme.lean").write_text(
                 "import LeanSphincs.Benchmark.Target\ndef LeanSphincs.Submission.f (init : Nat) := init\n")
-            result = subprocess.run(["bash", str(ROOT / "scripts/check-submission-imports.sh"),
+            result = subprocess.run(["bash", str(VERIFIER / "check-submission-imports.sh"),
                                      str(root)], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
 

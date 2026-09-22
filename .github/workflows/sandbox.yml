@@ -13,14 +13,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - run: bash setup.sh
+      - run: bash verifier/setup_tools.sh
       - run: lake build LeanSphincs LeanSphincsTest
+        working-directory: formal
       - run: lake env lean scripts/check-ots-axioms.lean
-      - run: python3 -m unittest discover -s tests -v
+        working-directory: formal
+      - run: python3 -m unittest discover -s verifier/tests -v
+      - run: python3 -m unittest discover -s tools/tests -v
       - run: lake env lean scripts/check-availability-axioms.lean
-      - run: python3 scripts/test-sandbox-lifecycle.py
-      - run: python3 scripts/test-sandbox-comparator.py
-      - run: python3 scripts/test-verifier.py
+        working-directory: formal
+      - run: python3 verifier/test-sandbox-lifecycle.py
+      - run: python3 verifier/test-sandbox-comparator.py
+      - run: python3 verifier/test-verifier.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -5,13 +5,13 @@ from pathlib import Path
 import subprocess
 import tempfile
 from sandbox_profile import landrun_args, systemd_command
-from verify_submission import ROOT, COMPARATOR, run
+from verify_submission import COMPARATOR, LANDRUN, run
 
 
 def main():
     lean = Path(subprocess.check_output(['lean', '--print-prefix'], text=True).strip())
     exporter = COMPARATOR / '.lake/packages/lean4export/.lake/build/bin/lean4export'
-    landrun = ROOT / '.benchmark-tools/landrun/landrun'
+    landrun = LANDRUN
     with tempfile.TemporaryDirectory(prefix='leansphincs-lifecycle-') as directory:
         root = Path(directory)
         output = root / '.lake/build/lib/lean/LeanSphincs/Submission'

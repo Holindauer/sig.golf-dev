@@ -10,13 +10,15 @@ import os
 from pathlib import Path
 import subprocess
 
-ROOT = Path(__file__).resolve().parents[1]
-TOOLS = ROOT / ".benchmark-tools/comparator"
+HERE = Path(__file__).resolve().parent            # verifier/
+ROOT = HERE.parent                                 # the repository
+FORMAL = ROOT / "formal"                           # the lake root
+TOOLS = HERE / ".tools/comparator"
 env = os.environ | {
     "COMPARATOR_LEAN4EXPORT": str(TOOLS / ".lake/packages/lean4export/.lake/build/bin/lean4export"),
     "COMPARATOR_LANDRUN": str(TOOLS / "scripts/fake-landrun.sh"),
 }
-config = json.loads((ROOT / "benchmark/comparator.json").read_text())
+config = json.loads((HERE / "comparator.json").read_text())
 config.update(challenge_module="LeanSphincsTest.Challenge",
               theorem_names=["LeanSphincsTest.candidate"],
               definition_names=["LeanSphincsTest.Submission.scheme"])
@@ -34,7 +36,7 @@ for case, expected in [
     config_path = output / f"{case}.json"
     config_path.write_text(json.dumps(config))
     result = subprocess.run(["lake", "env", str(TOOLS / ".lake/build/bin/comparator"),
-                             str(config_path)], cwd=ROOT, env=env, text=True,
+                             str(config_path)], cwd=FORMAL, env=env, text=True,
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=300)
     (output / f"{case}.log").write_text(result.stdout)
     if (result.returncode == 0) != (case == "Good") or expected not in result.stdout:

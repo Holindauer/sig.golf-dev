@@ -6,8 +6,8 @@ import sys
 import tempfile
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from source_bundle import capture, manifest, materialize
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from source_bundle import OPTIONAL_DOCS, capture, lean_sources, manifest, materialize, without_docs
 
 
 class BundleTests(unittest.TestCase):
@@ -66,6 +66,26 @@ class BundleTests(unittest.TestCase):
             (self.source / "Helper.lean").write_bytes(data)
             with self.assertRaises(ValueError):
                 capture(self.source)
+
+    def test_optional_docs_are_captured_but_not_lean_sources(self):
+        (self.source / "NOTES.md").write_bytes(b"# idea\n")
+        (self.source / "README.md").write_bytes(b"readme\n")
+        captured = capture(self.source)
+        self.assertEqual(set(captured) - set(self.bundle), OPTIONAL_DOCS)
+        self.assertEqual(lean_sources(captured), self.bundle)
+        self.assertEqual(without_docs(manifest(captured)), manifest(self.bundle))
+        self.assertNotEqual(manifest(captured), manifest(self.bundle))
+        self.assertNotEqual(manifest(captured), manifest(captured | {"NOTES.md": b"# other\n"}))
+
+    def test_other_markdown_and_binary_docs_are_rejected(self):
+        for name, data in (("OTHER.md", b"x"), ("notes.md", b"x"), ("NOTES.md", b"\xff"), ("README.md", b"a\x00b")):
+            with self.subTest(name=name):
+                (self.source / name).write_bytes(data)
+                try:
+                    with self.assertRaises(ValueError):
+                        capture(self.source)
+                finally:
+                    (self.source / name).unlink()
 
     def test_refuses_existing_snapshot(self):
         with self.assertRaises(FileExistsError):

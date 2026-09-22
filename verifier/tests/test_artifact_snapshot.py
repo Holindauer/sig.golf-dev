@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from artifact_snapshot import capture_artifacts, freeze_artifacts
 from source_bundle import manifest
 import verify_submission as verifier
@@ -70,7 +70,7 @@ class SnapshotTests(unittest.TestCase):
                     verifier.stop_service('leansphincs-test.service', subprocess.DEVNULL)
 
     def test_no_build_in_prebuilt_comparator(self):
-        patch_text = (Path(__file__).resolve().parents[1] / 'benchmark/comparator-leanchecker.patch').read_text()
+        patch_text = (Path(__file__).resolve().parents[1] / 'comparator-leanchecker.patch').read_text()
         self.assertIn('unless prebuilt do safeLakeBuild challengeModule', patch_text)
         self.assertIn('unless prebuilt do safeLakeBuild solutionModule', patch_text)
         self.assertIn('--verify-prebuilt', patch_text)

@@ -21,7 +21,7 @@ CAPS = ('reference_execution', 'verification_limit', 'raw_keygen_queries',
 FIXED = dict(ram_bytes=65536, keygen_target_ms=60000, sign_target_ms=1500,
              overrun_bits=40, keygen_deadline_ms=360000, sign_deadline_ms=120000)
 # These raw-query and uniform-sampling caps mirror the protected statement's
-# structural caps in LeanSphincs/Benchmark/Claim.lean (rawKeygenCap, rawSignCap,
+# structural caps in formal/LeanSphincs/Benchmark/Claim.lean (rawKeygenCap, rawSignCap,
 # rawVerifyCap, sampleKeygenCap, sampleSignCap). The profile leaves them null
 # until calibrated, but any value it does set must equal the statement, so a
 # calibrated profile can never disagree with the proved caps. A host test keeps
