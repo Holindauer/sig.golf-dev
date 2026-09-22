@@ -40,13 +40,15 @@ Every object has a fixed size in bytes:
 | `expand` | Message, public key, signature   | Witness or failure               | Prover host |
 | `verify` | Message, public key, witness     | Accept or reject                 | zkVM        |
 
-The seed is secret. The cache is public and untrusted. `expand` converts the compact signature into a verification witness, for example by expanding Merkle paths. It may simply copy the signature when `S = W`.
+The seed is secret. The cache is public and untrusted. `expand` converts the compact signature into a verification witness, for example by unprunning Merkle paths. It may simply copy the signature when `S = W`.
 
 ## Model and costs
 
-All programs and the adversary share a random oracle H: distinct finite bit strings receive independent uniform 32-byte answers; repeated inputs receive the same answer. Programs are deterministic given their inputs and H.
+All programs and the adversary share a random oracle H.
 
 Security counts calls to H. Program budgets and HASH cycles count compressions: hashing n bits costs `max(1, ceil(n / 512))` compressions.
+
+RiscV cycle breakdown:
 
 | Operation                                        | Cost                                                   |
 | ------------------------------------------------ | ------------------------------------------------------ |
@@ -73,32 +75,29 @@ Stop at the first failure. We say the `experiment succeeds` when all stages succ
 2. **Compression budgets:** for every seed, `E_H[2^(Kmax_P / BUDGET_P)] <= 2` for each P in {`keygen`, `sign`, `expand`}.
 3. **Verification cycles:** for every seed, message and oracle, if the experiment succeeds, `verify` uses at most `C` cycles.
 
-`Pr_H` and `E_H` range over H. The exponent uses real division.
+`Pr_H` means the probability over H. `E_H` means the expected value over H.
 
 ### Security
 
-Consider the following experiment for a classical probabilistic adversary A with unrestricted computation and an integer hash-call budget `Q >= 1`:
+Consider the following experiment for a classical probabilistic adversary `A` with unrestricted computation and an integer hash-call budget `Q >= 1`:
 
 1. Sample H and a uniform seed independently. Initialize an empty transcript T and count all calls to H throughout the experiment.
-2. Run `keygen(seed)`. Failure ends the experiment without a win; otherwise give A the public key and cache.
-3. A may adaptively query two oracles:
+2. Run `keygen(seed)`. Failure ends the experiment without a win; otherwise give `A` the public key and cache.
+3. `A` may then adaptively query two oracles:
    - **`random_oracle(input_A)`:** return H(input_A).
    - **`signing_oracle(message_A, cache_A)`:** run `sign(seed, public key, cache_A, message_A)` using the original seed and public key. Return the signature or failure. Add each returned `(message_A, signature)` to T. Allow at most `LIFETIME` requests.
-4. A makes one final submission, choosing either form below. Both use the original public key:
-   - **New-message forgery:** submit `(message_A, witness_A)`. `verify(message_A, public key, witness_A)` accepts, and no pair in T has message `message_A`.
-   - **New-signature forgery:** submit `(message_A, signature_A)`. `expand(message_A, public key, signature_A)` returns a witness that `verify` accepts, and `(message_A, signature_A)` is not in T.
+4. `A` makes one final submission, choosing either form below:
+   - **witness weak unforgeability:** submit `(message_A, witness_A)`. `A` wins if `verify(message_A, public key, witness_A)` accepts, and no pair in T has message `message_A`, and the total hash-call count is at most Q
+   - **signature strong unforgeability:** submit `(message_A, signature_A)`. `A` wins if `expand(message_A, public key, signature_A)` returns a witness that `verify` accepts, and `(message_A, signature_A)` is not in T, and the total hash-call count is at most Q.
 
-A wins if the chosen forgery condition holds and the total hash-call count is at most Q. This count includes key generation, signing, A’s queries, and final expansion and verification when performed.
+The total hash-call count includes key generation, signing, `A`’s queries, and final expansion and verification when performed.
 
-**Security:** for every A and `Q >= 1`, `Pr[A wins] <= Q / 2^SECURITY_BITS`, over the seed, H, and A’s private randomness.
+**Security:** for every A and `Q >= 1`, `Pr[A wins] <= Q / 2^SECURITY_BITS`, over the seed, H, and `A`’s private randomness.
 
 ### Program requirements
 
-1. **Sizes:** successful outputs have their declared fixed sizes.
-2. **Memory:** each program uses at most 1 MiB of memory.
-3. **Correctness:** whenever `sign` returns a signature and `expand` returns a witness from it, `verify` accepts, using the same message, public key, and H.
-4. **Statelessness:** signing reuses the seed and honest cache without updates, counters, consumed one-time keys, or other persistent state.
-5. **Termination:** every program terminates with a result or failure in fewer than `CYCLE_LIMIT` cycles, for every input and oracle.
+1. **Memory:** each program uses at most 16 MiB of memory.
+2. **Termination:** every program terminates with a result or failure in fewer than `CYCLE_LIMIT` cycles, for every input and oracle.
 
 ## RISC-V interface
 
@@ -110,9 +109,9 @@ Each program satisfies **`4 × instruction count + embedded-data bytes < 2^20`**
 
 Code occupies a separate, immutable instruction address space. Instruction i is at `0x1000 + 4 × i`.
 
-Memory occupies `0x000000`–`0x0FFFFF` (1 MiB), including embedded data, inputs, outputs, scratch space, and stack.
+Memory occupies `0x000000`–`0xFFFFFF` (16 MiB), including embedded data, inputs, outputs, scratch space, and stack.
 
-Initialize memory to zero. Load D embedded bytes at `data_base = 16 × floor((0x100000 - D) / 16)`. Initially, `sp = data_base` and `PC = 0x1000`; all other integer registers are zero.
+Initialize memory to zero. Load D embedded bytes at `data_base = 16 × floor((0x1000000 - D) / 16)`. Initially, `sp = data_base` and `PC = 0x1000`; all other integer registers are zero.
 
 ### Inputs and outputs
 
@@ -148,7 +147,7 @@ HASH writes H's 32-byte answer at the output address.
 - **Instructions:** encodings are 32 bits. Fetching outside the code or at a non-4-byte-aligned address fails. `FENCE` has no effect; `EBREAK` fails.
 - **Registers:** `x0`–`x31` are 64 bits. `x0` always reads zero and ignores writes. Aliases are `sp = x2`, `t0 = x5`, and `a0`–`a2 = x10`–`x12`. PC is separate.
 - **Memory access:** addresses count bytes; multi-byte integers are little-endian. Loads and stores access only memory, not code. Accesses of 1, 2, 4, or 8 bytes require alignment to their size. Misaligned accesses fail.
-- **Bounds:** every memory access and buffer must fit completely in memory. For unsigned byte address p and length n, require `p + n <= 0x100000`. All size, layout, and bounds calculations use mathematical integers without overflow. Instruction arithmetic and effective-address calculation follow RV64IM.
+- **Bounds:** every memory access and buffer must fit completely in memory. For unsigned byte address p and length n, require `p + n <= 0x1000000`. All size, layout, and bounds calculations use mathematical integers without overflow. Instruction arithmetic and effective-address calculation follow RV64IM.
 - **Buffer layout:** cache, signature, and witness occupy separate consecutive areas, with up to seven alignment bytes after the signature. Require `0x20060 + 8 × ceil(S / 8) + W <= data_base` for each program.
 - **Input loading:** reject incorrect sizes or buffers extending beyond `data_base`. Starting addresses are 8-byte aligned; lengths need not be multiples of eight.
 - **Output extraction:** read each output at its declared size from its fixed address in final memory. On failure, ignore output buffers.
