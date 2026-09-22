@@ -1,19 +1,21 @@
 {% extends "base.html" %}
 {% block title %}Submission {{ sub.id[:8] }} · sig.golf{% endblock %}
 {% block content %}
-<p class="muted"><a href="/#board-title">Leaderboard</a> / {{ t.title }}</p>
-<h1>Submission <span class="status s-{{ sub.status }}">{{ sub.status.replace('_', ' ') }}</span></h1>
+<p class="muted"><a class="back" href="/#board-title">← Back to leaderboard</a></p>
+<h1>{{ t.title }} {% if sub.detail_dict.get('demo') %}<span class="tag">demo</span>{% else %}<span class="status s-{{ sub.status }}">{{ sub.status.replace('_', ' ') }}</span>{% endif %}</h1>
 <p class="submission-scope">A verified submission proves, in Lean against the pinned statement, correctness on success, the
 signing-failure gate, exact signature size, the public-key cap, the worst-case verification bound and a canonical
-SUF-CMA bound clearing the 124-bit floor. Verification never promotes: a record needs the merged head.
-<a href="/rules">Rules</a>.</p>
-{% if sub.detail_dict.get('demo') %}<p class="demo-note">Fictional local demo: attribution, score and timestamps are illustrative.</p>{% endif %}
+SUF-CMA bound clearing the 124-bit floor. <a href="/rules">Rules</a>.</p>
+{% if sub.detail_dict.get('demo') %}<p class="demo-note">Fictional demo submission; this entry has not been verified.</p>{% endif %}
+{% if sub.status == 'admitting' %}<p class="notice">Your submission is being queued.</p>{% elif sub.status == 'publishing' %}<p class="notice">Verification has finished. The result will appear shortly.</p>{% endif %}
+{% if not sub.detail_dict.get('demo') and not sub.current_contract %}<p class="notice">Historical result: this submission was checked under a different or unknown contract and is excluded from the current leaderboard.</p>{% endif %}
 <dl class="facts">
-  <dt>Spacetime</dt><dd>{% if sub.scored %}<strong>{{ sub.score_int|num }}</strong> = {{ sub.sigma|num }} bytes × {{ sub.hverify|num }} hash-work units{% else %}–{% endif %}{% if sub.is_record %} <span class="tag">record</span>{% endif %}{% if on_frontier %} <span class="tag frontier">frontier</span>{% endif %}</dd>
+  <dt>Score</dt><dd>{% if sub.scored %}<strong>{{ sub.score_int|num }}</strong> = {{ sub.sigma|num }} bytes × {{ sub.hverify|num }} hash-work units{% else %}–{% endif %}{% if sub.is_record %} <span class="tag">{{ 'demo record' if sub.detail_dict.get('demo') else 'record' }}</span>{% endif %}{% if on_frontier %} <span class="tag frontier">frontier</span>{% endif %}</dd>
   <dt>Submitter</dt><dd><a href="/solvers/{{ sub.user.login }}">{{ sub.user.login }}</a>{% for c in sub.co_authors_list %}, {{ c }}{% endfor %}</dd>
   {% if sub.assisted_by %}<dt>Assisted by</dt><dd>{{ sub.assisted_by }}</dd>{% endif %}
   {% if not sub.detail_dict.get('demo') %}<dt>Commit</dt><dd>{% if sub.commit_url %}<a href="{{ sub.commit_url }}"><code>{{ sub.commit|short }}</code></a>{% else %}<code>{{ sub.commit|short }}</code>{% endif %} in <code>{{ sub.source_repo }}</code></dd>{% endif %}
   {% if sub.pr_url %}<dt>Pull request</dt><dd><a href="{{ sub.pr_url }}">#{{ sub.pr_number }}</a></dd>{% endif %}
+  {% if sub.source_url %}<dt>Code</dt><dd><a href="{{ sub.source_url }}">View source on GitHub</a></dd>{% elif sub.archive_url %}<dt>Checked code</dt><dd><a href="{{ sub.archive_url }}">Download exact source ZIP</a></dd>{% elif not sub.detail_dict.get('demo') and sub.finished_at %}<dt>Checked code</dt><dd>Source archive unavailable.</dd>{% endif %}
   {% if sub.detail_dict.get('claim_version') %}<dt>Statement</dt><dd><code>{{ sub.detail_dict.claim_version }}</code>{% if sub.detail_dict.get('hash_meter') %} · meter <code>{{ sub.detail_dict.hash_meter }}</code>{% endif %}</dd>{% endif %}
   <dt>Queued</dt><dd>{{ sub.created_at|dt }}{% if queue_position %} · position {{ queue_position }} in the queue{% endif %}</dd>
   {% if sub.finished_at %}<dt>Finished</dt><dd>{{ sub.finished_at|dt }}{% if sub.duration_s %} · {{ '%.0f'|format(sub.duration_s) }} s{% endif %}</dd>{% endif %}

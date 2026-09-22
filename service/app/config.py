@@ -9,6 +9,8 @@ from urllib.parse import urlsplit
 
 SERVICE_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_REPO_ROOT = SERVICE_DIR.parent
+DEFAULT_CONTRACT_REPO = "leanEthereum/sig.golf-dev"
+DEFAULT_SUBMISSIONS_REPO = "leanEthereum/sig.golf-submissions"
 
 
 @dataclass
@@ -21,10 +23,17 @@ class Settings:
     base_url: str = os.environ.get("SIG_BASE_URL", "http://localhost:8000").rstrip("/")
     github_webhook_secret: str = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
     github_token: str = os.environ.get("GITHUB_TOKEN", "")
-    contract_repo: str = os.environ.get("SIG_CONTRACT_REPO", "")   # owner/name of the public repository
+    contract_repo: str = os.environ.get("SIG_CONTRACT_REPO", DEFAULT_CONTRACT_REPO)
+    submissions_repo: str = os.environ.get("SIG_SUBMISSIONS_REPO", "")  # empty keeps webhook admission closed
+    # The account whose pull-request comments carry verdicts; by default the token's own login.
+    bot_login: str = os.environ.get("SIG_BOT_LOGIN", "")
+    # Invented demo submissions are opt-in for a local preview. Production shows real rows.
+    phony: bool = os.environ.get("SIG_PHONY", "0") == "1"
+    # Rebuild missing submissions from GitHub when the website starts.
+    resync_on_start: bool = os.environ.get("SIG_RESYNC_ON_START", "1") == "1"
     queue_cap: int = int(os.environ.get("SIG_QUEUE_CAP", "20"))
     max_inflight_per_user: int = int(os.environ.get("SIG_MAX_INFLIGHT_PER_USER", "2"))
-    # Development only: run the isolated verifier without its Linux sandbox (verify_submission --insecure-local).
+    # Development only: run the isolated verifier without its Linux sandbox (verify.py --insecure-local).
     insecure_local: bool = os.environ.get("SIG_INSECURE_LOCAL", "0") == "1"
     database_url: str = ""
 
@@ -39,11 +48,14 @@ class Settings:
         if (url.scheme not in {"http", "https"} or not url.netloc or url.username or url.password
                 or url.query or url.fragment or url.path):
             raise ValueError("SIG_BASE_URL must be an http(s) origin without credentials, a path or a query")
-        if self.contract_repo and not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9_.-]{1,100}", self.contract_repo):
-            raise ValueError("SIG_CONTRACT_REPO must be owner/repository")
+        for key, repo in (("SIG_CONTRACT_REPO", self.contract_repo), ("SIG_SUBMISSIONS_REPO", self.submissions_repo)):
+            if repo and not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9_.-]{1,100}", repo):
+                raise ValueError(f"{key} must be owner/repository")
+        if self.submissions_repo and self.submissions_repo.lower() == self.contract_repo.lower():
+            raise ValueError("contract and submissions must use separate repositories")
         if self.environment == "production":
-            if url.scheme != "https" or not self.contract_repo:
-                raise ValueError("production requires an HTTPS origin and contract repository")
+            if url.scheme != "https" or not self.contract_repo or not self.submissions_repo:
+                raise ValueError("production requires an HTTPS origin and both repository settings")
             if self.insecure_local:
                 raise ValueError("production never runs the verifier without its sandbox")
             if self.role == "web" and (not self.github_token or len(self.github_webhook_secret) < 32):
@@ -55,6 +67,14 @@ class Settings:
         self.work_dir = (self.work_dir or self.data_dir / "work").resolve()
         self.work_dir.mkdir(parents=True, exist_ok=True)
         self.database_url = os.environ.get("SIG_DATABASE_URL", f"sqlite:///{self.data_dir / 'sig.db'}")
+
+    @property
+    def contract_url(self) -> str:
+        return "https://github.com/" + (self.contract_repo or DEFAULT_CONTRACT_REPO)
+
+    @property
+    def submissions_url(self) -> str:
+        return "https://github.com/" + (self.submissions_repo or DEFAULT_SUBMISSIONS_REPO)
 
 
 settings = Settings()

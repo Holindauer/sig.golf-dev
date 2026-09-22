@@ -27,7 +27,7 @@ def _time_ticks(t0: datetime, t1: datetime, n: int = 5) -> list[datetime]:
     return [t0 + timedelta(seconds=span * i / (n - 1)) for i in range(n)]
 
 
-def record_chart(points: list[dict], now: datetime, unit: str = "spacetime") -> dict:
+def record_chart(points: list[dict], now: datetime, unit: str = "signature bytes × verification work") -> dict:
     """The best score over time as a step curve. Points carry t, value, id, login, sigma, hverify."""
     t1 = max([now, *(p["t"] for p in points)])
     t0 = min((p["t"] for p in points), default=now - timedelta(days=1))
@@ -48,8 +48,8 @@ def record_chart(points: list[dict], now: datetime, unit: str = "spacetime") -> 
 
     out = [f'<svg viewBox="0 0 {W} {H}" class="record-chart" role="group" '
            'aria-labelledby="record-chart-title record-chart-desc">',
-           '<title id="record-chart-title">Best spacetime over time</title>',
-           '<desc id="record-chart-desc">Each step is a merged record that lowered signature bytes times '
+           '<title id="record-chart-title">Best score over time</title>',
+           '<desc id="record-chart-desc">Each step is a record that lowered signature bytes times '
            'verification work. Hover or focus a record for its solver.</desc>']
     for v in _nice_ticks(y_lo, y_hi):
         y = sy(v)
@@ -78,7 +78,7 @@ def record_chart(points: list[dict], now: datetime, unit: str = "spacetime") -> 
                        f'<circle class="mark" cx="{x:.1f}" cy="{y:.1f}" r="4.5"><title>{title}</title></circle></a>')
         out.append('</g>')
     else:
-        out.append(f'<text class="tick empty" x="{(ML + W - MR) / 2:.1f}" y="{(MT + H - MB) / 2:.1f}" text-anchor="middle">No merged record yet</text>')
+        out.append(f'<text class="tick empty" x="{(ML + W - MR) / 2:.1f}" y="{(MT + H - MB) / 2:.1f}" text-anchor="middle">No record yet</text>')
     out.append(f'<line class="crosshair" x1="0" x2="0" y1="{MT}" y2="{H - MB}" visibility="hidden"/>')
     out.append('</svg>')
     return {"svg": '\n'.join(out), "points": json.dumps(side).replace('<', '\\u003c')}
@@ -134,6 +134,6 @@ def pareto_chart(records: list, frontier_ids: set[str]) -> dict:
                    f'<circle class="hit-area" cx="{x:.1f}" cy="{y:.1f}" r="16"/>'
                    f'<circle class="{cls}" cx="{x:.1f}" cy="{y:.1f}" r="5"><title>{title}</title></circle></a>')
     if not pts:
-        out.append(f'<text class="tick empty" x="{(PML + PW - PMR) / 2:.1f}" y="{(PMT + PH - PMB) / 2:.1f}" text-anchor="middle">No merged record yet</text>')
+        out.append(f'<text class="tick empty" x="{(PML + PW - PMR) / 2:.1f}" y="{(PMT + PH - PMB) / 2:.1f}" text-anchor="middle">No record yet</text>')
     out.append('</svg>')
     return {"svg": '\n'.join(out), "points": json.dumps(side).replace('<', '\\u003c')}

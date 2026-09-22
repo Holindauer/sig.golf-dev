@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from types import SimpleNamespace
 
-from app import charts, records
+from app import charts, contract, records
 
 
 def sub(sigma, hverify, ident=None, login='solver', at=None, demo=False):
@@ -41,6 +41,13 @@ class RecordsTests(unittest.TestCase):
         self.assertFalse(records.improves(existing, 2100, 210))           # dominated by (2000, 200)
         self.assertFalse(records.improves(existing, 2000, 200))           # duplicate
         self.assertFalse(records.improves(existing, 1500, 300))           # duplicate frontier point
+
+    def test_lead_compares_score_then_signature(self):
+        self.assertTrue(contract.leads(10, 5, None, None))
+        self.assertTrue(contract.leads(10, 5, 11, 1))
+        self.assertTrue(contract.leads(10, 5, 10, 6))
+        self.assertFalse(contract.leads(10, 5, 10, 5))
+        self.assertFalse(contract.leads(10, 5, 9, 9))
 
     def test_gains_are_relative_to_the_best_score_before_each_record(self):
         recs = [sub(2000, 200, 'a', at=datetime(2026, 9, 1)), sub(1000, 300, 'b', at=datetime(2026, 9, 2)),
@@ -77,14 +84,15 @@ class ChartTests(unittest.TestCase):
         self.assertEqual(json.loads(chart['points'])[0]['login'], login)
         link = svg.find('.//a')
         self.assertIn(login, link.get('aria-label'))
+        self.assertIn(' · demo', link.get('aria-label'))
         self.assertNotIn('onload', link.attrib)
 
     def test_empty_boards_render_a_placeholder_not_a_fake_point(self):
         chart = charts.record_chart([], datetime(2026, 1, 1))
-        self.assertIn('No merged record yet', chart['svg'])
+        self.assertIn('No record yet', chart['svg'])
         self.assertEqual(json.loads(chart['points']), [])
         pareto = charts.pareto_chart([], set())
-        self.assertIn('No merged record yet', pareto['svg'])
+        self.assertIn('No record yet', pareto['svg'])
 
     def test_pareto_chart_marks_frontier_and_dominated_points_differently(self):
         recs = [sub(2000, 200, 'a'), sub(1500, 300, 'b'), sub(2100, 210, 'c')]

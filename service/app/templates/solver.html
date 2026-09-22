@@ -6,7 +6,7 @@
 {% if solver.github_id %}<p><a href="https://github.com/{{ solver.login }}">github.com/{{ solver.login }}</a></p>{% endif %}
 <div class="board-scroll" role="region" tabindex="0" aria-labelledby="solver-name"><table>
 <caption class="visually-hidden">Submissions by {{ solver.login }}</caption>
-<thead><tr><th scope="col">Spacetime</th><th scope="col">σ</th><th scope="col">V</th><th scope="col">Solver</th><th scope="col">Assisted by</th><th scope="col">Status</th><th scope="col">When</th></tr></thead>
+<thead><tr><th scope="col">Score</th><th scope="col">σ</th><th scope="col">V</th><th scope="col">Solver</th><th scope="col">Assisted by</th><th scope="col">Status</th><th scope="col">When</th></tr></thead>
 <tbody>{{ rows(subs) }}</tbody></table>
 </div>
 {% endblock %}

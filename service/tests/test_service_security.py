@@ -1,7 +1,6 @@
 """Service boundaries: signed webhooks, queue admission, and untrusted presentation."""
 from __future__ import annotations
 
-import copy
 import hashlib
 import hmac
 import json
@@ -20,13 +19,7 @@ from sqlalchemy.pool import StaticPool
 from app import contract, github, main
 from app.config import Settings, settings
 from app.db import Base, Submission, User, get_session
-
-
-def open_config():
-    cfg = copy.deepcopy(contract.load())
-    for t in cfg["tracks"]:
-        t["admission"] = "open"
-    return cfg
+from tests.support import open_admission, pin_contract
 
 
 class ServiceSecurityTests(unittest.TestCase):
@@ -34,6 +27,7 @@ class ServiceSecurityTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.patch = patch.object(settings, 'data_dir', Path(self.temp.name))
         self.patch.start()
+        pin_contract(self)
         self.engine = create_engine('sqlite://', connect_args={'check_same_thread': False}, poolclass=StaticPool)
         Base.metadata.create_all(self.engine)
         self.session = Session(self.engine, expire_on_commit=False)
@@ -58,7 +52,7 @@ class ServiceSecurityTests(unittest.TestCase):
         headers = {'x-github-event': 'pull_request', 'x-hub-signature-256': 'sha256=' + digest}
         if not signature:
             headers['x-hub-signature-256'] = 'sha256=' + '0' * 64
-        with patch.object(settings, 'github_webhook_secret', 'test-secret'), patch.object(settings, 'contract_repo', repo):
+        with patch.object(settings, 'github_webhook_secret', 'test-secret'), patch.object(settings, 'submissions_repo', repo):
             return self.client.post('/webhooks/github', content=body, headers=headers)
 
     def test_webhook_rejects_bad_signatures_before_any_github_call(self):
@@ -95,14 +89,34 @@ class ServiceSecurityTests(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             handle.assert_called_once_with('owner/repo', 7, 'a' * 40)
 
-    def test_merge_events_use_separate_authenticated_handler(self):
+    def test_ready_for_review_dispatches_the_exact_head(self):
+        event = self.event()
+        event['action'] = 'ready_for_review'
+        with patch('app.main.handle_pull_request', return_value={'queued': True}) as handle:
+            response = self.send_event(event)
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(response.json()['queued'])
+            handle.assert_called_once_with('owner/repo', 7, 'a' * 40)
+
+    def test_core_repository_webhooks_do_not_queue_proofs(self):
+        with patch.object(settings, 'contract_repo', 'owner/core'), patch('app.main.handle_pull_request') as queue:
+            event = self.event()
+            event['repository']['full_name'] = 'owner/core'
+            response = self.send_event(event)
+            self.assertTrue(response.json()['ignored'])
+            self.assertEqual(response.json()['reason'], 'not the submissions repository')
+            queue.assert_not_called()
+
+    def test_closed_pull_requests_are_ignored(self):
+        """Merging or closing a pull request never decides a record."""
         event = self.event()
         event['action'] = 'closed'
-        with patch('app.main.handle_pull_request') as queue, \
-             patch('app.main.handle_merged_pull_request', return_value={'promoted': False}) as merge:
-            self.assertEqual(self.send_event(event).status_code, 200)
+        with patch('app.main.handle_pull_request') as queue:
+            response = self.send_event(event)
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(response.json()['ignored'])
             queue.assert_not_called()
-            merge.assert_called_once_with('owner/repo', 7, 'a' * 40)
+        self.assertFalse(hasattr(main, 'handle_merged_pull_request'))
 
     def test_webhook_body_and_content_length_limits(self):
         for value, code in [('not-an-integer', 400), ('-1', 400), (str(main.MAX_WEBHOOK_BYTES + 1), 413)]:
@@ -113,20 +127,20 @@ class ServiceSecurityTests(unittest.TestCase):
     def test_pull_request_must_touch_only_the_submission_root(self):
         with patch('app.github.httpx.Client') as client:
             response = client.return_value.__enter__.return_value.get.return_value
-            response.json.return_value = [{'filename': 'submissions/full/Solution.lean'},
-                                          {'filename': 'submissions/full/sigma.txt'}]
+            response.json.return_value = [{'filename': 'formal/Submissions/Full/Solution.lean'},
+                                          {'filename': 'formal/Submissions/Full/sigma.txt'}]
             self.assertEqual(github.pr_track('owner/repo', 7, expected_files=2), ('full', []))
-            response.json.return_value = [{'filename': 'submissions/full/Solution.lean',
-                                           'previous_filename': 'LeanSphincs/Benchmark/Claim.lean'}]
+            response.json.return_value = [{'filename': 'formal/Submissions/Full/Solution.lean',
+                                           'previous_filename': 'formal/LeanSphincs/Benchmark/Claim.lean'}]
             slug, outside = github.pr_track('owner/repo', 7, expected_files=1)
-            self.assertEqual((slug, outside), ('full', ['LeanSphincs/Benchmark/Claim.lean']))
-            response.json.return_value = [{'filename': 'index.html'}]
-            self.assertEqual(github.pr_track('owner/repo', 7, expected_files=1), (None, ['index.html']))
+            self.assertEqual((slug, outside), ('full', ['formal/LeanSphincs/Benchmark/Claim.lean']))
+            response.json.return_value = [{'filename': 'records.json'}]
+            self.assertEqual(github.pr_track('owner/repo', 7, expected_files=1), (None, ['records.json']))
 
     def test_truncated_or_oversized_pull_request_file_list_is_rejected(self):
         with patch('app.github.httpx.Client') as client:
             response = client.return_value.__enter__.return_value.get.return_value
-            response.json.return_value = [{'filename': 'submissions/full/Solution.lean'}]
+            response.json.return_value = [{'filename': 'formal/Submissions/Full/Solution.lean'}]
             self.assertIsNone(github.pr_track('owner/repo', 7, expected_files=2)[0])
             client.reset_mock()
             self.assertIsNone(github.pr_track('owner/repo', 7, expected_files=3001)[0])
@@ -164,25 +178,44 @@ class ServiceSecurityTests(unittest.TestCase):
             main.queue_submission(self.session, user, 'full', 'local', 'a' * 40, None, [], None, None, None)
         self.assertEqual(caught.exception.status_code, 403)
         self.assertIn('not open yet', caught.exception.detail)
+        self.assertEqual(list(self.session.scalars(select(Submission))), [])
+
+    def test_closed_admission_answers_the_pull_request_without_retaining_anything(self):
+        pr = {'state': 'open', 'changed_files': 1, 'body': 'A proof.', 'user': {'login': 'alice', 'id': 42},
+              'base': {'ref': 'main', 'repo': {'default_branch': 'main'}},
+              'head': {'sha': 'b' * 40, 'repo': {'clone_url': 'https://github.com/alice/entries.git'}}}
+        with patch.object(settings, 'submissions_repo', 'owner/repo'), patch('app.main.SessionLocal',
+                sessionmaker(self.engine, expire_on_commit=False)), \
+             patch('app.main.github.get_pr', return_value=pr), \
+             patch('app.main.github.pr_track', return_value=('full', [])), \
+             patch('app.main.github.ensure_source_ref') as pin, \
+             patch('app.main.github.post_comment') as comment:
+            result = main.handle_pull_request('owner/repo', 9, 'b' * 40)
+        self.assertFalse(result['queued'])
+        self.assertIn('not open yet', result['reason'])
+        pin.assert_not_called()
+        self.assertIn('not queued', comment.call_args.args[2])
+        self.assertEqual(list(self.session.scalars(select(Submission))), [])
 
     def test_commit_queue_requires_exact_sha_and_rejects_duplicates(self):
+        open_admission(self)
         user = User(login='alice')
         self.session.add(user)
         self.session.commit()
-        with patch.object(contract, 'load', return_value=open_config()):
-            for sha in ['a' * 7, 'a' * 39, 'a' * 41, 'x' * 40]:
-                with self.assertRaises(HTTPException):
-                    main.queue_submission(self.session, user, 'full', 'local', sha, None, [], None, None, None)
-            with self.assertRaises(HTTPException) as unknown:
-                main.queue_submission(self.session, user, 'nope', 'local', 'a' * 40, None, [], None, None, None)
-            self.assertEqual(unknown.exception.status_code, 400)
+        for sha in ['a' * 7, 'a' * 39, 'a' * 41, 'x' * 40]:
+            with self.assertRaises(HTTPException):
+                main.queue_submission(self.session, user, 'full', 'local', sha, None, [], None, None, None)
+        with self.assertRaises(HTTPException) as unknown:
+            main.queue_submission(self.session, user, 'nope', 'local', 'a' * 40, None, [], None, None, None)
+        self.assertEqual(unknown.exception.status_code, 400)
+        main.queue_submission(self.session, user, 'full', 'local', 'a' * 40, None, [], None, None, None)
+        with self.assertRaises(HTTPException) as caught:
             main.queue_submission(self.session, user, 'full', 'local', 'a' * 40, None, [], None, None, None)
-            with self.assertRaises(HTTPException) as caught:
-                main.queue_submission(self.session, user, 'full', 'local', 'a' * 40, None, [], None, None, None)
-            self.assertEqual(caught.exception.status_code, 409)
+        self.assertEqual(caught.exception.status_code, 409)
 
     def test_production_requires_distinct_secret_free_sandboxed_worker_configuration(self):
-        kwargs = {'environment': 'production', 'base_url': 'https://sig.example', 'contract_repo': 'owner/repo',
+        kwargs = {'environment': 'production', 'base_url': 'https://sig.example', 'contract_repo': 'owner/core',
+                  'submissions_repo': 'owner/repo',
                   'data_dir': Path(self.temp.name), 'github_token': '', 'github_webhook_secret': ''}
         with self.assertRaises(ValueError):
             Settings(**kwargs, role='web')
@@ -192,7 +225,9 @@ class ServiceSecurityTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             Settings(**(kwargs | {'insecure_local': True}), role='worker')
         Settings(**(kwargs | {'github_token': 'token', 'github_webhook_secret': 's' * 32}), role='web')
-        for override in ({'base_url': 'http://sig.example'}, {'queue_cap': 0}, {'contract_repo': '../repo'}):
+        for override in ({'base_url': 'http://sig.example'}, {'queue_cap': 0}, {'contract_repo': '../repo'},
+                         {'submissions_repo': '../repo'}, {'submissions_repo': ''}, {'contract_repo': ''},
+                         {'submissions_repo': 'OWNER/CORE'}):
             with self.assertRaises(ValueError):
                 Settings(**(kwargs | override), role='worker')
 
@@ -205,6 +240,7 @@ class ServiceSecurityTests(unittest.TestCase):
             initialize.assert_not_called()
 
     def test_simultaneous_admission_cannot_bypass_per_user_limit(self):
+        open_admission(self)
         engine = create_engine(f'sqlite:///{self.temp.name}/concurrent.db', connect_args={'check_same_thread': False})
         Base.metadata.create_all(engine)
         sessions = sessionmaker(engine, expire_on_commit=False)
@@ -222,8 +258,7 @@ class ServiceSecurityTests(unittest.TestCase):
                     return 200
                 except HTTPException as exc:
                     return exc.status_code
-        with patch.object(contract, 'load', return_value=open_config()), \
-             patch.object(settings, 'max_inflight_per_user', 1), ThreadPoolExecutor(max_workers=2) as executor:
+        with patch.object(settings, 'max_inflight_per_user', 1), ThreadPoolExecutor(max_workers=2) as executor:
             self.assertEqual(sorted(executor.map(submit, [1, 2])), [200, 429])
         with sessions() as session:
             self.assertEqual(len(list(session.scalars(select(Submission)))), 1)
