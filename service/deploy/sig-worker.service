@@ -1,0 +1,29 @@
+[Unit]
+Description=sig.golf verifier worker (one submission at a time)
+After=network.target
+
+[Service]
+User=sig
+Group=sig-state
+UMask=0007
+WorkingDirectory=/srv/sig/repo/service
+EnvironmentFile=/etc/sig/public.env
+Environment=SIG_REPO_ROOT=/srv/sig/repo
+Environment=SIG_ENV=production
+Environment=SIG_ROLE=worker
+Environment=PATH=/srv/sig/.elan/bin:/usr/local/bin:/usr/bin:/bin
+# The worker itself is light. The sandboxed compile and comparator runs are transient services of
+# the sig user's manager, in another cgroup: their memory and time limits come from
+# verifier/verify_submission.py and verifier/sandbox_profile.py, not from here.
+NoNewPrivileges=true
+MemoryMax=28G
+ExecStart=/srv/sig/repo/service/.venv/bin/python -m app.worker
+Restart=always
+RestartSec=5
+TimeoutStopSec=90
+# SIGTERM unwinds the pipeline cleanup and exits 128 + 15.
+SuccessExitStatus=143
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target
