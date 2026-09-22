@@ -49,6 +49,29 @@ theorem query_eq (s : MachineState) (level tree : Nat) (left right : Reference.D
     rw [Signing.getByte_word s 0x80000 i (by decide) (by omega), words ⟨i / 8, by omega⟩]
     exact payload_byte level tree left right ⟨i, bound⟩
 
+/-- The concrete HASH write contains the reference node digest. -/
+theorem node_answer (hash : Hash) (s : MachineState)
+    (level tree : Nat) (left right : Reference.Digest)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 512)
+    (destination : s.getReg .x12 = 0x80300)
+    (words : ∀ i : Fin 8, s.getMem (Signing.wordAddress 0x80000 i.val) = inputWord level tree left right i) :
+    ∀ i : Fin 2, (writeHash s (hash (hashInput s))).getMem (Signing.wordAddress 0x80300 i.val) =
+      (Reference.node hash level tree left right).extractLsb' (64 * i.val) 64 := by
+  intro i
+  rw [Signing.hash_answer_word s (hash (hashInput s)) destination ⟨i.val, by have := i.isLt; omega⟩]
+  have query := query_eq s level tree left right source bits words
+  have node_eq : Reference.node hash level tree left right = Reference.truncate (hash (hashInput s)) := by
+    rw [query]
+    simp only [Reference.node, Reference.query, payload]
+    have arithmetic : 4 + level * 2 ^ 8 + 0 * 2 ^ 16 + 0 * 2 ^ 24 + 0 * 2 ^ 32 =
+        4 + level * 2 ^ 8 := by simp only [Nat.zero_mul, Nat.add_zero]
+    rw [arithmetic]
+  rw [node_eq]
+  change (hash (hashInput s)).extractLsb' (64 * i.val) 64 =
+    ((hash (hashInput s)).extractLsb' 0 128).extractLsb' (64 * i.val) 64
+  fin_cases i <;> ext j hj <;> simp (disch := omega)
+
+
 /-- A prepared node HASH executes exactly once and returns the reference node answer. -/
 theorem hashes_node (image : Image) (hash : Hash) (s : MachineState)
     (level tree : Nat) (left right : Reference.Digest)
@@ -65,19 +88,7 @@ theorem hashes_node (image : Image) (hash : Hash) (s : MachineState)
   refine ⟨writeHash s answer, ?_, Keygen.hash_pc _ _, ?_⟩
   · simpa [len, compressions] using
       Trace.hash s (writeHash s answer) 0 0 0 0 code service valid (Trace.refl _)
-  · intro i
-    rw [Signing.hash_answer_word s answer destination ⟨i.val, by have := i.isLt; omega⟩]
-    have query := query_eq s level tree left right source bits words
-    have node_eq : Reference.node hash level tree left right = Reference.truncate (hash (hashInput s)) := by
-      rw [query]
-      simp only [Reference.node, Reference.query, payload]
-      have arithmetic : 4 + level * 2 ^ 8 + 0 * 2 ^ 16 + 0 * 2 ^ 24 + 0 * 2 ^ 32 =
-          4 + level * 2 ^ 8 := by simp only [Nat.zero_mul, Nat.add_zero]
-      rw [arithmetic]
-    rw [node_eq]
-    change (hash (hashInput s)).extractLsb' (64 * i.val) 64 =
-      ((hash (hashInput s)).extractLsb' 0 128).extractLsb' (64 * i.val) 64
-    fin_cases i <;> ext j hj <;> simp (disch := omega)
+  · exact node_answer hash s level tree left right source bits destination words
 
 /-- The node HASH site in the exact keygen image. -/
 theorem keygen_hash_site (s : MachineState) (pc : s.pc = 0x1190) :

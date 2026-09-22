@@ -18,10 +18,10 @@ Regenerate images with `python3 examples/hypertree/build.py` and the kernel-chec
 - Universal key-generation success, strict termination, and exact resource counts for the submitted bytecode.
 - The complete signer randomizer/index prefix through the official loader: 226 instructions, 256 cycles, two hash calls, four compressions, and the exact reference index.
 - The complete Winternitz encoding subroutine shared by signing and verification: all 46 digits, 454 ordinary instructions, and stack restoration.
-- The verifier’s index prefix through the official loader, with exact index recovery and memory preservation, plus its loop-index shift and final public-key comparison.
-- The key-generation parent-node HASH payload and header preparation, matched to the reference construction.
+- The verifier’s index prefix through the official loader, with exact index recovery and memory preservation, plus its loop-entry memory and stack invariants, optional encoding dispatch, layer advancement, and final public-key comparison.
+- The complete shared parent-node computation and return, matched to the reference construction and checked against the verifier’s code.
 - Canonical signature serialization, with fixed size and mutually inverse encoding/decoding; every signature byte is accounted for.
-- Concrete random-oracle query and cache-replacement lemmas, seed-guessing bounds, monadic reference key generation/signing/verification, and security-constant arithmetic. The complete security reduction remains unfinished.
+- Concrete random-oracle query and cache-replacement lemmas, seed-guessing bounds, exact private/public oracle simulations of reference key generation and signing, a seed-erasure game hop, monadic verification, and security-constant arithmetic. The complete security reduction remains unfinished.
 - The actual expansion bytecode: every input succeeds in exactly 89,733 cycles with zero hash calls, and its returned typed value equals the original signature. These proofs use the organizer’s loader, interpreter, and output decoder.
 
 Still required: full functional bytecode refinement for key generation, signing, and verification; universal signing/verification resource bounds; the honest-execution success and exponential compression-budget statements; and security in the competition game. No `SigGolf.Certificate` is claimed.
