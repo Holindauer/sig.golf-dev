@@ -77,7 +77,7 @@ def Submission.run (submission : Submission) (phase : Phase) (input : Input subm
       else none, execution.exit != .unfinished, execution.cycles, execution.hashCalls,
       execution.hashCompressions⟩
 
-/-- Fixed-oracle meaning, used in correctness and termination claims. -/
+/-- Fixed-oracle meaning, used in termination and verification-cycle claims. -/
 def Submission.runWith (submission : Submission) (hash : Hash) (phase : Phase)
     (input : Input submission.sizes phase) : RunResult (Output submission.sizes phase) :=
   evalWithAnswerFn hash (submission.run phase input)

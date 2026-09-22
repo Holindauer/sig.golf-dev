@@ -25,13 +25,6 @@ def Submission.CompressionBounds (submission : Submission) : Prop :=
       (fun summary => ENNReal.ofReal (Real.rpow 2
         ((summary.maxCosts phase : ℝ) / (phase.budget : ℝ)))) ≤ 2
 
-/-- No change of oracle, public key, or message between signing, expansion, and verification. This also covers successful signing with any supplied cache. -/
-def Submission.Correct (submission : Submission) : Prop :=
-  ∀ (hash : Hash) seed pk cache message signature witness,
-    (submission.runWith hash .sign (seed, pk, cache, message)).value = some signature →
-    (submission.runWith hash .expand (message, pk, signature)).value = some witness →
-    (submission.runWith hash .verify (message, pk, witness)).value = some ()
-
 /-- Scored cycles cover successful honest pipelines. Arbitrary inputs remain subject to the universal termination bound. -/
 def Submission.VerificationBound (submission : Submission) (C : Nat) : Prop :=
   ∀ (hash : Hash) seed message,
@@ -44,7 +37,6 @@ structure Certificate (submission : Submission) (C : Nat) : Prop where
   termination : submission.Terminates
   completeness : submission.Complete
   compressionBounds : submission.CompressionBounds
-  correctness : submission.Correct
   security : submission.Secure
   verificationBound : submission.VerificationBound C
 

@@ -19,10 +19,10 @@ def signatureBase : Nat := 0x20060
 def witnessBase (sizes : Sizes) : Nat := signatureBase + 8 * ((sizes.signature + 7) / 8)
 
 def Image.Valid (image : Image) (sizes : Sizes) : Prop :=
-  image.byteSize < MEMORY_BYTES ∧ witnessBase sizes + sizes.witness ≤ dataBase image
+  image.byteSize < MAX_IMAGE_BYTES ∧ witnessBase sizes + sizes.witness ≤ dataBase image
 
 instance (image : Image) (sizes : Sizes) : Decidable (image.Valid sizes) :=
-  inferInstanceAs (Decidable (image.byteSize < MEMORY_BYTES ∧ witnessBase sizes + sizes.witness ≤ dataBase image))
+  inferInstanceAs (Decidable (image.byteSize < MAX_IMAGE_BYTES ∧ witnessBase sizes + sizes.witness ≤ dataBase image))
 
 def rangeValid (address : BitVec 64) (bytes : Nat) : Bool :=
   decide (address.toNat + bytes ≤ MEMORY_BYTES)

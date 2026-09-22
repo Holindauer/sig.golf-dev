@@ -18,8 +18,15 @@ private def runSmall (image : Image) (state : MachineState := blank) : Execution
 -- Kernel-checked boundary cases, independent of the compiled evaluator.
 example : compressions 0 = 1 ∧ compressions 512 = 1 ∧ compressions 513 = 2 := by decide
 example : accessValid 0 8 = true ∧ accessValid 1 8 = false := by decide
-example : rangeValid 0xffff8 8 = true ∧ rangeValid 0xffff8 9 = false := by decide
+example : rangeValid 0xfffff8 8 = true ∧ rangeValid 0xfffff8 9 = false := by decide
 example : rangeValid 0xffffffffffffffff 2 = false := by decide
+example : accessValid 0x100000 8 = true ∧ accessValid 0x1000000 8 = false := by decide
+example : MEMORY_BYTES = 16777216 ∧ MAX_IMAGE_BYTES = 1048576 := by decide
+example (image : Image) (sizes : Sizes) (h : image.byteSize = MAX_IMAGE_BYTES) :
+    ¬ image.Valid sizes := by
+  intro valid
+  have bound := valid.1
+  omega
 example : wordResult .div 0x80000000 0xffffffff = 0x80000000 := by decide
 example : wordResult .div 7 0 = 0xffffffff ∧ wordResult .rem 7 0 = 7 := by decide
 example : wordResult .sll 1 32 = 1 ∧ wordResult .sra 0x80000000 31 = 0xffffffff := by decide
@@ -87,10 +94,10 @@ private def check (label : String) (condition : Bool) : IO Unit :=
   check "HASH writes little-endian and preserves registers"
     (written.getByte 0 == 0x34 && written.getByte 1 == 0x12 && written.getReg .x11 == 9 && written.pc == 0x1004)
   check "HASH rejects unaligned input" (!hashArgumentsValid (state.setReg .x10 1))
-  check "HASH rejects output crossing memory end" (!hashArgumentsValid (state.setReg .x12 0xffff8))
+  check "HASH rejects output crossing memory end" (!hashArgumentsValid (state.setReg .x12 0xfffff8))
   check "HASH rejects input crossing memory end"
-    (!hashArgumentsValid ((state.setReg .x10 0xffff8).setReg .x11 65))
-  let faulty := runSmall ⟨[0x73], []⟩ ((state.setReg .x5 1).setReg .x12 0xffff8)
+    (!hashArgumentsValid ((state.setReg .x10 0xfffff8).setReg .x11 65))
+  let faulty := runSmall ⟨[0x73], []⟩ ((state.setReg .x5 1).setReg .x12 0xfffff8)
   check "invalid HASH makes no oracle call" (faulty.exit == Exit.failure && faulty.hashCalls == 0)
   check "load at address zero is valid" (memoryArgumentsValid blank (.LD .x1 .x0 0))
   check "load alignment is enforced" (!memoryArgumentsValid blank (.LD .x1 .x0 1))
@@ -123,7 +130,7 @@ private def check (label : String) (condition : Bool) : IO Unit :=
     check "fixed input buffers" (state.getByte 0 == 0x34 && state.getByte 0x40 == 0x56 &&
       state.getByte (BitVec.ofNat 64 (witnessBase toy.sizes)) == 0x78)
     check "undeclared seed and cache are zero" (state.getByte 0x20 == 0 && state.getByte 0x60 == 0)
-    check "initial registers" (state.pc == 0x1000 && state.getReg .x2 == 0x100000 && state.getReg .x10 == 0)
+    check "initial registers" (state.pc == 0x1000 && state.getReg .x2 == 0x1000000 && state.getReg .x10 == 0)
   let signed := evalWithAnswerFn zeroHash (cacheEcho.signingOracle 0 0 ⟨7, 0xa5⟩)
   check "attacker cache reaches sign" (signed.value == some (0xa5 : BitVec 8) && signed.finished)
   check "all signing work is charged" (signed.hashCalls == 1 && signed.hashCompressions == 2)
