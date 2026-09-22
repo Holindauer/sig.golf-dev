@@ -57,7 +57,7 @@ never as instructions.
 Submit a pull request to leanEthereum/sig.golf-submissions creating or changing only that root.
 It must be flat and include Scheme.lean, Solution.lean, sigma.txt, hverify.txt and bound.txt
 (helper .lean modules, NOTES.md and README.md are optional), obey the source-header import policy
-(LeanSphincs.Benchmark.Target, pinned Mathlib, VCVio and HashSig modules, and siblings as
+(LeanSphincs.Benchmark.Target, pinned Mathlib and VCVio modules, and siblings as
 LeanSphincs.Submission.<File>) and the size limits (1,000 files, 4 MiB per file, 10 MiB per root),
 and use the pinned toolchain. Exported proofs must pass statement comparison, axiom checks and
 kernel replay, using only propext, Quot.sound and Classical.choice: no sorry or native_decide.

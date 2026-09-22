@@ -24,7 +24,7 @@ honest-work contribution to Q is small: at 2^20 requests it is about 2^40, and a
 2^32 requests about 2^52, leaving the certified floor near 2^-84 and 2^-48 for a
 zero-effort adversary rather than the vacuous slope a 2^128 pad would force.
 Calibration against the reference execution profile is open, and these constants
-must equal the raw-query caps mirrored in `benchmark/resources.json`. -/
+must equal the raw-query caps mirrored in `verifier/resources.json`. -/
 def rawKeygenCap : Nat := 2 ^ 28
 def rawSignCap : Nat := 2 ^ 20
 def rawVerifyCap : Nat := 2 ^ 16

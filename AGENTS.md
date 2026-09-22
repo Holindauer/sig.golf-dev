@@ -134,7 +134,7 @@ retains the size/verification Pareto frontier.
    tools.
 2. **Source-header imports.** One ordinary `import Module.Name` per line in the initial import
    block of every submitted `.lean` file. Header imports may name `LeanSphincs.Benchmark.Target`,
-   pinned `Mathlib`, `VCVio` and `HashSig` modules, and sibling files of the same root as
+   pinned `Mathlib` and `VCVio` modules, and sibling files of the same root as
    `LeanSphincs.Submission.<File>`. No other `LeanSphincs` module is admitted. Custom elaborators
    and macros, `eval%`, build-time execution and kernel-bypass features are rejected by source
    scanning as defense in depth; compilation runs in the sandbox regardless.
