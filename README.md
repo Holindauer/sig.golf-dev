@@ -21,6 +21,7 @@ score = S * C
 | `FAILURE`       |                2^-256 |
 | `LIFETIME`      | 2^24 signing requests |
 | `SECURITY_BITS` |                   127 |
+| `CYCLE_LIMIT`   |           2^40 cycles |
 
 Every object has a fixed size:
 
@@ -31,7 +32,7 @@ Every object has a fixed size:
 | Public key        |                   16 |
 | Cache             |       2^17 (128 KiB) |
 | Nonce             |                   16 |
-| Compact signature |                  `S` |
+| Compact signature |              `S` ≥ 1 |
 | Expanded witness  | `W` ≤ 2^17 (128 KiB) |
 
 ## Programs
@@ -91,14 +92,19 @@ Consider the following experiment for a classical, probabilistic, ubounded, adve
 - Initialize a hash-call counter and an empty transcript T.
 - Run `keygen(seed)` and give A the result (`public key` and `cache`); failure ends the experiment without a win.
 - `A` may adaptively query two oracles:
-  - **`random_oracle(input)`:** return H(input)
-  - **`signing_oracle(message, nonce, cache')`:** run `sign` with these inputs and the original `seed` and `public key`. Return the signature or failure. Record each returned `(message, signature)` in T. Allow at most `LIFETIME` requests. `cache'`may differ from the original `cache`.
-- At the end of the experiment, `A` submits a `message` and a `witness`. Run `verify` with these inputs and the original `public key`. `A` wins if:
-  - `verify` accepts
-  - its witness differs from every successful `expand(message, public key, signature)` for a `(message, signature)` in T.
-  - The total number of hash call to H, including key generation, signing, `A`'s queries, and verification, is at most `Q`.
+  - **`random_oracle(input_A)`:** return H(input_A)
+  - **`signing_oracle(message_A, nonce_A, cache_A)`:** run `sign` with these inputs and the original `seed` and `public key`. Return the signature or failure. Record each returned `(message_A, signature)` in T. Allow at most `LIFETIME` requests. `cache_A` may differ from the original `cache`.
+- At the end of the experiment, `A` has two possibilities:
+  1) `A` submits (`message_A`, `witness_A`). `A` wins if:
+     - Running `verify` with these inputs and the original `public key` accepts.
+     - For every message `(message, signature)` in T, `message` != `message_A`. (weak unforgeability)
+     - The total number of hash call to H, including key generation, signing, `A`'s queries, and verification, is at most `Q`.
+  2) `A` submits (`message_A`, `signature_A`). `A` wins if:
+     - Running `expand` followed by `verify` with these inputs and the original `public key` accepts.
+     - For every message `(message, signature)` in T, `(message, signature)` != `(message_A, signature_A)`. (strong unforgeability)
+     - The total number of hash calls to H, including key generation, signing, `A`'s queries, expansion, and verification, is at most `Q`.
 
-1. **Strong unforgeability:** for every `A` and Q `Pr[win] <= Q / 2^SECURITY_BITS`, with probability over the seed, H, and `A`'s randomness.
+1. **Security:** for every advserary `A` and query budget Q, `Pr[A wins] <= Q / 2^SECURITY_BITS`, with probability over the seed, H, and `A`'s randomness.
 
 ### Program requirements
 
@@ -106,6 +112,7 @@ Consider the following experiment for a classical, probabilistic, ubounded, adve
 2. **Memory:** each program uses at most 1 MiB of memory.
 3. **Correctness:** whenever `sign` returns a signature and `expand` returns a witness from it, `verify` accepts, using the same message, public key, and H.
 4. **Statelessness:** signing reuses the seed and honest cache without updates, counters, consumed one-time keys, or other persistent state.
+5. **Termination:** every program terminates with a result or failure in fewer than `CYCLE_LIMIT` cycles, for every input and oracle.
 
 
 ## RISC-V interface
