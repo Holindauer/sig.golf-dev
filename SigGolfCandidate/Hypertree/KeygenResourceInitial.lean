@@ -1,0 +1,62 @@
+import SigGolfCandidate.Hypertree.ResourceRun
+import SigGolfCandidate.Memory
+
+namespace SigGolfCandidate.Hypertree.KeygenResource
+open SigGolfCandidate.Resources SigGolf SigGolf.Riscv RiscvZkvm.Rv64
+
+/-- Only four initially zero control words are needed; all seed-dependent data stays unknown. -/
+def initialAbstract : AbstractState :=
+  ⟨0x1000, [(.x2, 0x1000000)],
+    [(0x80408, 0), (0x80410, 0), (0x80418, 0), (0x80440, 0)]⟩
+
+private def blank : MachineState := { regs := fun _ => 0, mem := fun _ => 0, pc := 0x1000 }
+
+def seedState (seed : Seed) : MachineState :=
+  (blank.writeBytesAsWords (BitVec.ofNat 64 0x20) (bytes seed)).setReg .x2 (BitVec.ofNat 64 0x1000000)
+
+theorem seed_loaded (seed : Seed) : initialState submission .keygen seed = some (seedState seed) := by
+  unfold initialState
+  rw [if_pos (admitted.2 .keygen)]
+  have hd : (submission.image .keygen).data = [] := rfl
+  have hb : dataBase (submission.image .keygen) = 0x1000000 := by decide
+  simp only [hd, hb, inputBuffers, List.foldl_cons, List.foldl_nil]
+  rw [MachineState.writeBytesAsWords]
+  rfl
+
+private theorem initial_mem_known (p v : Word) (known : lookup p initialAbstract.mem = some v) :
+    v = 0 ∧ 0x80408 ≤ p.toNat := by
+  simp only [initialAbstract, lookup] at known
+  split_ifs at known <;> simp_all
+
+theorem seed_models (seed : Seed) : initialAbstract.Models (seedState seed) := by
+  refine ⟨?_, ?_, ?_⟩
+  · simp [seedState, initialAbstract, blank]
+  · intro r value known
+    by_cases hz : r = .x0
+    · subst r
+      simp [AbstractState.getReg] at known
+      subst value
+      rfl
+    · by_cases hs : r = .x2
+      · subst r
+        have value_eq : value = 0x1000000 := by
+          simpa [initialAbstract, AbstractState.getReg, lookup] using known.symm
+        rw [value_eq]
+        exact MachineState.getReg_setReg_eq (by decide)
+      · simp [initialAbstract, AbstractState.getReg, lookup, hz, hs] at known
+  · intro p value known
+    obtain ⟨rfl, lower⟩ := initial_mem_known p value known
+    simp only [seedState, MachineState.getMem_setReg]
+    rw [Memory.write_preserves blank 0x20 (bytes seed) p]
+    · rfl
+    · simp [bytes]
+    · right
+      have len : (bytes seed).length = 16 := by simp [bytes]
+      rw [len]
+      omega
+
+/-- info: 'SigGolfCandidate.Hypertree.KeygenResource.seed_models' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms seed_models
+
+end SigGolfCandidate.Hypertree.KeygenResource

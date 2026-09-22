@@ -157,4 +157,53 @@ theorem randomizer_trace (hash : Hash) (s : MachineState) (pc : s.pc = 0x10b4) :
 #guard_msgs in
 #print axioms randomizer_trace
 
+theorem hash_answer_frame (s : MachineState) (answer : BitVec 256)
+    (dst : s.getReg .x12 = 0x80300) (a : Word)
+    (outside : ∀ i : Fin 4, a ≠ wordAddress 0x80300 i.val) :
+    (writeHash s answer).getMem a = s.getMem a := by
+  have h0 : a ≠ 0x80300 := outside 0
+  have h1 : a ≠ 0x80308 := outside 1
+  have h2 : a ≠ 0x80310 := outside 2
+  have h3 : a ≠ 0x80318 := outside 3
+  simp only [writeHash, MachineState.getMem_setPC, dst, MachineState.writeWords,
+    Expansion.mem_setMem]
+  change (if a = 0x80318 then _ else if a = 0x80310 then _ else
+    if a = 0x80308 then _ else if a = 0x80300 then _ else s.getMem a) = s.getMem a
+  rw [if_neg h3, if_neg h2, if_neg h1, if_neg h0]
+
+/-- The first HASH/copy block also preserves every word outside the answer and
+32-byte signature prefix, which includes all seed, public-key and message inputs. -/
+theorem randomizer_trace_frame (hash : Hash) (s : MachineState) (pc : s.pc = 0x10b4) :
+    ∃ final, Trace hash sign s 36 51 1 2 final ∧ final.pc = 0x10fc ∧
+      (∀ i : Fin 4, final.getMem (wordAddress 0x20060 i.val) =
+        (hash (hashInput (randomizerHashState s))).extractLsb' (64 * i.val) 64) ∧
+      (∀ a, (∀ i : Fin 4, a ≠ wordAddress 0x20060 i.val) →
+        (∀ i : Fin 4, a ≠ wordAddress 0x80300 i.val) → final.getMem a = s.getMem a) := by
+  let hs := randomizerHashState s
+  have hpc : hs.pc = 0x10cc := by simp [hs, randomizerHashState_pc, pc]
+  obtain ⟨service, src, len, dst⟩ := randomizerHashState_regs s
+  have hf : fetch sign hs = some (.base .ECALL) := by simp only [fetch, hpc]; decide
+  have hv : hashArgumentsValid hs = true := hash_arguments hs 640 src len dst (by decide)
+  have hlen : (hashInput hs).1 = 640 := by simp [hashInput, hs, len]
+  let answer := hash (hashInput hs)
+  have outpc : (writeHash hs answer).pc = 0x10d0 := by simp [hash_pc, hpc]
+  obtain ⟨final, loop, inv, output, frame⟩ := copy_all sign 0x10e4 randomizer_copy_code
+    0x80300 0x20060 4 (randomizerCopyState (writeHash hs answer))
+    (randomizerCopyState_invariant (writeHash hs answer) outpc)
+    (by decide) (by decide) (by decide) (by decide) (by decide)
+  have copied : OrdinarySteps sign (writeHash hs answer) 29 final :=
+    ordinary_trans sign _ _ final 5 24 (randomizerCopyState_block _ outpc) loop
+  have call : Trace hash sign hs 1 16 1 2 (writeHash hs answer) := by
+    simpa [hlen, compressions] using Trace.hash hs (writeHash hs answer) 0 0 0 0 hf service hv
+      (Trace.refl (writeHash hs answer))
+  refine ⟨final, ((randomizerHashState_block s pc).trace.trans call).trans copied.trace,
+    by simpa [CopyInvariant] using inv.2.2.1, ?_, ?_⟩
+  · intro i
+    rw [output i.val i.isLt, randomizerCopyState_mem]
+    exact hash_answer_word hs answer dst i
+  · intro a sigOutside answerOutside
+    rw [frame a (fun i hi => sigOutside ⟨i, hi⟩), randomizerCopyState_mem,
+      hash_answer_frame hs answer dst a answerOutside]
+    simp [hs, randomizerHashState, execInstrBr]
+
 end SigGolfCandidate.Hypertree.Signing

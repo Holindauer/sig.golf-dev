@@ -1,4 +1,5 @@
 import SigGolfCandidate.Hypertree.Expand
+import SigGolfCandidate.Memory
 import RiscvZkvm.Rv64.Logic.MemRegion
 
 namespace SigGolfCandidate.Hypertree.Expansion
@@ -149,6 +150,25 @@ theorem run_copies_buffer (hash : Hash) (input : Input submission.sizes .expand)
   change some (readBuffer final (witnessBase submission.sizes) signatureBytes) = _
   rw [show witnessBase submission.sizes = 0x3d3b0 from by decide]
   exact congrArg some same
+
+set_option maxRecDepth 4096 in
+/-- Expansion returns the exact typed signature through the official loader and decoder. -/
+theorem run_identity (hash : Hash) (input : Input submission.sizes .expand) :
+    (submission.runWith hash .expand input).value = some input.2.2 := by
+  rcases input with ⟨message, pk, signature⟩
+  obtain ⟨initial, loaded, output⟩ := run_copies_buffer hash (message, pk, signature)
+  rw [output]
+  apply congrArg some
+  unfold initialState at loaded
+  rw [if_pos (admitted.2 .expand)] at loaded
+  cases Option.some.inj loaded
+  dsimp only [inputBuffers, List.foldl_cons, List.foldl_nil]
+  rw [Memory.readBuffer_setReg]
+  exact Memory.read_write_buffer _ 0x20060 signatureBytes signature (by decide) (by decide)
+
+/-- info: 'SigGolfCandidate.Hypertree.Expansion.run_identity' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms run_identity
 
 /-- info: 'SigGolfCandidate.Hypertree.Expansion.copies_words' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
