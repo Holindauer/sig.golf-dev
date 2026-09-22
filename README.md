@@ -14,7 +14,7 @@ the draft rules page (`index.html`) that the live site serves at `/rules`. [AGEN
 is the precise specification: exact exports, submission-root rules, limits and the submission
 workflow. **Submissions are not open**: admission stays `closed` in [`challenges.json`](challenges.json)
 until the launch gates in [docs/SCHEMECLAIM_PLAN.md](docs/SCHEMECLAIM_PLAN.md) are met. The
-`sig.golf` domain is pending; until the service is deployed, GitHub Pages serves the rules.
+service is not deployed yet; until launch, GitHub Pages serves the rules.
 
 ## Tracks
 

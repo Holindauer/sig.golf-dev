@@ -92,7 +92,7 @@ from the core checkout; submissions never change it. A real check requires Linux
 ABI 8 or newer and a user systemd manager; --insecure-local is an organizer-only diagnostic whose
 result certifies nothing about isolation. Do not push or deploy without authorization.
 
-- Core: https://github.com/leanEthereum/sig.golf-dev (site: https://sig.golf, domain pending)
+- Core: https://github.com/leanEthereum/sig.golf-dev (site: https://sig.golf, not deployed before launch)
 - Proof PRs: https://github.com/leanEthereum/sig.golf-submissions
 - Exact submission requirements and exports: https://sig.golf/rules.md (deployed AGENTS.md)
 - Track metadata, limits, protected files and admission: challenges.json
