@@ -17,6 +17,9 @@ Regenerate images with `python3 examples/hypertree/build.py` and the kernel-chec
 - Image-independent protected copy-loop and HASH execution lemmas, including exact copied contents and preservation outside the destination.
 - Universal key-generation success, strict termination, and exact resource counts for the submitted bytecode.
 - The complete signer randomizer/index prefix through the official loader: 226 instructions, 256 cycles, two hash calls, four compressions, and the exact reference index.
+- The complete Winternitz encoding subroutine shared by signing and verification: all 46 digits, 454 ordinary instructions, and stack restoration.
+- The verifier’s index prefix through the official loader, with exact index recovery and memory preservation, plus its loop-index shift and final public-key comparison.
+- The key-generation parent-node HASH payload and header preparation, matched to the reference construction.
 - Canonical signature serialization, with fixed size and mutually inverse encoding/decoding; every signature byte is accounted for.
 - Concrete random-oracle query and cache-replacement lemmas, seed-guessing bounds, monadic reference key generation/signing/verification, and security-constant arithmetic. The complete security reduction remains unfinished.
 - The actual expansion bytecode: every input succeeds in exactly 89,733 cycles with zero hash calls, and its returned typed value equals the original signature. These proofs use the organizer’s loader, interpreter, and output decoder.

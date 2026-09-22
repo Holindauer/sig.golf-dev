@@ -33,3 +33,17 @@ import SigGolfCandidate.Hypertree.SignShift
 import SigGolfCandidate.Hypertree.Signature
 import SigGolfCandidate.Hypertree.SignatureDecode
 import SigGolfCandidate.Hypertree.SecurityVerify
+import SigGolfCandidate.Hypertree.KeygenCopyFrame
+import SigGolfCandidate.Hypertree.KeygenNode
+import SigGolfCandidate.Hypertree.KeygenNodePrepare
+import SigGolfCandidate.Hypertree.SignEncode
+import SigGolfCandidate.Hypertree.SignEncodeLoop
+import SigGolfCandidate.Hypertree.SignEncodeFinish
+import SigGolfCandidate.Hypertree.SignEncodeSubroutine
+import SigGolfCandidate.Hypertree.VerifyIndex
+import SigGolfCandidate.Hypertree.VerifyPrepare
+import SigGolfCandidate.Hypertree.VerifyRefine
+import SigGolfCandidate.Hypertree.VerifyLoader
+import SigGolfCandidate.Hypertree.VerifyIndexFrame
+import SigGolfCandidate.Hypertree.VerifyControl
+import SigGolfCandidate.Hypertree.VerifyEntry
