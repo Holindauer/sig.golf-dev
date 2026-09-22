@@ -10,7 +10,7 @@ import unittest
 from urllib.parse import unquote, urlsplit
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 class Page(HTMLParser):
@@ -64,7 +64,7 @@ class WebsiteTests(unittest.TestCase):
                 self.assertIn(unquote(href[1:]), self.page.ids)
 
     def test_linked_repo_documents_exist(self):
-        prefix = "/leanEthereum/sig.golf/blob/main/"
+        prefix = "/leanEthereum/sig.golf-dev/blob/main/"
         checked = 0
         for href in self.page.links:
             url = urlsplit(href)
@@ -75,9 +75,9 @@ class WebsiteTests(unittest.TestCase):
         self.assertGreater(checked, 0)
 
     def test_version_and_product_objective(self):
-        self.assertIn("DRAFT v0.22", self.source)
-        self.assertIn("draft rules v0.22", self.source)
-        self.assertIn("2026-09-15", self.source)
+        self.assertIn("DRAFT v0.23", self.source)
+        self.assertIn("draft rules v0.23", self.source)
+        self.assertIn("2026-09-22", self.source)
         self.assertIn('<span class="formula-big">minimize&nbsp;&nbsp;|σ| × V</span>', self.source)
         self.assertIn("Stage 1 is academic research; Stage 2 is the Ethereum selection.", self.source)
         objective = self.page.section_text("objective")
@@ -90,18 +90,32 @@ class WebsiteTests(unittest.TestCase):
         self.assertIn("worst-case cap", objective)
         self.assertIn("2 minutes signing and 6 minutes keygen", objective)
         self.assertIn("Those absolute limits admit no overrun allowance", objective)
-        for stale in ("v0.12", "v0.13", "v0.14", "v0.15", "v0.16", "v0.17", "v0.18", "v0.19", "Spacetime", "2^-60", "2<sup>−60</sup>"):
+        for stale in ("v0.12", "v0.13", "v0.14", "v0.15", "v0.16", "v0.17", "v0.18", "v0.19", "v0.20", "v0.21", "v0.22", "Spacetime", "2^-60", "2<sup>−60</sup>"):
             self.assertNotIn(stale, self.source)
 
     def test_publication_mechanics_stay_out_of_the_rules(self):
-        self.assertIn('<link rel="canonical" href="https://leanethereum.github.io/sig.golf/">', self.source)
+        self.assertIn('<link rel="canonical" href="https://leanethereum.github.io/sig.golf-dev/">', self.source)
+        self.assertNotIn("leanethereum.github.io/sig.golf/", self.source)
         self.assertNotIn("GitHub is canonical", self.source)
         self.assertNotIn("Claude artifact", self.source)
-        self.assertIn('href="https://github.com/leanEthereum/sig.golf"', self.source)
+        self.assertIn('href="https://github.com/leanEthereum/sig.golf-dev"', self.source)
+        self.assertNotIn('href="https://github.com/leanEthereum/sig.golf"', self.source)
+        self.assertNotIn("leanEthereum/sig.golf/blob", self.source)
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("GitHub is canonical", agents)
         self.assertIn("frozen legacy copy", agents)
         self.assertIn("Never republish it", agents)
+        self.assertLess(agents.index("## Submitting"), agents.index("## Maintaining the website"))
+
+    def test_two_repository_intake(self):
+        scoring = self.page.section_text("scoring")
+        for text in ("formal/Submissions/Full/", "Pull requests are never merged",
+                     "verification-finish order", "commits the checked root"):
+            self.assertIn(text, scoring)
+        self.assertIn("https://github.com/leanEthereum/sig.golf-submissions", self.page.links)
+        self.assertIn("https://github.com/leanEthereum/sig.golf-dev/blob/main/AGENTS.md", self.page.links)
+        for stale in ("submissions/full", "verify_pr.py", "SUBMISSION.md", "exact head is merged"):
+            self.assertNotIn(stale, self.source)
 
     def test_current_oracle_meter(self):
         cost = self.page.section_text("costmodels")
