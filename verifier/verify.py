@@ -1,23 +1,35 @@
 #!/usr/bin/env python3
 """Verify one submission the way the hosted sig.golf verifier does.
 
-    verify_pr.py TRACK --source URL_OR_DIR [--commit SHA] [--work DIR] [--keep] [--json]
-                       [--insecure-local]
+    verify.py TRACK --source URL_OR_DIR [--commit SHA] [--work DIR] [--keep] [--json]
+                    [--hide DIR]... [--archive-dir DIR --archive-id ID] [--insecure-local]
 
 Pipeline
+  0. Check the trusted checkout against its contract pin (challenges.json contract.pin_file).
+     A mismatch is an infrastructure failure: nothing of the candidate is processed.
   1. Export the track's submission root, and nothing else, from `--source` at `--commit`
      (or from the working tree of a local `--source` when no commit is given). Only flat,
-     bounded regular files are copied; blobs are read directly, never checked out.
-  2. Hand that directory to scripts/verify_submission.py, the isolated verifier, which captures,
+     bounded regular files are copied; blobs are read directly, never checked out. With
+     `--archive-dir`, the exact root is retained as a durable ZIP before any candidate code
+     runs, or restored from that store when it already holds this submission.
+  2. Hand that directory to verifier/verify_submission.py, the isolated verifier, which captures,
      policy-checks, compiles in its sandbox and compares against the protected statement.
-  3. Translate its receipt into the service result: verified | rejected | failed | timeout.
+  3. Translate its receipt into the service result:
+     verified | rejected | policy_rejected | timeout | failed.
 
-The result never promotes anything: receipts say ranked: false, and the site turns a verified
-head into a record only after GitHub confirms that exact head was merged.
+`--hide` is accepted for compatibility with the hosting worker. This verifier's sandbox is an
+allowlist (Landlock through landrun plus a transient systemd service): the candidate only sees
+the private project, the pinned toolchain and the read-only dependency packages, so directories
+named here are inaccessible whether or not they are listed. They are recorded in the log.
+
+The result never promotes anything: receipts say ranked: false, and the site decides records
+after the verdict is durable on GitHub.
 """
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
+import hashlib
 import json
 import os
 import re
@@ -31,9 +43,14 @@ import threading
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+HERE = Path(__file__).resolve().parent          # verifier/
+ROOT = HERE.parent                              # the repository: challenges.json, formal/, verifier/
+sys.path.insert(0, str(HERE))
+from source_archive import ArchiveError, read_metadata, restore_source, save_source  # noqa: E402
+
 SHA_RE = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
 LOG_CAP = 4 * 1024 * 1024
+NOTES_CAP = 64 * 1024
 VERIFIED = "verified"
 _CHILDREN: set[subprocess.Popen] = set()
 
@@ -55,6 +72,21 @@ def track(cfg: dict, slug: str) -> dict:
         if entry["slug"] == slug:
             return entry
     raise Failure(f"unknown track {slug!r}")
+
+
+def contract_id(cfg: dict, root: Path = ROOT) -> str:
+    pin = root / cfg["contract"]["pin_file"]
+    if not pin.is_file():
+        raise Failure(f"contract pin missing: {pin}")
+    return hashlib.sha256(pin.read_bytes()).hexdigest()
+
+
+def check_pin(root: Path = ROOT) -> None:
+    """Fail closed if any protected file of the trusted checkout differs from its pin."""
+    proc = subprocess.run([sys.executable, str(HERE / "pin_contract.py"), "check", "--root", str(root)],
+                          capture_output=True, text=True, stdin=subprocess.DEVNULL)
+    if proc.returncode:
+        raise Failure("protected files differ from the contract pin: " + (proc.stderr or proc.stdout).strip())
 
 
 def bounded_output(cmd: list[str], limit: int, timeout: int = 120, cwd: Path | None = None) -> bytes:
@@ -116,7 +148,8 @@ def _check_sizes(entries: list[tuple[str, int]], rel_root: str, limits: dict) ->
 def export_root(source: str, commit: str | None, rel_root: str, dest: Path, limits: dict) -> str:
     """Copy only flat, bounded regular files of the submission root into `dest`.
 
-    Returns the full commit hash, or "worktree" for a local uncommitted tree.
+    Returns the full commit hash, or "worktree" for a local uncommitted tree. Filenames are
+    admitted here by shape only; verify_submission.py applies the source policy to the copy.
     """
     dest.mkdir(parents=True, exist_ok=False)
     if commit is None:
@@ -172,9 +205,17 @@ def export_root(source: str, commit: str | None, rel_root: str, dest: Path, limi
         return full
 
 
+def read_notes(staged: Path) -> str | None:
+    """The submitter's NOTES.md, published whatever the verdict; untrusted text, capped."""
+    path = staged / "NOTES.md"
+    if path.is_symlink() or not path.is_file():
+        return None
+    return path.read_bytes()[:NOTES_CAP].decode("utf-8", errors="replace")
+
+
 def run_verifier(staged: Path, insecure: bool, log: Path) -> tuple[dict, Path]:
     """Run the isolated verifier as its own process and return its CLI summary and run directory."""
-    cmd = [sys.executable, str(ROOT / "scripts/verify_submission.py"), str(staged)]
+    cmd = [sys.executable, str(HERE / "verify_submission.py"), str(staged)]
     if insecure:
         cmd.append("--insecure-local")
     proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
@@ -211,7 +252,11 @@ def _tail(path: Path, n: int = 2000) -> str:
 
 
 def interpret(report: dict, slug: str, commit: str, limits: dict, run_dir: Path | None = None) -> dict:
-    """Map a verify_submission receipt onto the service's result vocabulary."""
+    """Map a verify_submission receipt onto the service's result vocabulary.
+
+    accepted -> verified; verification_failed -> rejected; source_rejected -> policy_rejected;
+    timed_out -> timeout; worker_busy, interrupted and infrastructure_error -> failed.
+    """
     status = report.get("status")
     result = {"track": slug, "commit": commit, "claim_version": report.get("claim_version"),
               "hash_meter": (report.get("hash_meter") or {}).get("id") if isinstance(report.get("hash_meter"), dict)
@@ -219,6 +264,7 @@ def interpret(report: dict, slug: str, commit: str, limits: dict, run_dir: Path 
               "comparator_exit": report.get("comparator_exit"), "compilation_exit": report.get("compilation_exit"),
               "ranked": False}
     metrics = report.get("metrics") or {}
+    error = report.get("error") or ""
     if status == "accepted":
         sigma, hverify = metrics.get("sigma"), metrics.get("hverify")
         score = (report.get("score") or {}).get("value")
@@ -228,20 +274,29 @@ def interpret(report: dict, slug: str, commit: str, limits: dict, run_dir: Path 
             raise Failure("accepted receipt carries inconsistent metrics")
         result.update(status=VERIFIED, sigma=sigma, hverify=hverify, score=score, bound=metrics.get("bound"),
                       objective="sigma * hverify")
-    elif status in {"verification_failed", "source_rejected"}:
-        reason = report.get("error") or ""
-        if not reason and run_dir is not None:
-            if report.get("compilation_exit"):
-                reason = "the submission did not compile against the protected statement\n" + _tail(run_dir / "compile.log")
-            else:
-                reason = "the comparator rejected the exported theorem\n" + _tail(run_dir / "comparator.log")
-        result.update(status="rejected", reason=reason[-2000:] or status)
+    elif status == "verification_failed":
+        tail = ""
+        if run_dir is not None:
+            log = "compile.log" if report.get("compilation_exit") else "comparator.log"
+            tail = _tail(run_dir / log)
+        if error:
+            reason = error
+        elif report.get("compilation_exit"):
+            reason = "the submission did not compile against the protected statement"
+        else:
+            reason = "the comparator rejected the exported theorem"
+        result.update(status="rejected", reason=reason[-2000:], tail=tail[-2000:])
+    elif status == "source_rejected":
+        result.update(status="policy_rejected", errors=[error[-2000:] or status])
+    elif status == "timed_out":
+        result.update(status="timeout", limit_s=report.get("limit_seconds"),
+                      reason=error[-2000:] or "the verification exceeded its wall-clock budget")
     elif status == "worker_busy":
         result.update(status="failed", reason="another verification owns this checkout; retry later", retryable=True)
     elif status == "interrupted":
-        result.update(status="failed", reason="verification was interrupted")
+        result.update(status="failed", reason="verification was interrupted", retryable=True)
     else:
-        result.update(status="failed", reason=(report.get("error") or f"verifier status {status!r}")[-2000:])
+        result.update(status="failed", reason=(error or f"verifier status {status!r}")[-2000:], retryable=False)
     return result
 
 
@@ -251,16 +306,28 @@ def main() -> int:
     ap.add_argument("--source", required=True, help="git URL, or a local directory (git repo or plain tree)")
     ap.add_argument("--commit", help="commit to verify; omit to take the working tree of a local --source")
     ap.add_argument("--work", type=Path, help="work directory (default: a temp dir)")
+    ap.add_argument("--hide", type=Path, action="append", default=[],
+                    help="directories the proof must not see; this sandbox is an allowlist, so they "
+                         "are inaccessible regardless and only recorded")
+    ap.add_argument("--archive-dir", type=Path, help="durable source store, outside disposable work")
+    ap.add_argument("--archive-id", help="32-digit submission id; required with --archive-dir")
     ap.add_argument("--keep", action="store_true", help="keep the work directory")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--insecure-local", action="store_true",
                     help="organizer diagnostics only: run the verifier without its Linux sandbox")
     a = ap.parse_args()
+    if bool(a.archive_dir) != bool(a.archive_id) or (a.archive_dir and not a.commit):
+        ap.error("--archive-dir and --archive-id require each other and an exact --commit")
 
     cfg = load_challenges()
     limits = cfg["limits"]
     work = (a.work or Path(tempfile.mkdtemp(prefix="sig-verify-"))).absolute()
+    if a.archive_dir:
+        a.archive_dir = a.archive_dir.resolve()
+        if a.archive_dir.is_relative_to(work.resolve()) or work.resolve().is_relative_to(a.archive_dir):
+            ap.error("source archive storage must be separate from disposable work")
     if a.work:
+        # This directory is removed after successful runs; never adopt an existing path.
         try:
             work.mkdir(mode=0o700, parents=True, exist_ok=False)
         except OSError as exc:
@@ -282,21 +349,47 @@ def main() -> int:
         signal.signal(sig, stop)
 
     def finish(**extra) -> int:
-        result.update(duration_s=round(time.monotonic() - t0, 1), log=str(log_path), **extra)
+        result.update(duration_s=round(time.monotonic() - t0, 1),
+                      finished_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                      log=str(log_path), **extra)
         if a.json:
             print(json.dumps(result, indent=2, sort_keys=True))
         else:
             print(f"{result['status']}: track={a.track} commit={result.get('commit')} "
                   f"score={result.get('score')} in {result['duration_s']}s (log: {log_path})")
-        if not a.keep and result["status"] in {VERIFIED, "rejected"}:
+        if not a.keep and result["status"] in {VERIFIED, "rejected", "policy_rejected", "timeout"}:
             shutil.rmtree(work, ignore_errors=True)
         return 0 if result["status"] == VERIFIED else 1
 
     try:
+        # 0. the trusted checkout first: nothing of the candidate is read before the pin holds
+        check_pin()
+        result["contract"] = contract_id(cfg)
         t = track(cfg, a.track)
+        if a.hide:
+            with log_path.open("a", encoding="utf-8") as out:
+                out.write("hidden from the proof (allowlisted sandbox): " +
+                          ", ".join(str(d) for d in a.hide) + "\n")
+        # 1. the submission root only
         staged = work / "staged"
-        commit = export_root(a.source, a.commit, t["submission_root"], staged, limits)
-        result["commit"] = commit
+        retained = read_metadata(a.archive_dir, a.archive_id) if a.archive_dir else None
+        if retained is not None:
+            result["commit"] = restore_source(a.archive_dir, retained, staged, commit=a.commit, track=a.track,
+                                               contract=result["contract"], submission_root=t["submission_root"])
+            result["source_archive"] = retained
+        else:
+            result["commit"] = export_root(a.source, a.commit, t["submission_root"], staged, limits)
+            if a.archive_dir:
+                if result["commit"] != a.commit:
+                    raise ArchiveError("archive retention requires the exact resolved commit")
+                # The trusted parent publishes durable bytes before any candidate code executes.
+                result["source_archive"] = save_source(a.archive_dir, a.archive_id, staged,
+                    source_repo=a.source, commit=result["commit"], track=a.track,
+                    submission_root=t["submission_root"], contract=result["contract"])
+        notes = read_notes(staged)
+        if notes:
+            result["notes"] = notes
+        # 2. the isolated verifier
         summary, run_dir = run_verifier(staged, a.insecure_local, log_path)
         report = json.loads((run_dir / "result.json").read_text(encoding="utf-8"))
         with log_path.open("a", encoding="utf-8") as out:
@@ -304,16 +397,18 @@ def main() -> int:
                 path = run_dir / name
                 if path.is_file():
                     out.write(f"\n===== {name} =====\n{_tail(path, LOG_CAP)}")
-        verdict = interpret(report, a.track, commit, limits, run_dir)
+        # 3. the verdict
+        verdict = interpret(report, a.track, result["commit"], limits, run_dir)
         verdict["receipt"] = str(run_dir / "result.json")
         return finish(**verdict)
     except Reject as exc:
-        log_path.write_text(str(exc) + "\n", encoding="utf-8")
-        return finish(status="rejected", reason=str(exc))
-    except (Failure, OSError, ValueError, subprocess.SubprocessError) as exc:
         with log_path.open("a", encoding="utf-8") as out:
             out.write(str(exc) + "\n")
-        return finish(status="failed", reason=str(exc)[-2000:])
+        return finish(status="policy_rejected", errors=[str(exc)])
+    except (ArchiveError, Failure, OSError, ValueError, subprocess.SubprocessError) as exc:
+        with log_path.open("a", encoding="utf-8") as out:
+            out.write(str(exc) + "\n")
+        return finish(status="failed", reason=str(exc)[-2000:], retryable=False)
 
 
 if __name__ == "__main__":

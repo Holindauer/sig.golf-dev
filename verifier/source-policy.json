@@ -1,5 +1,6 @@
 {
-  "version": "leansphincs-source-v2",
+  "version": "leansphincs-source-v3",
+  "repository_root": "formal/Submissions/Full",
   "submission_root": "LeanSphincs/Submission",
   "layout": "flat",
   "max_files": 1000,
@@ -14,7 +15,14 @@
   "allowed_files": [
     "sigma.txt",
     "hverify.txt",
-    "bound.txt"
+    "bound.txt",
+    "NOTES.md",
+    "README.md"
   ],
+  "documentation_files": [
+    "NOTES.md",
+    "README.md"
+  ],
+  "documentation_note": "captured and bound by the receipt, published by the site; never compiled",
   "status": "staged isolated verifier; independent verifier registration pending"
 }

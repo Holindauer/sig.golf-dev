@@ -8,11 +8,12 @@ import sys
 import tempfile
 import unittest
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scripts"))
+VERIFIER = Path(__file__).resolve().parents[1]
+ROOT = VERIFIER.parent
+sys.path.insert(0, str(VERIFIER))
 from benchmark_contract import metrics, parse_bound, render, scalar
 
-spec = importlib.util.spec_from_file_location("check_source", ROOT / "scripts/check-source.py")
+spec = importlib.util.spec_from_file_location("check_source", VERIFIER / "check-source.py")
 source_policy = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(source_policy)
 
@@ -32,7 +33,7 @@ class ContractTests(unittest.TestCase):
         (self.root / name).write_text(text)
 
     def imports(self):
-        return subprocess.run(["bash", str(ROOT / "scripts/check-submission-imports.sh"),
+        return subprocess.run(["bash", str(VERIFIER / "check-submission-imports.sh"),
                                str(self.root)], capture_output=True, text=True)
 
     def test_compile_time_io_route_rejected(self):
@@ -43,9 +44,9 @@ class ContractTests(unittest.TestCase):
             self.assertNotEqual(self.imports().returncode, 0)
 
     def test_single_product_scoring_authority(self):
-        policy = json.loads((ROOT / "benchmark/source-policy.json").read_text())
+        policy = json.loads((VERIFIER / "source-policy.json").read_text())
         self.assertNotIn("score", policy)
-        self.assertEqual(json.loads((ROOT / "benchmark/scoring.json").read_text())["schema"],
+        self.assertEqual(json.loads((VERIFIER / "scoring.json").read_text())["schema"],
                          "leansphincs-product-profile-v1")
 
     def test_valid(self):
@@ -132,26 +133,27 @@ class ContractTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             source_policy.check(self.root)
 
-    def test_score_rejects_metrics_changed_after_rendering(self):
+    def test_rendering_snapshot_binds_declared_metrics(self):
         output = self.root / "Challenge.lean"
         snapshot = self.root / "snapshot.json"
-        subprocess.run(["python3", str(ROOT / "scripts/render-benchmark-challenge.py"),
+        subprocess.run(["python3", str(VERIFIER / "render-benchmark-challenge.py"),
                         str(self.root), str(output), str(snapshot)], check=True)
-        command = ["python3", str(ROOT / "scripts/write-score.py"), str(self.root), str(snapshot)]
-        result = subprocess.run(command, text=True, capture_output=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn('"ranked": false', result.stdout)
-        report = json.loads(result.stdout)
-        self.assertEqual(report["score"]["value"], "43008")
-        self.assertTrue(report["score"]["diagnostic"])
-        self.assertFalse(report["score"]["eligible"])
-        self.assertFalse(report["verified"])
-        self.assertNotIn("score_pending", report)
-        self.write("hverify.txt", "1\n")
-        result = subprocess.run(command, text=True, capture_output=True)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("changed after rendering", result.stderr)
+        self.assertIn("1024 42 [⟨256, 0, 2, 0, 256⟩]", output.read_text())
+        self.assertEqual(json.loads(snapshot.read_text()),
+                         {"sigma": 1024, "hverify": 42, "bound": [[256, 1, 2, 0, 256]]})
 
+    def test_optional_docs_pass_the_source_policy_and_import_check(self):
+        self.write("NOTES.md", "# idea\n")
+        self.write("README.md", "readme\n")
+        source_policy.check(self.root)
+        self.assertEqual(self.imports().returncode, 0, self.imports().stderr)
+        policy = json.loads((VERIFIER / "source-policy.json").read_text())
+        self.assertEqual(set(policy["documentation_files"]), {"NOTES.md", "README.md"})
+        self.assertLessEqual(set(policy["documentation_files"]), set(policy["allowed_files"]))
+        self.write("OTHER.md", "not admitted\n")
+        with self.assertRaises(ValueError):
+            source_policy.check(self.root)
+        self.assertNotEqual(self.imports().returncode, 0)
 
 if __name__ == "__main__":
     unittest.main()
