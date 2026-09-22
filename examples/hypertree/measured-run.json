@@ -1,0 +1,33 @@
+{
+  "test_only": true,
+  "oracle": "SHA-256",
+  "signature_bytes": 119600,
+  "public_key": "ecdb0a5de0e8a6a5f04df4590cc8a33a",
+  "signature_sha256": "ace48cbe1ac8da2cfc117497a9942fc58b7b11b0cff229d2f73bb58f1d9d770d",
+  "phases": {
+    "keygen": {
+      "instructions_executed": 75993,
+      "cycles": 81342,
+      "hash_calls": 739,
+      "compressions": 761
+    },
+    "sign": {
+      "instructions_executed": 13875168,
+      "cycles": 14725709,
+      "hash_calls": 117507,
+      "compressions": 121006
+    },
+    "expand": {
+      "instructions_executed": 89709,
+      "cycles": 89709,
+      "hash_calls": 0,
+      "compressions": 0
+    },
+    "verify": {
+      "instructions_executed": 3099541,
+      "cycles": 3301155,
+      "hash_calls": 26802,
+      "compressions": 28552
+    }
+  }
+}
