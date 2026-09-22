@@ -2,7 +2,7 @@
 import hashlib
 import json
 from pathlib import Path
-from build import build, HEIGHT, CHAINS, SIGNATURE_BYTES, WITNESS_BASE
+from build import build, HEIGHT, CHAINS, SIGNATURE_BYTES, WITNESS_BASE, RANDOMIZER_BYTES
 
 MASK = (1 << 64) - 1
 
@@ -51,19 +51,21 @@ def keygen(h, seed):
     return tree(h, seed, HEIGHT - 1, 0, 0, bytes(16))[0]
 
 def sign(h, seed, public_key, message):
-    index = int.from_bytes(query(h, 5, 0, 0, public_key + message)[:20], 'little')
+    randomizer = query(h, 6, 0, 0, seed + message)
+    index = int.from_bytes(query(h, 5, 0, 0, public_key + message + randomizer)[:20], 'little')
     current, layers = bytes(16), []
     for level in range(HEIGHT):
         selected = index & 1
         index >>= 1
         current, signature = tree(h, seed, level, index, selected, current)
         layers.append(signature)
-    return b''.join(layers) if current == public_key else None
+    return randomizer + b''.join(layers) if current == public_key else None
 
 def verify(h, public_key, message, signature):
     if len(signature) != SIGNATURE_BYTES: return False
-    index = int.from_bytes(query(h, 5, 0, 0, public_key + message)[:20], 'little')
-    current, offset = bytes(16), 0
+    randomizer = signature[:RANDOMIZER_BYTES]
+    index = int.from_bytes(query(h, 5, 0, 0, public_key + message + randomizer)[:20], 'little')
+    current, offset = bytes(16), RANDOMIZER_BYTES
     for level in range(HEIGHT):
         selected = index & 1
         index >>= 1
@@ -92,7 +94,7 @@ def signed(x, bits):
 class Machine:
     def __init__(self, phase, inputs, zero=False):
         self.code = build(phase)
-        self.memory = bytearray(1 << 20)
+        self.memory = bytearray(1 << 24)
         for start, buffer in inputs:
             assert start + len(buffer) <= len(self.memory)
             self.memory[start:start+len(buffer)] = buffer
@@ -187,7 +189,7 @@ def main():
     machine = Machine('sign', [(0, message), (0x20, seed), (0x40, pk), (0x60, bytes([0xa5]) * (1 << 17))])
     machine.execute()
     assert machine.accepted and machine.buffer(0x20060, SIGNATURE_BYTES) == signature
-    assert machine.oracle.compressions == h.compressions == 121006
+    assert machine.oracle.compressions == h.compressions == 121008
     assert h.compressions < (1 << 17)
     profile['sign'] = machine.metrics()
     print('sign matches reference:', profile['sign'], flush=True)
@@ -208,7 +210,12 @@ def main():
     machine = Machine('verify', [(0, message), (0x40, pk), (WITNESS_BASE, damaged)])
     machine.execute(); assert not machine.accepted
     assert not verify(Oracle(), pk, bytes(reversed(message)), signature)
-    print('modified signature and wrong message rejected', flush=True)
+    changed_randomizer = bytearray(signature); changed_randomizer[0] ^= 1
+    assert not verify(Oracle(), pk, message, changed_randomizer)
+    machine = Machine('verify', [(0, message), (0x40, pk), (WITNESS_BASE, changed_randomizer)])
+    machine.execute(); assert not machine.accepted
+    assert signature[:RANDOMIZER_BYTES] == query(Oracle(), 6, 0, 0, seed + message)
+    print('modified signature, randomizer, and wrong message rejected', flush=True)
     path = Path(__file__).with_name('measured-run.json')
     path.write_text(json.dumps({'test_only': True, 'oracle': 'SHA-256', 'signature_bytes': SIGNATURE_BYTES,
         'public_key': pk.hex(), 'signature_sha256': hashlib.sha256(signature).hexdigest(), 'phases': profile}, indent=2) + '\n')

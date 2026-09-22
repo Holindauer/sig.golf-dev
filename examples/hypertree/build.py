@@ -3,7 +3,8 @@ from pathlib import Path
 
 HEIGHT = 160
 CHAINS = 46
-SIGNATURE_BYTES = 32 + (HEIGHT - 1) * (16 * CHAINS + 16)
+RANDOMIZER_BYTES = 32
+SIGNATURE_BYTES = RANDOMIZER_BYTES + 32 + (HEIGHT - 1) * (16 * CHAINS + 16)
 WITNESS_BASE = 0x20060 + SIGNATURE_BYTES
 HASH = 0x80000
 ANSWER = 0x80300
@@ -88,9 +89,15 @@ class Assembler:
                 self.words[pos] = (((u >> 20) & 1) << 31) | (((u >> 1) & 1023) << 21) | (((u >> 11) & 1) << 20) | (((u >> 12) & 255) << 12) | (args << 7) | 0x6f
         return self.words
 
-def message_index(a):
+def message_index(a, verifying):
+    randomizer = WITNESS_BASE if verifying else 0x20060
+    if not verifying:
+        a.copy(0x20, HASH + 32); a.copy(0, HASH + 48, 32)
+        a.hash(6, 80, message=True)
+        a.copy(ANSWER, randomizer, RANDOMIZER_BYTES)
     a.copy(0x40, HASH + 32); a.copy(0, HASH + 48, 32)
-    a.hash(5, 80, message=True)
+    a.copy(randomizer, HASH + 80, RANDOMIZER_BYTES)
+    a.hash(5, 112, message=True)
     a.copy(ANSWER, INDEX0, 16)
     a.load(6, ANSWER + 16); a.shift(6, 6, 32); a.shift(6, 6, 32, True); a.save(6, INDEX2)
 
@@ -191,8 +198,8 @@ def build(phase):
     if phase == 'keygen':
         a.set(LEVEL, HEIGHT - 1); a.call('tree'); a.copy(CURRENT, 0x40); a.halt(True)
     else:
-        a.set(MODE, 0 if verifying else 1); a.set(POINTER, WITNESS_BASE if verifying else 0x20060)
-        message_index(a)
+        a.set(MODE, 0 if verifying else 1); a.set(POINTER, (WITNESS_BASE if verifying else 0x20060) + RANDOMIZER_BYTES)
+        message_index(a, verifying)
         a.label('layer_loop'); shift_index(a)
         a.load(6, LEVEL); a.branch(6, 0, 'encoded'); a.call('encode'); a.label('encoded'); a.call('tree')
         a.load(6, LEVEL); a.load(7, POINTER); a.branch(6, 0, 'short_layer')

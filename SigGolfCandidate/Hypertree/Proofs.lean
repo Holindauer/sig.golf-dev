@@ -34,14 +34,14 @@ theorem recover_chain {α : Type} (hash : Nat → α → α) (secret : α) (digi
 
 /-- Deterministic compression counts for the reference algorithm. Correspondence with bytecode execution remains to be established in Lean. -/
 def referenceKeygenCompressions : Nat := 2 * (46 * (1 + 7) + 12) + 1
-def referenceSignCompressions : Nat := 2 + 5 + 159 * referenceKeygenCompressions
+def referenceSignCompressions : Nat := 2 + 2 + 5 + 159 * referenceKeygenCompressions
 def referenceVerificationCompressions : Nat := 2 + 2 + 159 * (46 * 7 + 12 + 1)
 
 theorem reference_keygen_budget : referenceKeygenCompressions ≤ BUDGET_KEYGEN := by decide
 theorem reference_sign_budget : referenceSignCompressions ≤ BUDGET_SIGN := by decide
-theorem reference_sign_count : referenceSignCompressions = 121006 := by decide
+theorem reference_sign_count : referenceSignCompressions = 121008 := by decide
 theorem reference_verify_count : referenceVerificationCompressions = 53269 := by decide
-theorem signature_size : signatureBytes = 119600 := rfl
+theorem signature_size : signatureBytes = 119632 := rfl
 
 /-- info: 'SigGolfCandidate.Hypertree.admitted' depends on axioms: [propext] -/
 #guard_msgs in
