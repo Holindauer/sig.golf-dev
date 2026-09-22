@@ -94,7 +94,7 @@ while IFS= read -r -d '' artifact; do
       echo "move every .lean helper directly under ${submission_dir} (no subdirectories)" >&2
       exit 1
       ;;
-    *.lean|sigma.txt|hverify.txt|bound.txt) ;;
+    *.lean|sigma.txt|hverify.txt|bound.txt|NOTES.md|README.md) ;;
     *)
       echo "unsupported artifact in submission tree: ${artifact}" >&2
       exit 1
@@ -163,9 +163,9 @@ while IFS= read -r -d '' source; do
       continue
     fi
     # The trusted libraries the challenge itself is built from, which ship
-    # precompiled in the verifier image.
+    # precompiled in the verifier image: exactly the pins of formal/lake-manifest.json.
     case "${module}" in
-      Mathlib|Mathlib.*|VCVio|VCVio.*|HashSig|HashSig.*)
+      Mathlib|Mathlib.*|VCVio|VCVio.*)
         continue
         ;;
     esac
