@@ -1,4 +1,5 @@
 import SigGolfCandidate.Hypertree.SecurityGraphExtraction
+import SigGolfCandidate.Hypertree.SecurityTrace
 import SigGolfCandidate.Hypertree.SecurityVerifyCost
 
 namespace SigGolfCandidate.Hypertree.SecurityVerifyTrace
@@ -130,5 +131,25 @@ theorem mem_recoverLayer_node (hash : Hash) (level tree : Nat) (side : Bool)
         else bytes (recoverLeaf hash level tree side message signature) ++ bytes signature.sibling) ∈
       queries hash (SecurityVerify.recoverLayer level tree side message signature) := by
   cases side <;> simp [SecurityVerify.recoverLayer, queries_bind]
+
+/-- The deterministic list is exactly the existing oracle instrumentation,
+including its unchanged returned value. Public answers are shared, not resampled. -/
+theorem traceHashes_lift {α : Type} (hash : Hash) (answers : QueryImpl World Id)
+    (agree : ∀ input, answers (.inr input) = hash input) (program : OracleComp HashSpec α) :
+    evalWithAnswerFn answers (SecurityTrace.traceHashes (program.liftComp World)) =
+      (evalWithAnswerFn hash program, queries hash program) := by
+  induction program using OracleComp.inductionOn with
+  | pure value => rfl
+  | query_bind input next ih =>
+    have lifted : (liftM (HashSpec.query input) >>= next).liftComp World =
+        (do let answer ← liftM (World.query (.inr input))
+            (next answer).liftComp World) := by
+      rw [OracleComp.liftComp_bind]
+      rfl
+    rw [lifted, SecurityTrace.traceHashes_query_bind]
+    simp only [evalWithAnswerFn_bind, evalWithAnswerFn_pure, queries_query_bind]
+    have queried : evalWithAnswerFn answers (liftM (World.query (.inr input))) = hash input := agree input
+    rw [queried, ih]
+    rfl
 
 end SigGolfCandidate.Hypertree.SecurityVerifyTrace
