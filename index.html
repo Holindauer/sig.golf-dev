@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>leanSPHINCS</title>
 <meta name="description" content="Draft rules for a machine-judged competition to find the post-quantum hash-based signature for Ethereum accounts.">
-<link rel="canonical" href="https://leanethereum.github.io/sig.golf/">
+<link rel="canonical" href="https://leanethereum.github.io/sig.golf-dev/">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦋</text></svg>">
 <style>
   :root {
@@ -303,8 +303,8 @@
   <h1><span class="lean">lean</span>SPHINCS</h1>
   <p class="subtitle">An open search for stateless hash-based signatures for Ethereum accounts, with Lean proofs of security in the classical, pure random-oracle model.</p>
   <div class="statusline">
-    <span><strong>DRAFT v0.22</strong></span>
-    <span>2026-09-15</span>
+    <span><strong>DRAFT v0.23</strong></span>
+    <span>2026-09-22</span>
     <span>values in <span class="tbd">amber</span> remain open</span>
   </div>
 </header>
@@ -312,8 +312,8 @@
 <section id="implementation-status">
   <h2>Two research stages · not open for submissions</h2>
   <p><strong>Stage 1 is academic research; Stage 2 is the Ethereum selection.</strong> Academic research includes one-time and few-time signatures, encodings, authentication structures, composition and complete constructions. Stage 2 evaluates complete stateless account signatures against every deployment gate. Improving a component does not automatically improve the resulting signature scheme: authentication paths, key derivation, domain separation and serialization must be included when evaluating the complete construction.</p>
-  <p>The <a href="https://github.com/leanEthereum/sig.golf">leanSPHINCS repository</a> contains the protected pure-ROM statement, a working local verification harness and experimental OTS foundations. The statement enforces a 32-byte public-key cap, exact signature size, weighted verification work, total-query security floors and same-scheme lifetime decay. <strong>No complete OTS security certificate or accepted SPHINCS⁻ baseline #0 exists yet.</strong> Full-program metering, signing/keygen budget certificates, external audit and registered verification remain launch work. Local receipts are unranked; product scores are diagnostic and confer no deployment eligibility.</p>
-  <p><a href="https://github.com/leanEthereum/sig.golf/blob/main/SCHEMECLAIM_PLAN.md">Workstream plan</a> · <a href="https://github.com/leanEthereum/sig.golf/blob/main/IMPLEMENTATION.md">Implementation contract</a> · <a href="https://github.com/leanEthereum/sig.golf/blob/main/HARNESS_SECURITY.md">Harness evidence and launch gates</a></p>
+  <p>The <a href="https://github.com/leanEthereum/sig.golf-dev">sig.golf core repository</a> contains the protected pure-ROM statement, the isolated verifier, the website and experimental OTS foundations; schemes are submitted as pull requests to a separate <a href="https://github.com/leanEthereum/sig.golf-submissions">submissions repository</a> (§6). The statement enforces a 32-byte public-key cap, exact signature size, weighted verification work, total-query security floors and same-scheme lifetime decay. <strong>No complete OTS security certificate or accepted SPHINCS⁻ baseline #0 exists yet.</strong> Full-program metering, signing/keygen budget certificates, external audit and registered verification remain launch work. Local receipts are unranked; product scores are diagnostic and confer no deployment eligibility.</p>
+  <p><a href="https://github.com/leanEthereum/sig.golf-dev/blob/main/AGENTS.md">Submission specification</a> · <a href="https://github.com/leanEthereum/sig.golf-dev/blob/main/docs/SCHEMECLAIM_PLAN.md">Workstream plan</a> · <a href="https://github.com/leanEthereum/sig.golf-dev/blob/main/docs/IMPLEMENTATION.md">Implementation contract</a> · <a href="https://github.com/leanEthereum/sig.golf-dev/blob/main/docs/HARNESS_SECURITY.md">Harness evidence and launch gates</a></p>
 </section>
 
 <section id="background">
@@ -415,7 +415,7 @@
   </div>
 
   <h3>The required theorem, in shape</h3>
-  <p>This is an explanatory summary, not Lean source. The normative implemented structure is <a href="https://github.com/leanEthereum/sig.golf/blob/main/LeanSphincs/Benchmark/Claim.lean">SchemeClaim</a>; it also includes the correctness, failure, size and verification obligations above.</p>
+  <p>This is an explanatory summary, not Lean source. The normative implemented structure is <a href="https://github.com/leanEthereum/sig.golf-dev/blob/main/formal/LeanSphincs/Benchmark/Claim.lean">SchemeClaim</a>; it also includes the correctness, failure, size and verification obligations above.</p>
   <pre><code>for the same scheme S and fixed bound B:
   for every adversary with raw whole-game hash budget qH
       and signing-request budget qS ≤ 2^32:
@@ -452,34 +452,35 @@
 <section id="scoring">
   <h2><span class="secno">6</span>Submissions, scoring and credit</h2>
   <p>The planned <strong>Cost</strong> tab ranks <code>signatureBytes * verificationWork</code> after all profile gates pass. The current hash-work profile computes the product with exact integer arithmetic. The <strong>Pareto</strong> tab retains nondominated size/verification points at matched signing, keygen and memory budgets. Neither tab mixes games or metering profiles.</p>
-  <p>Keep the full keygen/signing/verification, size, memory and failure evidence with each result, along with source hashes, dependencies, verifier provenance, stage and profile. An entrant cannot change the organizer's scoring rule or promote its own receipt. Ties break by smaller signatures and then earlier accepted submission time.</p>
+  <p>A submission is a pull request against the <a href="https://github.com/leanEthereum/sig.golf-submissions">submissions repository</a> that creates or changes only the flat root <code>formal/Submissions/Full/</code>: <code>Scheme.lean</code>, <code>Solution.lean</code>, the three metric files and optional helpers and notes. The hosted verifier checks the exact head commit against the pinned core, retains that commit, and answers on the pull request as a commit status and a comment. Pull requests are never merged: a verified improvement becomes the record in verification-finish order, and the bot then commits the checked root and its registry entry to <code>main</code>. The <a href="https://github.com/leanEthereum/sig.golf-dev/blob/main/AGENTS.md">submission specification</a> lists the exact exports, import policy, limits and attribution lines.</p>
+  <p>Keep the full keygen/signing/verification, size, memory and failure evidence with each result, along with source hashes, dependencies, verifier provenance, stage and profile. An entrant cannot change the organizer's scoring rule or promote its own receipt. Ties break by smaller signatures and then earlier verified submission time.</p>
   <p>Promotions are credited to the solver and, where used, the model. Research and rules-bounty credit are curated separately from numeric rank (§2). Awards and adoption require human review with published reasons. <span class="tbd">Prizes, timeline, protected-module governance and independent verifier registration remain open.</span></p>
 </section>
 
 <section id="mvp">
   <h2><span class="secno">7</span>Research stages and implementation</h2>
-  <p>Draft v0.22 retains adaptive availability and separates hostile compilation from proof checking. Compilation runs in its own constrained service; the runner confirms process-tree termination, captures regular module artifacts into a private snapshot, and checks and exports those same read-only bytes. Receipts distinguish mathematical verification, resource certification, side-channel review and deployment eligibility. All remain unranked; diagnostic scores are explicitly non-eligible. Historical receipts must be reverified under <code>suf-cma-total-work-pk32-adaptive-availability-v2</code>, never relabeled.</p>
+  <p>Draft v0.23 retains adaptive availability and separates hostile compilation from proof checking. Compilation runs in its own constrained service; the runner confirms process-tree termination, captures regular module artifacts into a private snapshot, and checks and exports those same read-only bytes. Receipts distinguish mathematical verification, resource certification, side-channel review and deployment eligibility. All remain unranked; diagnostic scores are explicitly non-eligible. Historical receipts must be reverified under <code>suf-cma-total-work-pk32-adaptive-availability-v2</code>, never relabeled.</p>
   <h3>Stage 1 · academic research beyond OTS</h3>
   <p>Stage 1 is the academic research track. It includes one-time and few-time primitives, message encodings, authentication structures, domain-separated composition and complete constructions. OTS is an initial experiment, not the boundary of the academic competition. Each board needs its own pinned security game, request/instance budgets and resource profile; only comparable entries share a ranking.</p>
   <p>Standard hybrid arguments can lift suitable single-instance security to multiple instances, generally with a loss. State and account for that loss and the conditions under which the argument applies. Shared random-oracle domains, seed-derived keys and the way a component is actually used in SPHINCS still need to match the reduction; an internal OTS is not automatically used as a fully black-box standalone scheme.</p>
-  <p><a href="https://github.com/leanEthereum/sig.golf/blob/main/OTS_STAGE1.md">The experimental OTS library</a> supplies graph evaluation, reconstruction, cost arithmetic and conditional failure envelopes. It is not a protected OTS security target. Direct pure-ROM proofs must remain possible beyond any optional construction template; lower-bound results must name the family and cost model they cover.</p>
+  <p><a href="https://github.com/leanEthereum/sig.golf-dev/blob/main/docs/OTS_STAGE1.md">The experimental OTS library</a> supplies graph evaluation, reconstruction, cost arithmetic and conditional failure envelopes. It is not a protected OTS security target. Direct pure-ROM proofs must remain possible beyond any optional construction template; lower-bound results must name the family and cost model they cover.</p>
   <h3>Stage 2 · complete Ethereum account signatures</h3>
   <p>Stage 2 is the Ethereum selection track. It measures complete stateless constructions, with SUF-CMA, the normal and extended-lifetime floors and all deployment gates. Size includes the whole serialized signature, not just a WOTS component or authentication fragment.</p>
   <h3>What the local harness currently verifies</h3>
-  <p>The <a href="https://github.com/leanEthereum/sig.golf/blob/main/SUBMISSION.md">three-file declaration contract</a> remains <code>sigma.txt</code>, <code>hverify.txt</code> and <code>bound.txt</code>, alongside the scheme and proof sources. The revised protected statement uses total work Q, a 32-byte public key and same-scheme decay. The product rule is stored in organizer-owned scoring configuration, not in a fourth entrant file.</p>
+  <p>The <a href="https://github.com/leanEthereum/sig.golf-dev/blob/main/AGENTS.md">three-file declaration contract</a> remains <code>sigma.txt</code>, <code>hverify.txt</code> and <code>bound.txt</code>, alongside the scheme and proof sources. The revised protected statement uses total work Q, a 32-byte public key and same-scheme decay. The product rule is stored in organizer-owned scoring configuration, not in a fourth entrant file.</p>
   <p>The runner is <strong>explicitly unranked</strong>, and does not yet bind the signing and keygen budget certificates or full-program execution costs. Successful verification and integrity checks yield a diagnostic product score; resource certification, side-channel review and deployment eligibility remain separate and blocked. Positive metric canaries test comparator matching only. <strong>No cryptographic baseline yet</strong>: passing those fixtures is not an accepted signature scheme or a launch decision.</p>
 </section>
 
 <section id="baseline">
   <h2><span class="secno">8</span>Baseline #0</h2>
-  <p>The intended first accepted entry is a SPHINCS⁻ variant meeting these requirements. The <a href="https://github.com/leanEthereum/sig.golf/blob/main/PR19_REVIEW.md">pinned PR #19 review and local reproduction</a> establish a useful 126-bit classical SUF-CMA theorem at up to 2<sup>24</sup> signing requests, not an accepted competition entry.</p>
+  <p>The intended first accepted entry is a SPHINCS⁻ variant meeting these requirements. The <a href="https://github.com/leanEthereum/sig.golf-dev/blob/main/docs/PR19_REVIEW.md">pinned PR #19 review and local reproduction</a> establish a useful 126-bit classical SUF-CMA theorem at up to 2<sup>24</sup> signing requests, not an accepted competition entry.</p>
   <p>The adapter still needs byte serialization, game/query transport, weighted verification and signing-failure certificates. In particular, a theorem capped at 2<sup>24</sup> requests does not establish R4 at 2<sup>32</sup>; the same-scheme extended-lifetime proof is additional work. Seed derivation, storage and wallet bounds also remain. Upstream work stays coordinated with Emile rather than silently changing the audited revision.</p>
 </section>
 
 <section id="tricks">
   <h2><span class="secno">9</span>Research directions</h2>
   <p>Useful directions include incomparable encodings, bounded grinding, coded disclosures, few-time components, authentication multiproofs, tree layouts, tighter reductions and lower bounds in explicit models. Every claimed security improvement retains its constants; every practical improvement retains the full execution and storage costs.</p>
-  <p>Emile's polynomial-coding exploration motivates keeping the model open to unusual constructions. The <a href="https://github.com/leanEthereum/sig.golf/blob/main/POLYNOMIAL_CODING_REVIEW.md">technical annex review</a> records the supplied construction, re-metering assumptions and unproved obligations. A shape that wins in one abstract cost model is not thereby globally optimal or deployable.</p>
+  <p>Emile's polynomial-coding exploration motivates keeping the model open to unusual constructions. The <a href="https://github.com/leanEthereum/sig.golf-dev/blob/main/docs/POLYNOMIAL_CODING_REVIEW.md">technical annex review</a> records the supplied construction, re-metering assumptions and unproved obligations. A shape that wins in one abstract cost model is not thereby globally optimal or deployable.</p>
 </section>
 
 <section id="questions">
@@ -508,7 +509,7 @@
 </section>
 
 <footer>
-  leanSPHINCS draft rules v0.22 · submissions not open · implementation and deployment review pending
+  leanSPHINCS draft rules v0.23 · submissions not open · implementation and deployment review pending
 </footer>
 
 </div>

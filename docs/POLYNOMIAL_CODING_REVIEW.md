@@ -58,7 +58,7 @@ before seeds, coefficients, tree nodes, decoder tables and scratch memory.
 Reproduce these limited arithmetic checks:
 
 ```sh
-python3 scripts/polynomial_annex.py
+python3 tools/polynomial_annex.py
 python3 -m unittest discover -s tests -v
 ```
 

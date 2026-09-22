@@ -25,7 +25,7 @@ security proof. Signing failure stays a separate 2^-128 gate; latency overrun
 does not automatically cause failure. The current research declarations and
 counting experiments do not provide those eligibility certificates.
 
-`LeanSphincs/OTS/Score.lean` retains historical additive arithmetic, positivity and
+`formal/LeanSphincs/OTS/Score.lean` retains historical additive arithmetic, positivity and
 monotonicity. `stage1RankKey price` and `stage2RankKey price` use that same
 formula for reproducing the earlier scoring experiments. The current competition
 product is defined by the organizer profile. None of these arithmetic lemmas
@@ -57,7 +57,7 @@ annex's complete signer/verifier, establish global optimality or certify budgets
 
 ## Implemented foundations
 
-- `LeanSphincs/OTS/Graph.lean`: finite acyclic-dependency predicate, distinct gate
+- `formal/LeanSphincs/OTS/Graph.lean`: finite acyclic-dependency predicate, distinct gate
   addresses, source/output vertices, structural reconstruction predicate and
   costs using the existing protected `hashWeight`. Each query returns two 128-bit
   vertices from the 256-bit oracle; using only one output does not reduce cost.
@@ -66,7 +66,7 @@ annex's complete signer/verifier, establish global optimality or certify budgets
   charging fixtures. The graph predicate does not enforce disclosure minimality,
   incomparability, or a byte-level verifier implementation. A reconstruction
   schedule still needs a root-correctness theorem against key generation.
-- `LeanSphincs/OTS/Evaluate.lean`: actual `OracleComp HashSpec` evaluation of
+- `formal/LeanSphincs/OTS/Evaluate.lean`: actual `OracleComp HashSpec` evaluation of
   schedules, with fixed 16-byte little-endian addresses and values. Proved byte
   encoding injectivity, address separation, exact input length, gate query weight
   and worst-case weighted schedule query bound on every oracle response path.
@@ -74,37 +74,37 @@ annex's complete signer/verifier, establish global optimality or certify budgets
   duplicate-free schedules, the operational budget equals the gate-subset cost
   and is at most graph keygen cost. This does not yet prove root correctness,
   randomized key generation or a complete OTS verifier bound including encoding.
-- `LeanSphincs/OTS/Reconstruct.lean`: the actual oracle computation reconstructs
+- `formal/LeanSphincs/OTS/Reconstruct.lean`: the actual oracle computation reconstructs
   the reference root when the disclosed values agree with an oracle-consistent
   assignment. This uses VCVio's `evalWithAnswerFn`, not a separate mock evaluator.
   Constructing the assignment from randomized keygen and transporting the result
   through the shared lazy ROM remain to prove.
-- `LeanSphincs/OTS/Failure.lean`: real-valued adaptive survival-envelope theorem,
+- `formal/LeanSphincs/OTS/Failure.lean`: real-valued adaptive survival-envelope theorem,
   an exception-aware variant for cached/bad steps, and a conservative exact
   retry bound at per-step success 2^-16. The actual signer must still establish
   the step premise and any exception allowance; these are not assumed facts.
-- `scripts/ots_experiments.py`: exact integer polynomial counting for the four
+- `tools/ots_experiments.py`: exact integer polynomial counting for the four
   fixed graph shapes in *looking for the optimal hash-based one-time signature*.
   It searches reconstruction-cost layers and disclosure-size caps, selects the
   size/verification frontier by default, or, for historical research comparisons only, the additive-minimizing pair
   at an explicit research price. These exploratory prices are not competition scoring. Keygen is fixed per graph and the explicit
   signing metric is common across these codebooks. This is not exhaustive graph
   synthesis or a global optimality result.
-- `scripts/check-ots-axioms.lean`: audit every declaration under `LeanSphincs.OTS`,
+- `formal/scripts/check-ots-axioms.lean`: audit every declaration under `LeanSphincs.OTS`,
   including generated/private declarations, against the three standard axioms.
   Experimental modules are not imported by the protected MVP Target.
 
 ## Reproducible experiments
 
 ```sh
-python3 scripts/ots_experiments.py --profile rom32-input64 \
+python3 tools/ots_experiments.py --profile rom32-input64 \
   --signing-work 131072 --signing-kind expected-upper-bound
 # Optional research price, not the competition profile:
-python3 scripts/ots_experiments.py --profile rom32-input64 \
+python3 tools/ots_experiments.py --profile rom32-input64 \
   --signing-work 131072 --signing-kind expected-upper-bound --bandwidth-price 1/8
 python3 -m unittest discover -s tests -v
 lake build LeanSphincsTest
-lake env lean scripts/check-ots-axioms.lean
+(cd formal && lake env lean scripts/check-ots-axioms.lean)
 ```
 
 The example signing metric is hypothetical: 2^16 expected encoding queries times

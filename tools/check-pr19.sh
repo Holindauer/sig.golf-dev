@@ -4,8 +4,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 readonly revision=a1daec3b929d8963b4eee4f1e05985065a96de9d
-readonly reference="$PWD/.benchmark-tools/sphincs-reference"
-readonly audit="$PWD/scripts/check-pr19.lean"
+readonly reference="$PWD/verifier/.tools/sphincs-reference"
+readonly audit="$PWD/tools/check-pr19.lean"
 
 if [[ ! -d "$reference" ]]; then
   git clone --filter=blob:none --no-checkout https://github.com/leanEthereum/leanVM-b.git "$reference"
@@ -20,10 +20,10 @@ fi
 
 package="$reference/formal/sphincs"
 mkdir -p "$package/.lake"
-if [[ ! -e "$package/.lake/packages" && -d "$PWD/.lake/packages" ]]; then
+if [[ ! -e "$package/.lake/packages" && -d "$PWD/formal/.lake/packages" ]]; then
   # Both projects pin the same dependency revisions; retain artifacts in the
   # workspace across interrupted sessions instead of rebuilding under /tmp.
-  ln -s "$PWD/.lake/packages" "$package/.lake/packages"
+  ln -s "$PWD/formal/.lake/packages" "$package/.lake/packages"
 fi
 lake -d "$package" build SphincsSecurity.Proof.Security126Completion
 lake -d "$package" env lean "$audit"

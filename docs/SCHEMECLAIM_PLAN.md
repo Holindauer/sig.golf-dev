@@ -1,7 +1,7 @@
 # SchemeClaim: current plan and decision history
 
 Status: draft v0.22 rules and implementation plan, 2026-09-15. The
-[public rules](https://leanethereum.github.io/sig.golf/) and
+[public rules](https://leanethereum.github.io/sig.golf-dev/) and
 [implementation contract](IMPLEMENTATION.md) describe the current target.
 Historical notes below are snapshots, not competing current instructions.
 
@@ -20,8 +20,8 @@ attribute openers so an array literal `#[init]` or a GetElem `arr[init]` is no
 longer falsely rejected. (5) Bound exponents capped at work 32 / sign 64 (usable
 values are 8 / 32) so the floor certificate's kernel arithmetic stays small; the
 general expensive-proof surface remains bounded by the sandbox caps. Regression
-coverage extended in `LeanSphincsTest/DeadBranch.lean`, `tests/test_raw_caps.py`
-and `tests/test_contract.py`.
+coverage extended in `formal/LeanSphincsTest/DeadBranch.lean`, `verifier/tests/test_raw_caps.py`
+and `verifier/tests/test_contract.py`.
 
 ## Structural raw-query caps as claim fields (2026-09-14, current)
 
@@ -33,7 +33,7 @@ are conclusions of `SchemeClaim` (`keygen_queries`, `sign_queries`,
 `verify_raw_queries`) over every structural path, with placeholders 2^38, 2^36 and
 2^24 checked against both security ranges in Lean; hypotheses of the security and
 availability clauses constrain only adversary-controlled computations through the
-honest caps. Regression: `LeanSphincsTest/DeadBranch.lean`. Calibration, the
+honest caps. Regression: `formal/LeanSphincsTest/DeadBranch.lean`. Calibration, the
 adversarial-query slack of about 2^-32 at 2^32 requests, and the rules page text
 for R9 remain open.
 
@@ -177,7 +177,7 @@ structure SchemeClaim (S : SigScheme)
 ```
 
 Explanatory expansion of the constants; the normative file is
-`LeanSphincs/Benchmark/Claim.lean`. The comparator leaves only S as a definition
+`formal/LeanSphincs/Benchmark/Claim.lean`. The comparator leaves only S as a definition
 hole and binds all three declarations. The claim identifier is
 `suf-cma-total-work-pk32-decay-v1`; meter `rom256-input64-ceil-v1` is unchanged.
 Old declarations/receipts need re-verification, not relabeling.
@@ -395,7 +395,7 @@ rechecked before receipt publication. Source scanning rejects `eval%` and unsafe
 helpers as defense in depth; compilation can execute code even if scanning passes.
 Source pins do not authenticate precompiled dependency caches.
 
-`benchmark/resources.json` is organizer-owned. Reference execution calibration,
+`verifier/resources.json` is organizer-owned. Reference execution calibration,
 verification limits, raw keygen/sign/verify caps, persistent secret and
 precomputation storage, executable size and evidence validators remain unset.
 Missing values fail closed. Execution evidence must bind algorithms, executable

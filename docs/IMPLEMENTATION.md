@@ -123,7 +123,7 @@ Verification is `HashSpec`-only and cannot sample. Calibration against the refer
 execution profile remains open; no arbitrary raw-call-to-seconds conversion certifies
 the fixed runtime limits. These five statement constants are mirrored by
 `eligibility.STATEMENT_RAW_CAPS`, and `load_resource_profile` rejects any calibrated
-`benchmark/resources.json` cap that disagrees with them, so the profile can never
+`verifier/resources.json` cap that disagrees with them, so the profile can never
 drift from the proved caps. The same requirement applies to ranked academic profiles
 under their own pinned games.
 
@@ -211,7 +211,7 @@ them. The renderer still binds all three declarations.
 
 The objective is **sigma * hverify** for the hash-work profile, computed
 with exact integer arithmetic in byte × verification-work units. The organizer-owned
-`benchmark/scoring.json` uses schema `leansphincs-product-profile-v1` and profile
+`verifier/scoring.json` uses schema `leansphincs-product-profile-v1` and profile
 `signature-bytes-times-hash-work-v1`, bound by the harness manifest. There is no
 bandwidth coefficient or entrant pricing. Retain both coordinates for Pareto
 exploration. Historical additive profiles are rejected by the current loader;
@@ -275,7 +275,7 @@ rechecked before receipt publication. Source scanning rejects `eval%` and unsafe
 helpers as defense in depth; compilation can execute code even if scanning passes.
 Source pins do not authenticate precompiled dependency caches.
 
-`benchmark/resources.json` is organizer-owned. Reference execution calibration,
+`verifier/resources.json` is organizer-owned. Reference execution calibration,
 verification limits, raw keygen/sign/verify caps, persistent secret and
 precomputation storage, executable size and evidence validators remain unset.
 Missing values fail closed. Execution evidence must bind algorithms, executable
