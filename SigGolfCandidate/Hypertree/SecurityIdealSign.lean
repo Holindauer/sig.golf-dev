@@ -110,4 +110,20 @@ theorem simulate_signCompact (seed : Seed) (pk : PublicKey) (message : Message) 
     simulate_randomizedIndex, simulate_signLayerWithRoot, simulate_signUpper,
     BitVec.toNat_ofNat, Nat.mod_eq_of_lt (index_bound _)]
 
+/-- The list length is structural and holds for independent private/public answers,
+not only for answer functions arising from a real seeded oracle. -/
+theorem eval_signUpper_length (answers : QueryImpl SplitWorld Id) (count level index : Nat)
+    (hl : count + level ≤ 160) (hi : index < 2 ^ 192) (message : Digest) :
+    (evalWithAnswerFn answers (signUpper count level index hl hi message)).length = count := by
+  induction count generalizing level index message with
+  | zero => rfl
+  | succ count ih =>
+    simp only [signUpper, evalWithAnswerFn_bind, evalWithAnswerFn_pure, List.length_cons, ih]
+
+/-- Every fixed independent-oracle interpretation produces a valid compact object. -/
+theorem eval_signCompact_valid (answers : QueryImpl SplitWorld Id) (pk : PublicKey) (message : Message) :
+    (evalWithAnswerFn answers (signCompact pk message)).Valid := by
+  simp only [signCompact, evalWithAnswerFn_bind, evalWithAnswerFn_pure, Compact.Valid,
+    eval_signUpper_length]
+
 end SigGolfCandidate.Hypertree.SecurityIdealSign
