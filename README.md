@@ -75,11 +75,11 @@ For any `seed`, `message` and oracle H, consider the following experiment:
 
 Stop at the first failure. We say the `experiment succeeds` when all stages succeed and verification accepts.
 
-K_P counts program P's compressions in this experiment, including retries and failed attempts; it is zero if P is never reached. `BUDGET_P` denotes P's named budget.
+`K_P` counts program P's compressions in this experiment, including retries and failed attempts; it is zero if P is never reached. For each fixed seed and H, `Kmax_P` is the maximum of `K_P` over all messages. `BUDGET_P` denotes P's named budget.
 
 1. **Termination:** experiment terminates for every seed, message, and oracle.
 2. **Success:** for every seed, `Pr_H[experiment succeeds for every message] >= 1 - FAILURE`.
-3. **Compression budgets:** for every seed and message, `E_H[2^(K_P / BUDGET_P)] <= 2` for each P in {`keygen`, `grind`, `sign`, `expand`}.
+3. **Compression budgets:** for every seed, `E_H[2^(Kmax_P / BUDGET_P)] <= 2` for each P in {`keygen`, `grind`, `sign`, `expand`}.
 4. For every seed, message and oracle, if the experiment succeeds, verify runs no more than `C` RiscV cycles.
 
 (`Pr_H`means probability over `H`, `E_H` means expectation over `H`.)
@@ -94,13 +94,13 @@ Consider the following experiment for a classical, probabilistic, ubounded, adve
 - `A` may adaptively query two oracles:
   - **`random_oracle(input_A)`:** return H(input_A)
   - **`signing_oracle(message_A, nonce_A, cache_A)`:** run `sign` with these inputs and the original `seed` and `public key`. Return the signature or failure. Record each returned `(message_A, signature)` in T. Allow at most `LIFETIME` requests. `cache_A` may differ from the original `cache`.
-- At the end of the experiment, `A` has two possibilities:
+- `A` makes one final submission, choosing one of the following two forms:
   1) `A` submits (`message_A`, `witness_A`). `A` wins if:
      - Running `verify` with these inputs and the original `public key` accepts.
      - For every message `(message, signature)` in T, `message` != `message_A`. (weak unforgeability)
      - The total number of hash call to H, including key generation, signing, `A`'s queries, and verification, is at most `Q`.
   2) `A` submits (`message_A`, `signature_A`). `A` wins if:
-     - Running `expand` followed by `verify` with these inputs and the original `public key` accepts.
+     - `expand(message_A, public key, signature_A)` succeeds with a witness, and `verify(message_A, public key, witness)` accepts.
      - For every message `(message, signature)` in T, `(message, signature)` != `(message_A, signature_A)`. (strong unforgeability)
      - The total number of hash calls to H, including key generation, signing, `A`'s queries, expansion, and verification, is at most `Q`.
 
@@ -145,7 +145,7 @@ Inputs and outputs use the same addresses, fixed for each submission:
 
 Load the inputs and read the outputs listed in the Programs table at their declared sizes. Unused input fields stay zero.
 
-HALT ends execution with `a0 = 1` for success, or `a0 = 0` for failure.
+HALT ends execution with `a0 = 1` for success, or `a0 = 0` for failure. For `verify`, these mean acceptance and rejection, respectively.
 
 ### System calls
 
@@ -163,11 +163,10 @@ HASH writes H's 32-byte answer at the output address.
 - **Instructions:** encodings are 32 bits. Fetching outside the code or at a non-4-byte-aligned address fails. `FENCE` has no effect; `EBREAK` fails.
 - **Registers:** `x0`–`x31` are 64 bits. `x0` always reads zero and ignores writes. Aliases are `sp = x2`, `t0 = x5`, and `a0`–`a2 = x10`–`x12`. PC is separate.
 - **Memory access:** addresses count bytes; multi-byte integers are little-endian. Loads and stores access only memory, not code. Accesses of 1, 2, 4, or 8 bytes require alignment to their size. Misaligned accesses fail.
-- **Bounds:** every memory access and buffer must fit completely in memory. For unsigned byte address p and length n, require `p + n <= 0x100000`. Instruction arithmetic and effective-address calculation follow RV64IM.
+- **Bounds:** every memory access and buffer must fit completely in memory. For unsigned byte address p and length n, require `p + n <= 0x100000`. All size, layout, and bounds calculations use mathematical integers without overflow. Instruction arithmetic and effective-address calculation follow RV64IM.
 - **Buffer layout:** cache, signature, and witness occupy separate consecutive areas, with up to seven alignment bytes after the signature. Require `0x20060 + 8 × ceil(S / 8) + W <= data_base` for each program.
 - **Input loading:** reject incorrect sizes or buffers extending beyond `data_base`. Starting addresses are 8-byte aligned; lengths need not be multiples of eight.
 - **Output extraction:** read each output at its declared size from its fixed address in final memory. On failure, ignore output buffers.
-- **Witness padding:** `verify` reads the witness with ordinary loads and checks that unused witness bytes are zero.
 - **HASH arguments:** addresses and bit length n are unsigned 64-bit values. The input’s `ceil(n / 8)` bytes and the output’s 32 bytes must fit entirely in memory; check this before any oracle call or write. Both input and output addresses must be 8-byte aligned.
 - **HASH execution:** read exactly n bits in increasing byte-address order, least-significant bit first within each byte; ignore unused high bits of the final byte. Read all input before writing the answer, so buffers may overlap. Preserve integer registers and advance PC by 4.
 - **Faults:** unknown services, invalid arguments, invalid HALT statuses, invalid instruction encodings, and memory or instruction-fetch faults end the program with failure (`verify` rejects).
