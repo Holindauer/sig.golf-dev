@@ -5,7 +5,7 @@ registered verifier, open leaderboard or accepted baseline.
 
 ## Submission path
 
-`bash benchmark.sh /path/to/submission` captures a flat folder, validates the
+`python3 verifier/verify_submission.py /path/to/submission` captures a flat folder, validates the
 captured bytes, prepares a private Lake project, compiles its protected challenge,
 audits the protected axioms, then runs the real comparator in the Linux profile.
 The runner compiles candidate modules in a separate service and freezes their artifacts.
@@ -22,7 +22,7 @@ Every receipt says `ranked: false`.
 
 Historical draft v0.17 used claim identifier `suf-cma-total-work-pk32-decay-v1`,
 which cannot certify the current adaptive claim.
-Organizer-owned `benchmark/scoring.json` belongs to the protected harness
+Organizer-owned `verifier/scoring.json` belongs to the protected harness
 manifest. Its product schema computes `sigma * hverify` exactly, with no
 bandwidth coefficient. Historical additive profiles are rejected rather than
 silently reinterpreted. No entrant-supplied pricing is admitted. Complete-program
@@ -43,7 +43,7 @@ evidence, not signed attestations or authority to award/promote a submission.
 
 ## Admission and operator responsibilities
 
-The `verify()` entry point (including `benchmark.sh` and insecure diagnostics)
+The `verify()` entry point (including the `verify_submission.py` command line and insecure diagnostics)
 holds a nonblocking kernel file lock at `benchmark-results/runs/.worker.lock`
 before capture and through receipt publication. A concurrent invocation returns
 a `worker_busy` receipt with `retryable: true`, no captured submission and no
@@ -107,7 +107,7 @@ ignoring repeated SIGTERM while unwinding. Library callers retain control of
 their own signal policy. SIGKILL, host failure, or interruption outside the
 receipt-producing portion of verification can still leave no receipt.
 
-`python3 scripts/check-sandbox.py` runs synthetic positive/negative probes using the
+`python3 verifier/check-sandbox.py` runs synthetic positive/negative probes using the
 same resource/permission constructors as verification. It checks outside-file
 reads; protected, dependency and source writes; TCP, UDP, IPv6 and Unix sockets;
 and allowed candidate-output writes. A probe failure is an infrastructure error.
@@ -143,12 +143,12 @@ input. The protected library/test build and standard-axiom audit passed again.
 ## Tests and remaining launch work
 
 ```sh
-bash setup.sh
+bash verifier/setup_tools.sh
 python3 -m unittest discover -s tests -v
 lake build LeanSphincs LeanSphincsTest
-python3 scripts/test-comparator.py       # organizer metric canaries, unsandboxed
-python3 scripts/test-sandbox-comparator.py # same metric cases in the real sandbox
-python3 scripts/test-verifier.py         # actual SchemeClaim negative path, sandboxed
+python3 verifier/test-comparator.py       # organizer metric canaries, unsandboxed
+python3 verifier/test-sandbox-comparator.py # same metric cases in the real sandbox
+python3 verifier/test-verifier.py         # actual SchemeClaim negative path, sandboxed
 ```
 
 The five comparator canaries prove only metric statements. The production-path
@@ -215,7 +215,7 @@ rechecked before receipt publication. Source scanning rejects `eval%` and unsafe
 helpers as defense in depth; compilation can execute code even if scanning passes.
 Source pins do not authenticate precompiled dependency caches.
 
-`benchmark/resources.json` is organizer-owned. Reference execution calibration,
+`verifier/resources.json` is organizer-owned. Reference execution calibration,
 verification limits, raw keygen/sign/verify caps, persistent secret and
 precomputation storage, executable size and evidence validators remain unset.
 Missing values fail closed. Execution evidence must bind algorithms, executable
@@ -246,9 +246,9 @@ Missing systemd state is an infrastructure error even after a successful compile
 exit. Prebuilt metric canaries exercise the same capture/check/export sequence,
 including the no-build adapter, and remain explicitly non-cryptographic.
 
-Run `lake env lean scripts/check-availability-axioms.lean` after the test build
+Run `lake env lean scripts/check-availability-axioms.lean` in `formal/` after the test build
 for the adaptive positive/negative fixture axiom closures. Run
-`python3 scripts/test-sandbox-lifecycle.py` for the organizer-controlled detached
+`python3 verifier/test-sandbox-lifecycle.py` for the organizer-controlled detached
 compiler-child probe: the child survives its parent, ignores SIGTERM and attempts
 a delayed artifact write, and the service must terminate it before capture.
 The scanner is intentionally bypassed by these sandbox probes. Unit regressions

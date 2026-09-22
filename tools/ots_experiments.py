@@ -6,6 +6,10 @@ from collections import defaultdict
 from fractions import Fraction
 import json
 from math import comb
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "verifier"))
 from oracle_meter import hash_weight, meter_metadata
 from scoring_policy import additive_score
 

@@ -8,7 +8,7 @@ import subprocess
 import sys
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from ots_experiments import experiments, hash_cost, multiply, pareto, power, rank_key, shared_rows
 
 
@@ -98,7 +98,7 @@ class OTSExperimentsTests(unittest.TestCase):
                          [(1, 5), (2, 3), (4, 1)])
 
     def test_cli_without_price_reports_only_frontier(self):
-        command = [sys.executable, str(Path(__file__).resolve().parents[1] / "scripts/ots_experiments.py"),
+        command = [sys.executable, str(Path(__file__).resolve().parents[1] / "ots_experiments.py"),
                    "--profile", "paper", "--signing-work", "1", "--signing-kind", "expected-upper-bound"]
         report = json.loads(subprocess.check_output(command, text=True, timeout=30))
         self.assertIsNone(report["bandwidth_price"])
@@ -113,7 +113,7 @@ class OTSExperimentsTests(unittest.TestCase):
         self.assertEqual(invalid.returncode, 2)
 
     def test_current_cli_exposes_meter_version(self):
-        command = [sys.executable, str(Path(__file__).resolve().parents[1] / "scripts/ots_experiments.py"),
+        command = [sys.executable, str(Path(__file__).resolve().parents[1] / "ots_experiments.py"),
                    "--profile", "rom32-input64", "--signing-work", "1", "--signing-kind", "worst-case-bound"]
         report = json.loads(subprocess.check_output(command, text=True, timeout=30))
         self.assertEqual(report["schema"], "leansphincs-ots-experiment-v3")
