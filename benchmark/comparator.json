@@ -1,8 +1,0 @@
-{
-  "challenge_module": "LeanSphincs.Benchmark.Challenge",
-  "solution_module": "LeanSphincs.Submission.Solution",
-  "theorem_names": ["LeanSphincs.Benchmark.candidate"],
-  "definition_names": ["LeanSphincs.Submission.scheme"],
-  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
-  "enable_nanoda": false
-}

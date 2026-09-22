@@ -1,8 +1,5 @@
+.DS_Store
 .lake/
-.benchmark-tools/
-benchmark-results/
-LeanSphincs/Benchmark/Challenge.lean
-LeanSphincs/Submission/
+.venv/
 __pycache__/
-service/.venv/
-service/data/
+*.pyc
