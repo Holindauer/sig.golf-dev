@@ -5,7 +5,8 @@ const $ = selector => document.querySelector(selector);
 const handInImage = {x: 548, y: 148};
 const BOLT_HOLD_MS = 1000;
 const BOLT_FADE_MS = 500;
-const BOLT_ARRIVAL_MS = 380;
+const LAYER_REVEAL_MS = 100;
+const BOLT_ARRIVAL_MS = 3 * LAYER_REVEAL_MS;
 const FIRST_STRIKE_MIN_MS = 2000;
 const FIRST_STRIKE_MAX_MS = 4000;
 const STRIKE_INTERVAL_MIN_MS = 5000;
@@ -239,12 +240,12 @@ function render(now) {
   const age = now - lastStrike;
   const fade = age < 0 ? 0 : age < BOLT_HOLD_MS ? 1 : clamp(1 - (age - BOLT_HOLD_MS) / BOLT_FADE_MS);
   const arrival = clamp(age / BOLT_ARRIVAL_MS);
-  const visible = fade * clamp(age / 130);
-  const sweep = 1 - (1 - arrival) ** 2;
+  const visible = fade * clamp(age / 65);
+  const sweep = arrival;
   const offset = boltLength * (1 - sweep);
   for (const id of ['path-blur', 'path-glow', 'path-core']) $('#' + id).style.strokeDashoffset = `${offset}`;
   treeGroups.forEach((group, index) => {
-    const reveal = clamp((age - index * 110) / 170);
+    const reveal = clamp((age - index * LAYER_REVEAL_MS) / LAYER_REVEAL_MS);
     group.setAttribute('opacity', reveal.toFixed(3));
   });
   $('#sky-glow').setAttribute('opacity', (visible * .38).toFixed(3));

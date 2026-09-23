@@ -7,10 +7,9 @@
   <title>sig.golf — Stateless signatures, proved</title>
   <link rel="stylesheet" href="/site/style.css">
   <script src="/site/storm.js" defer></script>
-  <script src="/site/demo-records.js" defer></script>
-  <script src="/site/demo-data.js" defer></script>
 </head>
 <body>
+  <div class="beta-banner">The competition is live in beta. Expect rules to change every day and submissions to be lost.</div>
   <svg id="page-bolt" aria-hidden="true" preserveAspectRatio="none">
     <defs>
       <filter id="bolt-blur" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="9"/></filter>
@@ -53,13 +52,13 @@
 
     <section class="progress" aria-labelledby="progress-title">
       <div class="section-heading"><h2 id="progress-title">Progress over time</h2></div>
-      <div class="score-plot"><svg id="score-chart" role="img" aria-label="Preview submission scores over time"></svg></div>
+      <div class="score-plot empty-plot" role="img" aria-label="No verified submission scores to plot yet"><span class="empty-plot-y">Score</span><span class="empty-plot-message">No verified submissions yet.</span><span class="empty-plot-x">Time →</span></div>
       <img id="zeus-full" class="zeus-full" src="/site/assets/zeus-full.png" alt="Full-length Zeus statue reaching for lightning, with his feet at the top edge of the score chart">
     </section>
 
     <section class="pareto" aria-labelledby="pareto-title">
       <div class="section-heading"><h2 id="pareto-title">Pareto frontier</h2></div>
-      <div class="score-plot"><svg id="pareto-chart" role="img" aria-label="Signature size versus verification cycles; the blue line marks non-dominated submissions"></svg></div>
+      <div class="score-plot empty-plot" role="img" aria-label="No verified submissions on the Pareto frontier yet"><span class="empty-plot-y">Verification cycles</span><span class="empty-plot-message">No verified submissions yet.</span><span class="empty-plot-x">Signature size (bytes) →</span></div>
     </section>
 
     <section id="leaderboard" class="leaderboard" aria-labelledby="leaderboard-title">
