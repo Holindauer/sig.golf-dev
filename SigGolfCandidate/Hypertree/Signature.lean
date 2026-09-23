@@ -102,6 +102,32 @@ theorem recover_bottom (hash : Hash) (tree : Nat) (side : Bool) (message : Diges
       recoverLayer hash 0 tree side message signature := by
   simp [recoverLayer, recoverLeaf]
 
+private theorem packed_cast_injective {n : Nat} (first second : List Byte)
+    (hfirst : first.length = n) (hsecond : second.length = n)
+    (same : ((Reference.packed first).2.cast (by
+      change 8 * first.length = 8 * n
+      rw [hfirst]) : Bytes n) =
+      ((Reference.packed second).2.cast (by
+        change 8 * second.length = 8 * n
+        rw [hsecond]) : Bytes n)) : first = second := by
+  apply SecurityPacking.packed_injective
+  apply Serialization.query_eq
+  · change 8 * first.length = 8 * second.length
+    rw [hfirst, hsecond]
+  · have hv := congrArg BitVec.toNat same
+    simpa only [BitVec.toNat_cast] using hv
+
+private theorem packed_cast_bytes {n : Nat} (data : List Byte) (h : data.length = n) :
+    bytes ((Reference.packed data).2.cast (by
+      change 8 * data.length = 8 * n
+      rw [h]) : Bytes n) = data := by
+  apply SecurityPacking.packed_injective
+  rw [Serialization.packed_bytes]
+  apply Serialization.query_eq
+  · change 8 * n = 8 * data.length
+    rw [h]
+  · simp only [BitVec.toNat_cast]
+
 /-- The submitted fixed-width object, with no padding or unused encoded fields. -/
 def Compact.wire (signature : Compact) (valid : signature.Valid) : Bytes signatureBytes :=
   (Reference.packed signature.encode).2.cast (by
@@ -111,21 +137,13 @@ def Compact.wire (signature : Compact) (valid : signature.Valid) : Bytes signatu
 theorem Compact.wire_injective (first second : Compact) (hfirst : first.Valid) (hsecond : second.Valid)
     (same : first.wire hfirst = second.wire hsecond) : first = second := by
   apply Compact.encode_injective
-  apply SecurityPacking.packed_injective
-  apply Serialization.query_eq
-  · change 8 * first.encode.length = 8 * second.encode.length
-    rw [first.valid_length hfirst, second.valid_length hsecond]
-  · have hv := congrArg BitVec.toNat same
-    simpa only [Compact.wire, BitVec.toNat_cast] using hv
+  exact packed_cast_injective first.encode second.encode
+    (first.valid_length hfirst) (second.valid_length hsecond) (by
+      simpa only [Compact.wire] using same)
 
 theorem Compact.wire_bytes (signature : Compact) (valid : signature.Valid) :
     bytes (signature.wire valid) = signature.encode := by
-  apply SecurityPacking.packed_injective
-  rw [Serialization.packed_bytes]
-  apply Serialization.query_eq
-  · change 8 * signatureBytes = 8 * signature.encode.length
-    rw [signature.valid_length valid]
-  · simp only [Compact.wire, BitVec.toNat_cast]
+  exact packed_cast_bytes signature.encode (signature.valid_length valid)
 
 /-- Drop the bottom-layer fields that are never serialized or read by verification. -/
 def Compact.ofReference (signature : Signature) (valid : signature.layers.length = 160) : Compact where
