@@ -69,7 +69,7 @@ For any `secretKey`, `message` and oracle H, consider the following experiment:
 
 Stop at the first failure. We say the `experiment succeeds` when all stages succeed and verification accepts.
 
-`K_P` counts program P's compressions in this experiment, including retries and failed attempts; it is zero if P is never reached. For each fixed secret key and H, `Kmax_P` is the maximum of `K_P` over all messages. `BUDGET_P` denotes P's named budget.
+`K_P` counts program P's compressions in this experiment; it is zero if P is never reached. For each fixed secret key and H, `Kmax_P` is the maximum of `K_P` over all messages. `BUDGET_P` denotes P's named budget.
 
 1. **Success:** for every secret key, `Pr_H[experiment succeeds for every message] >= 1 - FAILURE`.
 2. **Compression budgets:** for every secret key, `E_H[2^(Kmax_P / BUDGET_P)] <= 2` for each P in {`keygen`, `sign`, `expand`}.
