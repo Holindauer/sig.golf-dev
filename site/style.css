@@ -43,15 +43,13 @@ button { font: inherit; cursor: pointer; }
 .progress { position: relative; }
 .section-heading .eyebrow { margin-bottom: 7px; }
 h2 { font-size: 25px; line-height: 1.2; letter-spacing: -.025em; margin: 0; }
-.score-summary { position: absolute; z-index: 2; left: 0; bottom: 18px; width: min(620px, 58%); display: grid; grid-template-columns: 1fr 1fr; border: 2px solid var(--blue); border-radius: 9px; background: var(--surface); box-shadow: 0 8px 30px rgba(22,54,87,.06); }
+.score-summary { position: absolute; z-index: 2; left: 0; bottom: 18px; width: min(690px, 66%); display: grid; grid-template-columns: 1fr 1fr; border: 2px solid var(--blue); border-radius: 9px; background: var(--surface); box-shadow: 0 8px 30px rgba(22,54,87,.06); }
 .score-summary > div { min-width: 0; padding: 18px 19px; }
-.score-definition { border-right: 1px solid var(--line); }
+.score-definition { display: flex; align-items: center; border-right: 1px solid var(--line); }
 .card-label { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin: 0; }
-.formula { display: flex; gap: 12px; align-items: baseline; margin: 11px 0 7px; font-size: 43px; font-weight: 680; letter-spacing: -.06em; line-height: 1; }
-.formula .times { font-size: 31px; color: var(--blue); font-weight: 400; }
-.formula-key { color: var(--secondary); font-size: 11px; line-height: 1.35; }
-.formula-key p { margin: 4px 0 0; }
-.formula-key strong { color: var(--ink); margin-right: 5px; }
+.score-equation { margin: 0; font-size: clamp(18px, 2vw, 24px); font-weight: 650; line-height: 1.22; letter-spacing: -.035em; }
+.score-equation span { display: block; white-space: nowrap; }
+.score-equation em { color: var(--blue); font-style: normal; }
 .record-empty { margin: 15px 0 7px; font-size: 18px; font-weight: 600; line-height: 1.25; letter-spacing: -.025em; }
 .score-record { display: flex; flex-direction: column; }
 .score-record .record-empty { flex: 1; display: grid; place-items: center; margin: 0; text-align: center; font-size: 32px; font-variant-numeric: tabular-nums; }
@@ -109,7 +107,7 @@ h2 { font-size: 25px; line-height: 1.2; letter-spacing: -.025em; margin: 0; }
   .progress { margin-top: 160px; }
   .zeus-full { right: -20px; bottom: 255px; width: 230px; }
 }
-@media (max-width: 420px) {
+@media (max-width: 600px) {
   .site-header { padding-top: 19px; padding-bottom: 10px; }
   .site-header nav { gap: 9px; flex-wrap: wrap; justify-content: flex-end; }
   .score-summary { grid-template-columns: 1fr; }
