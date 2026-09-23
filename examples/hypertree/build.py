@@ -66,7 +66,7 @@ class Assembler:
             start=len(self.words);
             self.ld(11,28,744);self.store(11,28,1272);self.ld(11,28,752);self.store(11,28,1280)
             self.i(0x13,0,28,28,1056);self.ld(6,28);self.i(0x13,0,6,6,1);self.store(6,28)
-            self.jump('chain_step_reuse')
+            self.jump('cached_chain_check')
             while len(self.words)-start<19:self.i(0x13,0,0,0,0)
             return
         if (self.optimize_address_reuse and count==16 and source==VALUE and destination==HASH+32 and 'chain_step' in self.labels and 'chain_end' not in self.labels):
@@ -79,6 +79,11 @@ class Assembler:
             for off,src in [(8,INDEX0),(16,INDEX1),(24,INDEX2)]:self.ld(11,28,src-STEP);self.store(11,28,off-1080)
             self.i(0x13,0,28,28,-1056);self.i(0x13,0,10,28,-24);self.li(11,384);self.i(0x13,0,12,28,744);self.li(5,1)
             end=self.fresh('fused_end');self.jump(end)
+            self.label('cached_chain_check')
+            self.ld(6,28);self.li(7,7);self.branch(6,7,'chain_end')
+            self.ld(11,28,216);self.store(11,28,-1048);self.ld(11,28,224);self.store(11,28,-1040)
+            self.ld(10,28,-1080);self.li(11,1);self.shift(11,11,32);self.add(10,10,11);self.store(10,28,-1080)
+            self.i(0x13,0,28,28,-1056);self.i(0x13,0,10,28,-24);self.li(11,384);self.i(0x13,0,12,28,744);self.li(5,1);self.jump(end)
             while len(self.words)-start<59:self.i(0x13,0,0,0,0)
             self.label(end);self.fused_hash_ready=True
             return

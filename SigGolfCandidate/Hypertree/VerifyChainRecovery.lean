@@ -42,7 +42,7 @@ theorem recover_chain_fragment (hash : Hash) (s : MachineState) (level tree : Na
     (value0 : s.getMem (chainSource s) = value.extractLsb' 0 64)
     (value8 : s.getMem (chainSource s + 8) = value.extractLsb' 64 64)
     (digitEq : s.getByte (BitVec.ofNat 64 (0x80600 + chain.val)) = BitVec.ofNat 8 digit.val) :
-    ∃ final, Trace hash verify s (43*(7-digit.val)+28) (50*(7-digit.val)+28) (7-digit.val) (7-digit.val) final ∧
+    ∃ final, Trace hash verify s (28*(7-digit.val)+cachedOverhead (7-digit.val)+23) (35*(7-digit.val)+cachedOverhead (7-digit.val)+23) (7-digit.val) (7-digit.val) final ∧
       final.pc = 0x163c ∧
       ChainData final level tree side chain 7
         (walk (Reference.chainHash hash level tree side chain) digit.val (7-digit.val) value) ∧
