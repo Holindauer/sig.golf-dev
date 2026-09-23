@@ -50,7 +50,7 @@ theorem prob_conflict_le {α : Type} (program : Program α) (limit : Nat) :
 /-- Joint-output bound: the original result remains available for coupling with the actual game. -/
 theorem prob_lifetime_conflict_le {α : Type} (program : Program α) :
     Pr[fun result => Conflict result.2 ∧ marks result.2 ≤ LIFETIME | execute program] ≤
-      expectedValue (execute program) (fun result => (result.2.length : ENNReal))/2^136 := by
+      expectedValue (execute program) (fun result => (result.2.length : ENNReal))/2^128 := by
   have bound := SecurityIndexTrace.prob_lifetime_conflict_le (erase program)
   rw [← trace_projection, probEvent_map, expectedValue_map] at bound
   exact bound

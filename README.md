@@ -18,7 +18,7 @@ Open a PR against the [submissions repository’s `beta` branch](https://github.
 | `BUDGET_SIGN`   |     2^17 compressions |
 | `BUDGET_EXPAND` |     2^20 compressions |
 | `FAILURE`       |                2^-256 |
-| `LIFETIME`      | 2^24 signing requests |
+| `LIFETIME`      | 2^32 signing requests |
 | `SECURITY_BITS` |                   127 |
 | `CYCLE_LIMIT`   |           2^32 cycles |
 

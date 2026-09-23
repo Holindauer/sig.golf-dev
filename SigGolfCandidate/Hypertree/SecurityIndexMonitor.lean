@@ -144,10 +144,10 @@ theorem cost_eq_expected (strategy : Strategy) :
 
 theorem prob_lifetime_le (strategy : Strategy) :
     Pr[fun hit => hit = true | play strategy ∅ ∅ LIFETIME] ≤
-      expectedValue (draws strategy) (fun count => (count : ENNReal)) / 2^136 := by
+      expectedValue (draws strategy) (fun count => (count : ENNReal)) / 2^128 := by
   have bound := prob_empty_le strategy LIFETIME
   rw [cost_eq_expected] at bound
-  have rate : (LIFETIME : ENNReal)/2^160 = 1/(2:ENNReal)^136 := by
+  have rate : (LIFETIME : ENNReal)/2^160 = 1/(2:ENNReal)^128 := by
     apply (ENNReal.div_eq_div_iff (by norm_num) (by finiteness) (by norm_num) (by finiteness)).2
     norm_num [LIFETIME]
   simpa only [rate, div_eq_mul_inv, one_mul, mul_comm] using bound

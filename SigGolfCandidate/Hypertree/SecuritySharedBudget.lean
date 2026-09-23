@@ -16,7 +16,7 @@ def Counts.total (counts : Counts) : Nat := counts.secretKey + counts.graph + co
 
 noncomputable def weight (counts : Counts) : ENNReal :=
   (counts.secretKey : ENNReal)/2^128 + 2*(counts.graph : ENNReal)/2^128 +
-    (counts.index : ENNReal)/2^256 + (counts.index : ENNReal)/2^136
+    (counts.index : ENNReal)/2^256 + (counts.index : ENNReal)/2^128
 
 theorem weight_le (counts : Counts) : weight counts ≤ (counts.total : ENNReal)/2^127 := by
   have secretKey : (counts.secretKey : ENNReal)/2^128 ≤ 2*(counts.secretKey : ENNReal)/2^128 := by
@@ -25,12 +25,10 @@ theorem weight_le (counts : Counts) : weight counts ≤ (counts.total : ENNReal)
     exact le_add_right le_rfl
   have nonce : (counts.index : ENNReal)/2^256 ≤ (counts.index : ENNReal)/2^128 :=
     ENNReal.div_le_div le_rfl (by norm_num)
-  have index : (counts.index : ENNReal)/2^136 ≤ (counts.index : ENNReal)/2^128 :=
-    ENNReal.div_le_div le_rfl (by norm_num)
   calc
     _ ≤ 2*(counts.secretKey : ENNReal)/2^128 + 2*(counts.graph : ENNReal)/2^128 +
       (counts.index : ENNReal)/2^128 + (counts.index : ENNReal)/2^128 :=
-        add_le_add (add_le_add (add_le_add secretKey le_rfl) nonce) index
+        add_le_add (add_le_add (add_le_add secretKey le_rfl) nonce) le_rfl
     _ = 2*(counts.total : ENNReal)/2^128 := by
       simp only [Counts.total, Nat.cast_add, div_eq_mul_inv]
       ring
@@ -54,7 +52,7 @@ theorem prob_union_le {α : Type} (simulation : ProbComp α) (counts : α → Co
     (secretKeyBound : Pr[secretKeyBad | simulation] ≤ expectedValue simulation (fun result => ((counts result).secretKey : ENNReal)/2^128))
     (graphBound : Pr[graphBad | simulation] ≤ expectedValue simulation (fun result => 2*((counts result).graph : ENNReal)/2^128))
     (nonceBound : Pr[nonceBad | simulation] ≤ expectedValue simulation (fun result => ((counts result).index : ENNReal)/2^256))
-    (indexBound : Pr[indexBad | simulation] ≤ expectedValue simulation (fun result => ((counts result).index : ENNReal)/2^136)) :
+    (indexBound : Pr[indexBad | simulation] ≤ expectedValue simulation (fun result => ((counts result).index : ENNReal)/2^128)) :
     Pr[fun result => secretKeyBad result ∨ graphBad result ∨ nonceBad result ∨ indexBad result | simulation] ≤
       (budget : ENNReal)/2^127 := by
   have union : Pr[fun result => secretKeyBad result ∨ graphBad result ∨ nonceBad result ∨ indexBad result | simulation] ≤
@@ -71,7 +69,7 @@ theorem prob_union_le {α : Type} (simulation : ProbComp α) (counts : α → Co
     _ ≤ expectedValue simulation (fun result => ((counts result).secretKey : ENNReal)/2^128) +
       expectedValue simulation (fun result => 2*((counts result).graph : ENNReal)/2^128) +
       expectedValue simulation (fun result => ((counts result).index : ENNReal)/2^256) +
-      expectedValue simulation (fun result => ((counts result).index : ENNReal)/2^136) :=
+      expectedValue simulation (fun result => ((counts result).index : ENNReal)/2^128) :=
         add_le_add (add_le_add (add_le_add secretKeyBound graphBound) nonceBound) indexBound
     _ = expectedValue simulation (fun result => weight (counts result)) := by
       simp only [weight, expectedValue_add]

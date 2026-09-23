@@ -107,13 +107,13 @@ theorem nonce_bound (publicCache : Cache) (adversary : Adversary submission.size
 
 theorem index_bound (publicCache : Cache) (adversary : Adversary submission.sizes) (rounds budget : Nat) :
     Pr[IndexBad | experiment publicCache adversary rounds budget] ≤
-      expectedValue (experiment publicCache adversary rounds budget) (fun result => ((history result).counts.index : ENNReal)/2^136) := by
+      expectedValue (experiment publicCache adversary rounds budget) (fun result => ((history result).counts.index : ENNReal)/2^128) := by
   unfold IndexBad
   simp only [experiment, history]
   rw [SecuritySecretKeyMonitor.value_event (joint publicCache adversary rounds budget)
     (fun result => result.2.value.history.secretKeyInputs) (fun result => SecurityIndexTrace.Conflict result.2.value.history.indexTrace),
     SecuritySecretKeyMonitor.expected_value (joint publicCache adversary rounds budget)
-    (fun result => result.2.value.history.secretKeyInputs) (fun result => (result.2.value.history.counts.index : ENNReal)/2^136)]
+    (fun result => result.2.value.history.secretKeyInputs) (fun result => (result.2.value.history.counts.index : ENNReal)/2^128)]
   have bound := SecurityMonitorIndexBound.experiment_bad_le publicCache adversary rounds budget
   have event : Pr[fun result => SecurityIndexTrace.Conflict result.value.history.indexTrace |
       SecurityMonitorGraphView.experiment publicCache adversary rounds budget] =

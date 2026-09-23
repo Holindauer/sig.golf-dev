@@ -156,7 +156,7 @@ theorem conflict_of_pair (before between after : List Entry) (first second : Ent
 
 theorem prob_lifetime_conflict_le (strategy : Strategy) :
     Pr[fun entries => Conflict entries ∧ marks entries ≤ LIFETIME | trace strategy] ≤
-      OracleComp.EvalDist.expectedValue (trace strategy) (fun entries => (entries.length : ENNReal)) / 2^136 := by
+      OracleComp.EvalDist.expectedValue (trace strategy) (fun entries => (entries.length : ENNReal)) / 2^128 := by
   have bound := prob_lifetime_le strategy
   rw [play_eq_trace, probEvent_map, ← trace_length, OracleComp.EvalDist.expectedValue_map] at bound
   apply le_trans _ bound

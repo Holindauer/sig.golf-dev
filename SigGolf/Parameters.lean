@@ -8,7 +8,7 @@ namespace SigGolf
 def BUDGET_KEYGEN : Nat := 2 ^ 20
 def BUDGET_SIGN : Nat := 2 ^ 17
 def BUDGET_EXPAND : Nat := 2 ^ 20
-def LIFETIME : Nat := 2 ^ 24
+def LIFETIME : Nat := 2 ^ 32
 def SECURITY_BITS : Nat := 127
 def CYCLE_LIMIT : Nat := 2 ^ 32
 def MEMORY_BYTES : Nat := 2 ^ 24
