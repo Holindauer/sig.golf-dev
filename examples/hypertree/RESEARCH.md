@@ -102,3 +102,12 @@ Proposed C = 3218131, score = 384991447792, S = W = 119632. Bound: `145 + 288 + 
 Next route: 152-level hypertree. The standalone shared-budget and index-monitor proofs pass with permitted axiom guards; the prototype reference/bytecode tests pass at 113616 signature bytes and 1891993 sample cycles. Full adaptation of reference, bytecode, security, termination and resource proofs remains. See `../research/height152-notes.md`; do not treat the prototype as certified.
 
 The complete combined-ending certificate and axiom guards, exported Solution.lean, source policy and reference/rejection checks passed. Organizer definitions and pinned dependencies are unchanged. Broad-build status and exact commit are in autoresearch state.
+
+
+## 152-level research checkpoint (2026-09-23)
+
+PR6 remains fixed at f95c734241fd45a4b640a45338dceb618f3222e9. This isolated checkout is an incomplete research branch, not a submission candidate.
+
+The adapted SecurityIndexMonitor, SecurityIndexTrace, SecurityIndexProgram and SecuritySharedBudget target built successfully (2760 jobs), including permitted-axiom guards. Reference.correct also built for height152 (2704 jobs). The earlier Python prototype passes reference/rejection tests at113616 bytes. These are component proofs only; dependent security and bytecode modules still require adaptation.
+
+Next executable step: inspect Signature.lean and SecurityPath.lean to adapt the compact signature's151 upper layers, then adapt SecurityRandomOracle's152-bit output and104-bit extraction complement. Build those targets before propagating changes through graph and common-monitor modules. Review each numeric occurrence; PC offsets must stay unchanged. The old auxiliary SecurityAccounting.combine_query_classes theorem has a different coarse bound and cannot simply replace160 with152; preserve or separately generalize it only if actually required. Keep organizer lambda127/lifetime2^24 unchanged. Finally regenerate bytecode from the saved height152 prototype, update refinements and resource proofs, and complete the entire certificate before claiming a new bound.
