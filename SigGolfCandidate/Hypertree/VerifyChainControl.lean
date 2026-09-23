@@ -1,6 +1,6 @@
 import SigGolfCandidate.Hypertree.ChainLoopControl
 import SigGolfCandidate.Hypertree.FastIncrement
-import SigGolfCandidate.Hypertree.AddressReuseChain
+import SigGolfCandidate.Hypertree.Copy6Chain
 
 namespace SigGolfCandidate.Hypertree.Verifying
 open SigGolf SigGolf.Riscv RiscvZkvm.Rv64
@@ -13,8 +13,8 @@ theorem verify_chain_increment : FastIncrement.Code verify 0x161c := by
   unfold FastIncrement.Code
   decide
 
-theorem verify_chain_code : AddressReuseChain.ChainCode verify 0x1500 := by
-  unfold AddressReuseChain.ChainCode AddressReuseProof.inputCode AddressReuseProof.outputCode AddressReuseProof.headerCode
+theorem verify_chain_code : Copy6Chain.ChainCode verify 0x1500 := by
+  unfold Copy6Chain.ChainCode Copy6.InputCode Copy6.OutputCode AddressReuseProof.headerCode
   decide
 
 end SigGolfCandidate.Hypertree.Verifying

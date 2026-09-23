@@ -72,3 +72,13 @@ Next route: `../research/Copy6.lean` proves six-step copies satisfy the exact me
 The six-step-copy prototype passes full reference and malformed-input rejection tests at 2112787 sample verification cycles, with unchanged hash counts. The smaller copy execution/specification theorems and axiom guards pass standalone; a full integrated certificate remains necessary.
 
 The complete counter-update certificate, permitted-axiom guards, source policy, and exported `Solution.lean` pass. Organizer definitions and pinned dependencies are unchanged. Full-build result and local commit are recorded in the autoresearch state.
+
+## Six-step chain copies
+
+Checkout `research-copy6`, based on `e160eee`. Replace both chain copies with a shared-base load/store fragment and a jump over unused padding. Each executes six steps instead of nine. The proofs preserve the required memory frame, return address, stack pointer, and following PC; temporary registers need not match. The full chain iteration uses 51 steps/58 cycles.
+
+Proposed C = 3414019, score = 408425921008, S = W = 119632. Bound: `145 + 288 + 159 * 21469 + 15`. Reference comparisons and malformed-input rejection pass; sample verification costs 2112787 cycles with unchanged hash counts. Final validation and commit are in `../autoresearch-state.json`.
+
+Next route: `../research/FusedPrepare.lean` proves a combined copy/header block executes 31 ordinary steps and reaches exactly the prior prepared state. This removes one jump and one repeated base-address load, saving two cycles per chain hash. Prototype: `../research/fused_prepare_probe.py`. Integration and a complete certificate are still required.
+
+The complete six-step-copy certificate, permitted-axiom guards, source policy, and exported Solution.lean passed. The combined-block prototype also passes reference and malformed-input rejection tests at 2059713 sample cycles. Full broad-build status and candidate commit are in the autoresearch state.

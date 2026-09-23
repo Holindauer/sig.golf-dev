@@ -61,6 +61,16 @@ class Assembler:
     def halt(self, accepted): self.li(5, 0); self.li(10, int(accepted)); self.emit(0x73)
     def copy(self, source, destination, count=16):
         assert count % 8 == 0
+        if (self.optimize_address_reuse and count == 16
+                and 'chain_step' in self.labels and 'chain_end' not in self.labels):
+            start = len(self.words)
+            self.emit((128 << 12) | (28 << 7) | 0x37)
+            self.ld(11,28,source-HASH); self.store(11,28,destination-HASH)
+            self.ld(11,28,source-HASH+8); self.store(11,28,destination-HASH+8)
+            end = self.fresh('copy6_end'); self.jump(end)
+            while len(self.words)-start < 11: self.i(0x13,0,0,0,0)
+            self.label(end)
+            return
         if self.optimize_copy16 and count == 16 and (not self.optimize_only_chain or ('chain_step' in self.labels and 'chain_end' not in self.labels)):
             # Preserve every final register, the copied memory, and following PCs.
             # Initialize pointers at their final values and address the two words backwards.
