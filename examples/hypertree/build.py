@@ -78,11 +78,12 @@ class Assembler:
             self.store(10,28,-1080)
             for off,src in [(8,INDEX0),(16,INDEX1),(24,INDEX2)]:self.ld(11,28,src-STEP);self.store(11,28,off-1080)
             self.i(0x13,0,28,28,-1056);self.i(0x13,0,10,28,-24);self.li(11,384);self.i(0x13,0,12,28,744);self.li(5,1)
+            self.li(13,1);self.shift(13,13,32)
             end=self.fresh('fused_end');self.jump(end)
             self.label('cached_chain_check')
             self.ld(6,28);self.li(7,7);self.branch(6,7,'chain_end')
             self.ld(11,28,216);self.store(11,28,-1048);self.ld(11,28,224);self.store(11,28,-1040)
-            self.ld(10,28,-1080);self.li(11,1);self.shift(11,11,32);self.add(10,10,11);self.store(10,28,-1080)
+            self.ld(10,28,-1080);self.add(10,10,13);self.store(10,28,-1080)
             self.i(0x13,0,28,28,-1056);self.i(0x13,0,10,28,-24);self.li(11,384);self.i(0x13,0,12,28,744);self.li(5,1);self.jump(end)
             while len(self.words)-start<59:self.i(0x13,0,0,0,0)
             self.label(end);self.fused_hash_ready=True

@@ -1,7 +1,7 @@
 import SigGolfCandidate.Hypertree.ChainLoopControl
 import SigGolfCandidate.Hypertree.FastIncrement
-import SigGolfCandidate.Hypertree.InitialCachedChain
-import SigGolfCandidate.Hypertree.CachedChain
+import SigGolfCandidate.Hypertree.InitialConstantChain
+import SigGolfCandidate.Hypertree.ConstantChain
 import SigGolfCandidate.Hypertree.CheckReuse
 
 namespace SigGolfCandidate.Hypertree.Verifying
@@ -13,13 +13,13 @@ theorem verify_chain_check : ChainLoopControl.CheckCode verify 0x14ec := by deci
 
 theorem verify_short_check : CheckReuse.Code verify 0x14f4 := by unfold CheckReuse.Code; decide
 
-theorem verify_chain_code : InitialCachedChain.ChainCode verify 0x1500 := by
-  unfold InitialCachedChain.ChainCode ReusePrepare.Code CachedFinish.Code
+theorem verify_chain_code : InitialConstantChain.ChainCode verify 0x1500 := by
+  unfold InitialConstantChain.ChainCode ConstantInitialPrepare.Code ConstantFinish.Code
   decide
 
-theorem verify_cached_check : CachedCheck.Code verify 0x1578 := by unfold CachedCheck.Code; decide
+theorem verify_cached_check : ConstantCheck.Code verify 0x1580 := by unfold ConstantCheck.Code; decide
 
-theorem verify_cached_code : CachedChain.ChainCode verify 0x1584 := by
-  unfold CachedChain.ChainCode CachedPrepare.Code CachedFinish.Code
+theorem verify_cached_code : ConstantChain.ChainCode verify 0x158c := by
+  unfold ConstantChain.ChainCode ConstantPrepare.Code ConstantFinish.Code
   decide
 end SigGolfCandidate.Hypertree.Verifying
