@@ -94,8 +94,8 @@ function treeShape(root, target, leaf, width, baseSpread) {
     const t = depth / 4;
     const x = (visual + .5) / (1 << depth) * 2 - 1;
     points[id] = {
-      x: mix(root.x, target.x, t) + spread * (x - selectedX * t) + (unit() - .5) * 11,
-      y: mix(root.y, target.y, t) + (unit() - .5) * Math.min(9, (target.y - root.y) * .11)
+      x: mix(root.x, target.x, t) + spread * (x - selectedX * t) + (unit() - .5) * 22,
+      y: mix(root.y, target.y, t) + (unit() - .5) * Math.min(17, (target.y - root.y) * .18)
     };
   }
   points[1] = root;
@@ -114,8 +114,6 @@ function newStrike() {
   overlay.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
 
   pageHand = hand;
-  $('#hand-glow').setAttribute('cx', pageHand.x);
-  $('#hand-glow').setAttribute('cy', pageHand.y);
   const topRange = clamp(width * .045, 18, 55);
   const top = {x: clamp(pageHand.x + (unit() - .5) * topRange * 2, 20, width - 20), y: -18};
   const skyGlow = $('#sky-glow');
@@ -173,37 +171,31 @@ function newStrike() {
     const shine = element('g', {}, branches);
     const edges = [];
     for (let id = 2; id < 32; id++) {
-      const edge = jaggedEdge(points[id >> 1], points[id], 3, 11);
+      const edge = jaggedEdge(points[id >> 1], points[id], 4, 17);
       edges[id] = edge;
       const depth = Math.floor(Math.log2(id));
       const d = pathData(edge);
-      const widthAtDepth = [0, 3.1, 2.5, 1.85, 1.28][depth];
+      const widthAtDepth = [0, 3.1, 2.5, 1.85, 1.28][depth] * (.78 + unit() * .4);
+      const brightness = .48 + unit() * .32;
       element('path', {
-        d, stroke: '#88beef', 'stroke-width': (widthAtDepth * 4).toFixed(2),
-        opacity: '.24'
+        d, stroke: unit() < .5 ? '#88beef' : '#b5d2ee', 'stroke-width': (widthAtDepth * (3.1 + unit() * 1.3)).toFixed(2),
+        opacity: (brightness * .19).toFixed(3)
       }, aura);
       element('path', {
-        d, stroke: '#53799c', 'stroke-width': widthAtDepth.toFixed(2), opacity: '.74'
+        d, stroke: '#607f9b', 'stroke-width': widthAtDepth.toFixed(2), opacity: (brightness * .7).toFixed(3)
       }, body);
-      element('path', {
-        d, stroke: '#e5f4ff', 'stroke-width': (widthAtDepth * .31).toFixed(2), opacity: '.82'
-      }, shine);
-    }
-    const nodes = element('g', {stroke: 'none'}, group);
-    for (let id = 1; id < 32; id++) {
-      const point = points[id];
-      const isLeaf = id >= 16;
-      const radius = isLeaf ? 1.35 : id === 1 ? 3 : 2.15;
-      if (treeIndex !== 2 || id !== leaf) {
-        element('circle', {cx: point.x, cy: point.y, r: radius * 2.7,
-          fill: '#b0d9fb', opacity: isLeaf ? '.23' : '.28', filter: 'url(#branch-blur)'}, nodes);
-      }
-      if (!isLeaf && !(treeIndex === 2 && id === leaf)) {
-        element('circle', {cx: point.x, cy: point.y, r: radius,
-          fill: '#f8fcff', stroke: '#688dad', 'stroke-width': '.72', opacity: '.9'}, nodes);
-      } else if (id !== leaf || treeIndex !== 2) {
-        element('circle', {cx: point.x, cy: point.y, r: radius,
-          fill: '#c4e4fb', opacity: '.85'}, nodes);
+      for (let segment = 0; segment < edge.length - 1; segment++) {
+        const detail = pathData(edge.slice(segment, segment + 2));
+        element('path', {
+          d: detail, stroke: unit() < .5 ? '#3d739e' : '#a4c5df',
+          'stroke-width': (widthAtDepth * (.75 + unit() * .4)).toFixed(2),
+          opacity: (brightness * (.13 + unit() * .23)).toFixed(3)
+        }, body);
+        if (unit() < .48) element('path', {
+          d: detail, stroke: unit() < .5 ? '#f3fbff' : '#b8dcf5',
+          'stroke-width': (widthAtDepth * (.17 + unit() * .13)).toFixed(2),
+          opacity: (brightness * (.24 + unit() * .4)).toFixed(3)
+        }, shine);
       }
     }
     for (const id of selectedIds(leaf)) pageRoute.push(...edges[id].slice(1));
@@ -233,7 +225,6 @@ function render(now) {
   const light = age < 0 ? 0 : age < BOLT_HOLD_MS ? 1 : clamp(1 - (age - BOLT_HOLD_MS) / BOLT_FADE_MS);
   const visible = light > .012 ? light : 0;
   $('#sky-glow').setAttribute('opacity', (light * .38).toFixed(3));
-  $('#hand-glow').setAttribute('opacity', (light * .65).toFixed(3));
   $('#energy').setAttribute('opacity', visible.toFixed(3));
   $('#trees').setAttribute('opacity', visible.toFixed(3));
   requestAnimationFrame(render);

@@ -18,8 +18,7 @@
 
   <main id="main" class="wrap rules-page">
     <div class="rules-layout">
-      <nav class="rules-toc" aria-label="On this page">
-        <span class="toc-heading">On this page</span>
+      <nav class="rules-toc" aria-label="Rules sections">
         <a href="#submission">Submission</a>
         <a href="#parameters">Parameters</a>
         <a href="#programs">Programs</a>
@@ -31,13 +30,11 @@
 
       <div class="rules-content">
         <section id="submission" class="rule-section">
-          <div class="section-kicker">01 / Entry</div>
           <h2>Submission</h2>
           <p>Submit the four RISC-V program images below, including embedded data; nonnegative integers <code>S</code>, <code>W</code>, and <code>C</code> for signature bytes, witness bytes, and verification cycles; and Lean 4 proofs of the statements on this page for those exact images, sizes, and bound.</p>
         </section>
 
         <section id="parameters" class="rule-section">
-          <div class="section-kicker">02 / Fixed values</div>
           <h2>Parameters</h2>
           <div class="table-grid">
             <div class="rule-table-wrap"><table><caption>Competition constants</caption><thead><tr><th>Constant</th><th>Value</th></tr></thead><tbody>
@@ -61,7 +58,6 @@
         </section>
 
         <section id="programs" class="rule-section">
-          <div class="section-kicker">03 / Pipeline</div>
           <h2>Programs</h2>
           <div class="rule-table-wrap"><table><thead><tr><th>Program</th><th>Inputs</th><th>Outputs</th><th>Context</th></tr></thead><tbody>
             <tr><td><code>keygen</code></td><td>Seed</td><td>Public key and cache, or failure</td><td>Enclave</td></tr>
@@ -73,7 +69,6 @@
         </section>
 
         <section id="model" class="rule-section">
-          <div class="section-kicker">04 / Accounting</div>
           <h2>Model and costs</h2>
           <p>All programs and the adversary share a random oracle <code>H</code>. Security counts calls to <code>H</code>. Program budgets and HASH cycles count compressions: hashing <code>n</code> bits costs <code>max(1, ceil(n / 512))</code> compressions.</p>
           <div class="rule-table-wrap"><table><caption>RISC-V cycle breakdown</caption><thead><tr><th>Operation</th><th>Cost</th></tr></thead><tbody>
@@ -84,7 +79,6 @@
         </section>
 
         <section id="proofs" class="rule-section">
-          <div class="section-kicker">05 / Certificate</div>
           <h2>Required Lean statements</h2>
           <h3>Honest execution</h3>
           <p>For any <code>seed</code>, <code>message</code>, and oracle <code>H</code>, run <code>keygen(seed)</code> to get the public key and cache; <code>sign(seed, public key, cache, message)</code> to get the signature; <code>expand(message, public key, signature)</code> to get the witness; then <code>verify(message, public key, witness)</code> to get the verdict. Stop at the first failure. The experiment succeeds when all stages succeed and verification accepts.</p>
@@ -119,7 +113,6 @@
         </section>
 
         <section id="interface" class="rule-section">
-          <div class="section-kicker">06 / Machine</div>
           <h2>RISC-V interface</h2>
           <p>Use <a href="https://docs.riscv.org/reference/isa/v20260120/unpriv/rv64.html">RV64I</a> and the <a href="https://docs.riscv.org/reference/isa/v20260120/unpriv/m-st-ext.html">M extension</a>. Each program satisfies <code>4 × instruction count + embedded-data bytes &lt; 2^20</code>, checked directly at submission.</p>
 
@@ -164,7 +157,6 @@
         </section>
 
         <section id="project" class="rule-section">
-          <div class="section-kicker">07 / Source</div>
           <h2>Lean project</h2>
           <p><code>SigGolf.Certificate submission C</code> in <a href="https://github.com/leanEthereum/sig.golf-dev/blob/beta/SigGolf/Statements.lean">SigGolf/Statements.lean</a> is the competition claim for the exact four program images and declared sizes. <a href="https://github.com/leanEthereum/sig.golf-dev/blob/beta/SigGolf/Security.lean">SigGolf/Security.lean</a> defines the attacker and both forgery experiments; <a href="https://github.com/leanEthereum/sig.golf-dev/blob/beta/SigGolf/Riscv.lean">SigGolf/Riscv.lean</a> defines execution and costs.</p>
           <p>Build the statements and regression checks with <code>lake build SigGolf SigGolfTests</code>. Dependencies are pinned in <code>lake-manifest.json</code>. These files define the requirements; they do not certify a particular signature scheme.</p>
