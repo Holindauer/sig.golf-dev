@@ -1,13 +1,13 @@
-import SigGolfCandidate.Hypertree.SecuritySeedHonestSign
+import SigGolfCandidate.Hypertree.SecuritySecretKeyHonestSign
 
-namespace SigGolfCandidate.Hypertree.SecuritySeedTraceBlocks
+namespace SigGolfCandidate.Hypertree.SecuritySecretKeyTraceBlocks
 open SigGolf OracleComp OracleSpec SecurityDerivation SecuritySeparation SecurityGameHop
-  SecurityBudget SecurityAtomicCutoff SecuritySeedHonest
+  SecurityBudget SecurityAtomicCutoff SecuritySecretKeyHonest
 set_option backward.isDefEq.respectTransparency false
 set_option maxRecDepth 4096
 open scoped Classical
 
-/-- A query that never contributes to the public seed-guess log. -/
+/-- A query that never contributes to the public secret key-guess log. -/
 def clean : GameWorld.Domain → Prop
   | .inl _ => True
   | .inr input => allowed input
@@ -30,7 +30,7 @@ theorem lift_clean {α : Type} {program : OracleComp SplitWorld α} (safe : Safe
     change Safe clean (liftM (GameWorld.query (.inr input)) >>= _)
     exact Safe.query _ _ good ih
 
-/-- A safe prefix emits no seed-input entries, while retaining every later
+/-- A safe prefix emits no secret key-input entries, while retaining every later
 entry and the full continuation output. -/
 theorem trace_bind {α β : Type} {program : OracleComp GameWorld α} (safe : Safe clean program)
     (next : α → OracleComp GameWorld β) :
@@ -44,7 +44,7 @@ theorem trace_bind {α β : Type} {program : OracleComp GameWorld α} (safe : Sa
     rw [ih answer]
     simp only [clean_prepend input good, bind_assoc, Prod.mk.eta, bind_pure]
 
-/-- Metering may stop a safe block early but cannot introduce a seed input. -/
+/-- Metering may stop a safe block early but cannot introduce a secret key input. -/
 theorem metered_clean {α : Type} {program : OracleComp GameWorld α} (safe : Safe clean program) (budget : Nat) :
     Safe clean (metered program budget) := by
   induction safe generalizing budget with
@@ -102,7 +102,7 @@ theorem metered_insufficient {α : Type} {program : OracleComp GameWorld α} {co
     next exhausted => simpa using member
 
 /-- Sufficient budget preserves the honest block and debits its exact cost,
-while all seed-log entries come from its continuation. -/
+while all secret key-log entries come from its continuation. -/
 theorem trace_enough {α β : Type} {program : OracleComp GameWorld α} {cost : Nat}
     (safe : Safe clean program) (fixed : FixedCost program cost)
     (next : α → OracleComp GameWorld β) (budget : Nat) (enough : cost ≤ budget) :
@@ -111,7 +111,7 @@ theorem trace_enough {α β : Type} {program : OracleComp GameWorld α} {cost : 
   rw [fixed.bind_enough next budget enough, trace_bind safe]
 
 /-- Insufficient honest-block budget has exactly the ordinary budget-abort
-output and empty seed log, under any stateful probabilistic oracle. -/
+output and empty secret key log, under any stateful probabilistic oracle. -/
 theorem trace_insufficient {σ α β : Type} {program : OracleComp GameWorld α} {cost : Nat}
     (safe : Safe clean program) (fixed : FixedCost program cost)
     (implementation : QueryImpl GameWorld (StateT σ ProbComp))
@@ -141,4 +141,4 @@ theorem trace_insufficient {σ α β : Type} {program : OracleComp GameWorld α}
       simp only [map_eq_pure_bind, probOutput_bind_const]
       simp
 
-end SigGolfCandidate.Hypertree.SecuritySeedTraceBlocks
+end SigGolfCandidate.Hypertree.SecuritySecretKeyTraceBlocks

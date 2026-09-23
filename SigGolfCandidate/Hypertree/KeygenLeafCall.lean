@@ -15,26 +15,26 @@ instance (side : Bool) (a : Word) : Decidable (Outside side a) :=
 
 /-- A complete upper-leaf call, with the exact generated keygen entry and return. -/
 theorem execute (hash : Hash) (s : MachineState) (pc : s.pc=0x11cc)
-    (sp : s.getReg .x2=0xfffff0) (level tree : Nat) (side : Bool) (seed : Seed)
-    (nonzero : BitVec.ofNat 64 level ≠ 0) (context : Context level tree side seed s) :
+    (sp : s.getReg .x2=0xfffff0) (level tree : Nat) (side : Bool) (secretKey : SecretKey)
+    (nonzero : BitVec.ofNat 64 level ≠ 0) (context : Context level tree side secretKey s) :
     ∃ final, Trace hash keygen s 37935 40606 369 380 final ∧
       final.pc=s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2=s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =
-        (Reference.leafRoot hash seed level tree side).extractLsb' (64*i.val) 64) ∧
+        (Reference.leafRoot hash secretKey level tree side).extractLsb' (64*i.val) 64) ∧
       (∀ a, Outside side a → final.getMem a=s.getMem a) := by
   obtain ⟨ready,pre,rpc,rcontext,rchain,rsp,saved,entryFrame⟩ :=
-    KeygenLeafPrologue.prepare s pc sp level tree side seed nonzero context
+    KeygenLeafPrologue.prepare s pc sp level tree side secretKey nonzero context
   obtain ⟨ended,rounds,endPC,endContext,endCounter,endpoints,endRA,endSP,endFrame⟩ :=
-    KeygenLeafLoop.loop hash 46 ready 0 level tree side seed (by decide) rpc rcontext rchain
+    KeygenLeafLoop.loop hash 46 ready 0 level tree side secretKey (by decide) rpc rcontext rchain
       (by intro chain lt; omega)
   have esp : ended.getReg .x2=0xffffe0 := endSP.trans rsp
   have esaved : ended.getMem 0xffffe0=s.getReg .x1 := by
     rw [endFrame _ (by decide),saved]
   obtain ⟨final,tail,fpc,fsp,words,frame⟩ :=
     KeygenLeaf.compute_return keygen hash 0x1548 KeygenLeaf.keygen_code keygen_leaf_return ended endPC
-      level tree side (Reference.endpoint hash seed level tree side)
+      level tree side (Reference.endpoint hash secretKey level tree side)
       endContext.levelWord endContext.leafWord endContext.indexWords
-      (KeygenLeafLoop.endpoint_words hash seed level tree side ended endpoints)
+      (KeygenLeafLoop.endpoint_words hash secretKey level tree side ended endpoints)
       (by rw [esp]; decide)
       (by rw [esp]; decide)
       (by rw [esp]; decide)

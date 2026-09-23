@@ -63,10 +63,10 @@ theorem parse_graph (pk : PublicKey) (position : Position) (payload : List Byte)
   rw [locate_index, locate_address] at located
   cases located
 
-theorem parsed_not_seedEligible (pk : PublicKey) (query : Query) (pair : Message × Bytes 32)
-    (parsed : parse pk query = some pair) : ¬SecuritySeparation.SeedEligible query := by
+theorem parsed_not_secretKeyEligible (pk : PublicKey) (query : Query) (pair : Message × Bytes 32)
+    (parsed : parse pk query = some pair) : ¬SecuritySeparation.SecretKeyEligible query := by
   rw [← (parse_some_iff pk query pair).1 parsed]
-  exact SecurityDomains.not_seedEligible_addressedInput 5 0 0 0 0 0 _ (by decide) (by decide)
+  exact SecurityDomains.not_secretKeyEligible_addressedInput 5 0 0 0 0 0 _ (by decide) (by decide)
 
 noncomputable def parsedInputs (pk : PublicKey) (inputs : List Query) : List (Message × Bytes 32) :=
   inputs.filterMap (parse pk)

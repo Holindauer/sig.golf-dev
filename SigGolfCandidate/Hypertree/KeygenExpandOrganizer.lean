@@ -19,42 +19,42 @@ theorem pipeline_expand_cost {σ ω : Type} (hash : Hash) (keygen : OracleComp H
     · simp [recordCost]
   · simp [recordCost]
 
-theorem honest_expand_cost (hash : Hash) (seed : Seed) (message : Message) :
-    (evalWithAnswerFn hash (submission.honest seed message)).costs .expand = 0 := by
+theorem honest_expand_cost (hash : Hash) (secretKey : SecretKey) (message : Message) :
+    (evalWithAnswerFn hash (submission.honest secretKey message)).costs .expand = 0 := by
   rw [honest_eq_pipeline]
   apply pipeline_expand_cost
   intro pk signature
   exact (Expansion.run_bound hash (message,pk,signature)).2.2.2.2
 
-theorem allMessages_expand_cost (hash : Hash) (seed : Seed) :
-    (evalWithAnswerFn hash (submission.allMessages seed)).maxCosts .expand = 0 := by
+theorem allMessages_expand_cost (hash : Hash) (secretKey : SecretKey) :
+    (evalWithAnswerFn hash (submission.allMessages secretKey)).maxCosts .expand = 0 := by
   apply Nat.eq_zero_of_le_zero
   unfold Submission.allMessages
-  exact fold_max_cost hash (submission.honest seed) .expand 0
-    (fun message => (honest_expand_cost hash seed message).le) _ {} (by decide)
+  exact fold_max_cost hash (submission.honest secretKey) .expand 0
+    (fun message => (honest_expand_cost hash secretKey message).le) _ {} (by decide)
 
-theorem support_expand_cost (seed : Seed) (summary : HonestSummary)
-    (mem : summary ∈ support (withRandomOracle (submission.allMessages seed))) :
+theorem support_expand_cost (secretKey : SecretKey) (summary : HonestSummary)
+    (mem : summary ∈ support (withRandomOracle (submission.allMessages secretKey))) :
     summary.maxCosts .expand = 0 := by
-  obtain ⟨hash,eq⟩ := fixed_hash_of_support (submission.allMessages seed) summary mem
+  obtain ⟨hash,eq⟩ := fixed_hash_of_support (submission.allMessages secretKey) summary mem
   rw [← eq]
-  exact allMessages_expand_cost hash seed
+  exact allMessages_expand_cost hash secretKey
 
 /-- Expansion's actual organizer moment is exactly one, because the image makes no hash calls. -/
-theorem expansion_compression_moment (seed : Seed) :
-    expectedValue (withRandomOracle (submission.allMessages seed))
+theorem expansion_compression_moment (secretKey : SecretKey) :
+    expectedValue (withRandomOracle (submission.allMessages secretKey))
       (fun summary => ENNReal.ofReal (Real.rpow 2
         ((summary.maxCosts .expand : ℝ) / (Phase.expand.budget : ℝ)))) = 1 := by
   calc
-    _ = expectedValue (withRandomOracle (submission.allMessages seed)) (fun _ => (1 : ENNReal)) := by
+    _ = expectedValue (withRandomOracle (submission.allMessages secretKey)) (fun _ => (1 : ENNReal)) := by
       apply expectedValue_congr_of_support
       intro summary mem
-      rw [support_expand_cost seed summary mem,Real.rpow_eq_pow]
+      rw [support_expand_cost secretKey summary mem,Real.rpow_eq_pow]
       simp
     _ = 1 := expectedValue_const NeverFail.probFailure_eq_zero 1
 
-theorem expansion_compression_bound (seed : Seed) :
-    expectedValue (withRandomOracle (submission.allMessages seed))
+theorem expansion_compression_bound (secretKey : SecretKey) :
+    expectedValue (withRandomOracle (submission.allMessages secretKey))
       (fun summary => ENNReal.ofReal (Real.rpow 2
         ((summary.maxCosts .expand : ℝ) / (Phase.expand.budget : ℝ)))) ≤ 2 := by
   rw [expansion_compression_moment]

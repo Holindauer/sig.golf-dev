@@ -9,7 +9,7 @@ set_option linter.constructorNameAsVariable false
 
 /-- Original ideal-game execution through independent factors, in the exact
 sampling order used by the common passive experiment. The output may retain
-both a cutoff result and its seed-query trace. -/
+both a cutoff result and its secret key-query trace. -/
 theorem ideal_factors {α : Type} (program : OracleComp GameWorld α) :
     𝒮[(simulateQ idealGameOracle program).run' (∅, ∅)] =
       𝒮[do

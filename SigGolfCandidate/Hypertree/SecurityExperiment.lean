@@ -16,14 +16,14 @@ def serialize (signature : Compact) : Option (Bytes signatureBytes) :=
 def signWire (pk : PublicKey) (message : Message) : OracleComp SplitWorld (Option (Bytes signatureBytes)) :=
   serialize <$> SecurityIdealSign.signCompact pk message
 
-@[simp] theorem simulate_signWire (seed : Seed) (pk : PublicKey) (message : Message) :
-    simulateQ (realImplementation seed) (signWire pk message) =
-      serialize <$> SecurityReference.signCompact seed pk message := by
+@[simp] theorem simulate_signWire (secretKey : SecretKey) (pk : PublicKey) (message : Message) :
+    simulateQ (realImplementation secretKey) (signWire pk message) =
+      serialize <$> SecurityReference.signCompact secretKey pk message := by
   simp [signWire, SecurityIdealSign.simulate_signCompact]
 
-@[simp] theorem eval_signWire (hash : Hash) (seed : Seed) (pk : PublicKey) (message : Message) :
-    evalWithAnswerFn hash (simulateQ (realImplementation seed) (signWire pk message)) =
-      some ((SignatureEncoding.signCompact hash seed pk message).wire (signCompact_valid hash seed pk message)) := by
+@[simp] theorem eval_signWire (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (message : Message) :
+    evalWithAnswerFn hash (simulateQ (realImplementation secretKey) (signWire pk message)) =
+      some ((SignatureEncoding.signCompact hash secretKey pk message).wire (signCompact_valid hash secretKey pk message)) := by
   simp [simulate_signWire, SecurityReference.eval_signCompact, signCompact_valid]
 
 /-- Keep the accepted forgery and raw organizer transcript for the deterministic
@@ -87,19 +87,19 @@ noncomputable def idealExperiment (publicCache : Cache) (adversary : Adversary s
 
 noncomputable def realExperiment (publicCache : Cache) (adversary : Adversary submission.sizes)
     (rounds : Nat) : ProbComp AttackResult := do
-  let seed ← sampleSeed
+  let secretKey ← sampleSecretKey
   (fun result => ⟨result.1.won, result.2⟩) <$>
-    (simulateQ (realGameOracle seed) (SecurityBudget.counted (program publicCache adversary rounds))).run' ∅
+    (simulateQ (realGameOracle secretKey) (SecurityBudget.counted (program publicCache adversary rounds))).run' ∅
 
-/-- The seed-erasure theorem now applies to the concrete organizer-style reference
+/-- The secret key-erasure theorem now applies to the concrete organizer-style reference
 experiment, rather than a sampler with no adversary/signing interface. -/
-theorem realExperiment_le_ideal_add_seed (publicCache : Cache) (adversary : Adversary submission.sizes)
+theorem realExperiment_le_ideal_add_secretKey (publicCache : Cache) (adversary : Adversary submission.sizes)
     (rounds budget : Nat) :
     Pr[fun result => result.won = true ∧ result.hashCalls ≤ budget |
       realExperiment publicCache adversary rounds] ≤
     Pr[fun result => result.won = true ∧ result.hashCalls ≤ budget |
       idealExperiment publicCache adversary rounds] + (budget : ENNReal) / 2 ^ 128 := by
-  have h := SecurityBudget.prob_counted_real_le_ideal_add_seed
+  have h := SecurityBudget.prob_counted_real_le_ideal_add_secretKey
     (program publicCache adversary rounds) budget (fun result => result.won = true)
   simpa only [realExperiment, idealExperiment, probEvent_bind_eq_tsum,
     probEvent_map, Function.comp_def] using h

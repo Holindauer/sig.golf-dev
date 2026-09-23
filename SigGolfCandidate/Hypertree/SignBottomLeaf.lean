@@ -7,23 +7,23 @@ set_option linter.unusedSimpArgs false
 
 /-- The actual complete bottom-leaf body, including its conditional preimage capture and
 protected return. The low-memory equation covers both selected and unselected leaves. -/
-theorem sign_bottom_leaf_body (hash : Hash) (s : MachineState) (seed : Seed) (pointer tree : Nat)
+theorem sign_bottom_leaf_body (hash : Hash) (s : MachineState) (secretKey : SecretKey) (pointer tree : Nat)
     (side : Bool) (pc : s.pc = 0x19dc) (sp : s.getReg .x2 = 0xffffe0)
     (valid : CapturePointerValid pointer) (ptr : s.getMem 0x80448 = BitVec.ofNat 64 pointer)
-    (data : LeafData s seed 0 tree side 0) (step : s.getMem 0x80438 = 0) :
+    (data : LeafData s secretKey 0 tree side 0) (step : s.getMem 0x80438 = 0) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 2 2 final ∧
       instructions ≤ 183 ∧ cycles ≤ 197 ∧
       final.pc = s.getMem 0xffffe0 &&& ~~~1#64 ∧ final.getReg .x2 = 0xfffff0 ∧
       (∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =
-        (Reference.leafRoot hash seed 0 tree side).extractLsb' (64*i.val) 64) ∧
+        (Reference.leafRoot hash secretKey 0 tree side).extractLsb' (64*i.val) 64) ∧
       (∀ a, a.toNat < 0x80000 → final.getMem a =
         if s.getMem 0x80440 ≠ 0 ∧ s.getMem 0x80428 = s.getMem 0x80420 then
-          if a = BitVec.ofNat 64 pointer + 8 then (Reference.secret hash seed 0 tree side 0).extractLsb' 64 64 else
-          if a = BitVec.ofNat 64 pointer then (Reference.secret hash seed 0 tree side 0).extractLsb' 0 64 else s.getMem a
+          if a = BitVec.ofNat 64 pointer + 8 then (Reference.secret hash secretKey 0 tree side 0).extractLsb' 64 64 else
+          if a = BitVec.ofNat 64 pointer then (Reference.secret hash secretKey 0 tree side 0).extractLsb' 0 64 else s.getMem a
         else s.getMem a) ∧
       (∀ a, OutsideBottomWork side a → (∀ i : Fin 2, a ≠ wordAddress pointer i.val) → final.getMem a = s.getMem a) := by
   obtain ⟨secret, pre, secretPC, secretWords, secretRA, secretSP, secretFrame⟩ := KeygenSecret.compute sign hash 0x19dc
-    sign_bottom_secret_code s pc 0 tree side 0 seed data.levelEq data.leafEq data.chainEq data.indexEq data.seedEq
+    sign_bottom_secret_code s pc 0 tree side 0 secretKey data.levelEq data.leafEq data.chainEq data.indexEq data.secretKeyEq
   have secretKeep (a : Word) (outside : OutsideBottomWork side a) : secret.getMem a = s.getMem a :=
     secretFrame a outside.1 outside.2.1 outside.2.2.1
   have secretPtr : secret.getMem 0x80448 = BitVec.ofNat 64 pointer := by
@@ -52,12 +52,12 @@ theorem sign_bottom_leaf_body (hash : Hash) (s : MachineState) (seed : Seed) (po
     rw [keep _ (by fin_cases i <;> unfold OutsideBottomWork <;> cases side <;> decide) (by fin_cases i <;> decide)]
     exact data.indexEq i
   have valueEq : ∀ i : Fin 2, captured.getMem (wordAddress 0x80510 i.val) =
-      (Reference.secret hash seed 0 tree side 0).extractLsb' (64*i.val) 64 := by
+      (Reference.secret hash secretKey 0 tree side 0).extractLsb' (64*i.val) 64 := by
     intro i
     rw [ captureBottom_high_frame secret pointer valid secretPtr _ (by fin_cases i <;> decide)]
     exact secretWords i
   obtain ⟨hashed, core, hashedPC, root, hashedRA, hashedSP, hashedFrame⟩ := SignBottomHash.compute sign hash 0x1b38
-    SignBottomHash.sign_code captured capturePC 0 tree 0 side 0 (Reference.secret hash seed 0 tree side 0)
+    SignBottomHash.sign_code captured capturePC 0 tree 0 side 0 (Reference.secret hash secretKey 0 tree side 0)
     levelEq leafEq chainEq stepEq indexEq valueEq
   have returnTrace := return_block sign 0x1c64 sign_bottom_return_code hashed hashedPC
     (by rw [hashedSP, captureSP]; decide)
@@ -92,8 +92,8 @@ theorem sign_bottom_leaf_body (hash : Hash) (s : MachineState) (seed : Seed) (po
       secretKeep _ (by unfold OutsideBottomWork; cases side <;> decide),
       secretKeep _ (by unfold OutsideBottomWork; cases side <;> decide),
       secretKeep _ (by unfold OutsideBottomWork; cases side <;> decide), secretPtr,
-      show secret.getMem 0x80518 = (Reference.secret hash seed 0 tree side 0).extractLsb' 64 64 from secretWords 1,
-      show secret.getMem 0x80510 = (Reference.secret hash seed 0 tree side 0).extractLsb' 0 64 from secretWords 0,
+      show secret.getMem 0x80518 = (Reference.secret hash secretKey 0 tree side 0).extractLsb' 64 64 from secretWords 1,
+      show secret.getMem 0x80510 = (Reference.secret hash secretKey 0 tree side 0).extractLsb' 0 64 from secretWords 0,
       secretKeep a outside]
 
 end SigGolfCandidate.Hypertree.Signing

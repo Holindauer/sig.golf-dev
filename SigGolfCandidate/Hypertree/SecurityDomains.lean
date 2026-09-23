@@ -31,12 +31,12 @@ theorem addressedInput_tag_eq {tag level tree leaf chain step tag' level' tree' 
   have h := congrArg (fun header : BitVec 64 => header.toNat % 256) (addressedInput_header_eq same)
   simpa only [header_tag] using h
 
-/-- Exact seed-guess candidates can occur only in derivation tags 1 and 6.
-Consequently chain, leaf-compression, node, and index queries consume no seed budget. -/
-theorem not_seedEligible_addressedInput (tag level tree leaf chain step : Nat) (payload : List Byte)
+/-- Exact secret key-guess candidates can occur only in derivation tags 1 and 6.
+Consequently chain, leaf-compression, node, and index queries consume no secret key budget. -/
+theorem not_secretKeyEligible_addressedInput (tag level tree leaf chain step : Nat) (payload : List Byte)
     (notChain : tag % 256 ≠ 1) (notNonce : tag % 256 ≠ 6) :
-    ¬SeedEligible (addressedInput tag level tree leaf chain step payload) := by
-  rintro ⟨seed, slot, same⟩
+    ¬SecretKeyEligible (addressedInput tag level tree leaf chain step payload) := by
+  rintro ⟨secretKey, slot, same⟩
   cases slot with
   | chain address =>
     have h := addressedInput_tag_eq same

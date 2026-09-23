@@ -30,7 +30,7 @@ theorem bytes_eq_of_words (original final : MachineState) (source destination co
   rw [getByte_word final destination i dstalign (by omega),
     getByte_word original source i srcalign (by omega), words (i / 8) (by omega)]
 
-/-- Exact byte form of the prepared tag6/seed/message buffer. -/
+/-- Exact byte form of the prepared tag6/secret key/message buffer. -/
 def randomizerInputByte (s : MachineState) (i : Fin 80) : Byte :=
   extractByte (randomizerInputWord s ⟨i.val / 8, by have := i.isLt; omega⟩) (i.val % 8)
 
@@ -63,7 +63,7 @@ theorem copy_bytes_of_content (source destination total : Nat) (original final :
 #guard_msgs in
 #print axioms bytes_eq_of_words
 
-/-- The prepared bytes are exactly the domain header followed by seed and message. -/
+/-- The prepared bytes are exactly the domain header followed by secret key and message. -/
 theorem randomizerInputByte_spec (s : MachineState) (i : Fin 80) :
     randomizerInputByte s i =
       if i.val = 0 then 6 else if i.val < 32 then 0 else

@@ -87,16 +87,16 @@ def WellCounted (history : History) : Prop :=
   marks history.indexTrace ≤ history.signedMessages.card ∧
   history.indexTrace.length ≤ history.counts.index ∧
   history.nonceGuesses.length ≤ history.counts.index ∧
-  history.seedInputs.length = history.counts.seed
+  history.secretKeyInputs.length = history.counts.secretKey
 
 @[simp] theorem wellCounted_empty : WellCounted {} := by simp [WellCounted, marks]
 
 theorem WellCounted.recordParsed {history : History} (counted : WellCounted history)
-    (query : Query) (parsed : Option (Message × Bytes 32)) (seedEligible hit : Bool) (answer : BitVec 256) :
-    WellCounted (SecurityMonitorIndexState.recordParsed history query parsed seedEligible hit answer) := by
+    (query : Query) (parsed : Option (Message × Bytes 32)) (secretKeyEligible hit : Bool) (answer : BitVec 256) :
+    WellCounted (SecurityMonitorIndexState.recordParsed history query parsed secretKeyEligible hit answer) := by
   cases parsed with
   | none =>
-    cases seedEligible <;> simp only [SecurityMonitorIndexState.recordParsed, Bool.false_eq_true, if_true, if_false,
+    cases secretKeyEligible <;> simp only [SecurityMonitorIndexState.recordParsed, Bool.false_eq_true, if_true, if_false,
       WellCounted, List.length_cons] at * <;> omega
   | some pair =>
     rcases pair with ⟨message, nonce⟩
@@ -107,7 +107,7 @@ theorem WellCounted.recordParsed {history : History} (counted : WellCounted hist
 theorem WellCounted.recordPublic {history : History} (counted : WellCounted history)
     (pk : PublicKey) (query : Query) (hit : Bool) (answer : BitVec 256) :
     WellCounted (SecurityMonitorIndexState.recordPublic pk history query hit answer) :=
-  counted.recordParsed query (parse pk query) (decide (SeedEligible query)) hit answer
+  counted.recordParsed query (parse pk query) (decide (SecretKeyEligible query)) hit answer
 
 theorem WellCounted.recordSign {history : History} (counted : WellCounted history)
     (message : Message) (hit : Bool) (answer : BitVec 256) :

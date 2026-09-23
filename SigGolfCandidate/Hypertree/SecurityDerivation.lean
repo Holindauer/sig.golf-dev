@@ -1,8 +1,8 @@
-import SigGolfCandidate.Hypertree.SecuritySeed
+import SigGolfCandidate.Hypertree.SecuritySecretKey
 import SigGolfCandidate.Hypertree.SecurityReference
 
 namespace SigGolfCandidate.Hypertree.SecurityDerivation
-open SigGolf OracleSpec OracleComp Reference SecurityRandomOracle SecurityPacking SecuritySeed
+open SigGolf OracleSpec OracleComp Reference SecurityRandomOracle SecurityPacking SecuritySecretKey
 
 /-- Explicit bounds ensure that distinct private chain slots cannot alias through
 header overflow or tree truncation. -/
@@ -52,32 +52,32 @@ private theorem header_fields (first second : ChainAddress) (same : header first
     simp [sideNumber, hfirst, hsecond] at h ⊢ <;> omega
 
 /-- A private slot is implemented by precisely one actual reference H input. -/
-def input (seed : Seed) : Slot → Query
+def input (secretKey : SecretKey) : Slot → Query
   | .chain address => addressedInput 1 address.level.val address.tree.toNat
-      (sideNumber address.side) address.chain.val 0 (bytes seed)
-  | .randomizer message => randomizerInput seed message
+      (sideNumber address.side) address.chain.val 0 (bytes secretKey)
+  | .randomizer message => randomizerInput secretKey message
 
-@[simp] theorem chain_input_length (seed : Seed) (address : ChainAddress) :
-    (input seed (.chain address)).1 = 384 := by simp [input, bytes]
+@[simp] theorem chain_input_length (secretKey : SecretKey) (address : ChainAddress) :
+    (input secretKey (.chain address)).1 = 384 := by simp [input, bytes]
 
-@[simp] theorem nonce_input_length (seed : Seed) (message : Message) :
-    (input seed (.randomizer message)).1 = 640 := by simp [input]
+@[simp] theorem nonce_input_length (secretKey : SecretKey) (message : Message) :
+    (input secretKey (.randomizer message)).1 = 640 := by simp [input]
 
-theorem input_seedAt (seed : Seed) (slot : Slot) : SeedAt (input seed slot) seed := by
+theorem input_secretKeyAt (secretKey : SecretKey) (slot : Slot) : SecretKeyAt (input secretKey slot) secretKey := by
   cases slot with
   | chain address =>
-    exact seedAt_secret seed address.level.val address.tree.toNat
+    exact secretKeyAt_secret secretKey address.level.val address.tree.toNat
       (sideNumber address.side) address.chain.val
-  | randomizer message => exact seedAt_randomizer seed message
+  | randomizer message => exact secretKeyAt_randomizer secretKey message
 
 /-- A normalization lemma keeps byte packing opaque in the injectivity proof. -/
-theorem chain_input_eq (seed : Seed) (address : ChainAddress) :
-    input seed (.chain address) =
-      packed (bytes (n := 8) (header address) ++ bytes (n := 24) address.tree ++ bytes seed) := by
+theorem chain_input_eq (secretKey : SecretKey) (address : ChainAddress) :
+    input secretKey (.chain address) =
+      packed (bytes (n := 8) (header address) ++ bytes (n := 24) address.tree ++ bytes secretKey) := by
   simp [input, addressedInput, header]
 
 /-- Private slots remain distinct under the exact reference byte packing. -/
-theorem input_injective (seed : Seed) : Function.Injective (input seed) := by
+theorem input_injective (secretKey : SecretKey) : Function.Injective (input secretKey) := by
   intro first second same
   cases first with
   | chain first =>
@@ -106,32 +106,32 @@ theorem input_injective (seed : Seed) : Function.Injective (input seed) := by
         simpa [input, randomizerInput, addressedInput, List.append_assoc] using h
       exact congrArg Slot.randomizer (bytes_injective 32 hb)
 
-/-- Changing either the seed or private slot changes the actual oracle input. -/
-theorem seeded_input_injective : Function.Injective (fun pair : Seed × Slot => input pair.1 pair.2) := by
+/-- Changing either the secret key or private slot changes the actual oracle input. -/
+theorem secretKeyed_input_injective : Function.Injective (fun pair : SecretKey × Slot => input pair.1 pair.2) := by
   intro first second same
   change input first.1 first.2 = input second.1 second.2 at same
-  have hf : SeedAt (input second.1 second.2) first.1 := by
+  have hf : SecretKeyAt (input second.1 second.2) first.1 := by
     rw [← same]
-    exact input_seedAt first.1 first.2
-  have seeds : first.1 = second.1 := seedAt_unique hf (input_seedAt second.1 second.2)
-  apply Prod.ext seeds
+    exact input_secretKeyAt first.1 first.2
+  have secretKeys : first.1 = second.1 := secretKeyAt_unique hf (input_secretKeyAt second.1 second.2)
+  apply Prod.ext secretKeys
   apply input_injective second.1
-  simpa [seeds] using same
+  simpa [secretKeys] using same
 
 /-- Real interpretation of the private derivation oracle: each query makes one H call. -/
-def realDerivation (seed : Seed) : QueryImpl SecretSpec (OracleComp HashSpec) :=
-  fun slot => liftM (HashSpec.query (input seed slot))
+def realDerivation (secretKey : SecretKey) : QueryImpl SecretSpec (OracleComp HashSpec) :=
+  fun slot => liftM (HashSpec.query (input secretKey slot))
 
-def realImplementation (seed : Seed) : QueryImpl SplitWorld (OracleComp HashSpec) :=
-  realDerivation seed + (HasQuery.toQueryImpl (spec := HashSpec) (m := OracleComp HashSpec))
+def realImplementation (secretKey : SecretKey) : QueryImpl SplitWorld (OracleComp HashSpec) :=
+  realDerivation secretKey + (HasQuery.toQueryImpl (spec := HashSpec) (m := OracleComp HashSpec))
 
-/-- The chain-secret slot is exactly the seeded source used by the reference algorithm. -/
-theorem eval_real_chain (hash : Hash) (seed : Seed) (address : ChainAddress) :
-    Reference.truncate (evalWithAnswerFn hash (realDerivation seed (.chain address))) =
-      Reference.secret hash seed address.level.val address.tree.toNat address.side address.chain := rfl
+/-- The chain-secret slot is exactly the secretKeyed source used by the reference algorithm. -/
+theorem eval_real_chain (hash : Hash) (secretKey : SecretKey) (address : ChainAddress) :
+    Reference.truncate (evalWithAnswerFn hash (realDerivation secretKey (.chain address))) =
+      Reference.secret hash secretKey address.level.val address.tree.toNat address.side address.chain := rfl
 
-theorem eval_real_randomizer (hash : Hash) (seed : Seed) (message : Message) :
-    evalWithAnswerFn hash (realDerivation seed (.randomizer message)) =
-      Reference.randomizer hash seed message := rfl
+theorem eval_real_randomizer (hash : Hash) (secretKey : SecretKey) (message : Message) :
+    evalWithAnswerFn hash (realDerivation secretKey (.randomizer message)) =
+      Reference.randomizer hash secretKey message := rfl
 
 end SigGolfCandidate.Hypertree.SecurityDerivation

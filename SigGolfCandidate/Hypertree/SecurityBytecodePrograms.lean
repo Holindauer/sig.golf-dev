@@ -24,45 +24,45 @@ theorem record_view (transcript : Transcript submission.sizes) (message : Messag
 
 /-- Every value observed by the organizer security experiment, excluding unobserved cycle fields. -/
 structure Interface where
-  keygen : Seed → OracleComp HashSpec (Option (PublicKey×Cache) × Nat)
-  sign : Seed → PublicKey → SigningRequest → OracleComp HashSpec (Option (Bytes submission.sizes.signature) × Nat)
+  keygen : SecretKey → OracleComp HashSpec (Option (PublicKey×Cache) × Nat)
+  sign : SecretKey → PublicKey → SigningRequest → OracleComp HashSpec (Option (Bytes submission.sizes.signature) × Nat)
   check : PublicKey → Transcript submission.sizes → Forgery submission.sizes → OracleComp HashSpec AttackResult
 
 def actualInterface : Interface where
-  keygen seed := view <$> submission.run .keygen seed
-  sign seed pk request := view <$> submission.signingOracle seed pk request
+  keygen secretKey := view <$> submission.run .keygen secretKey
+  sign secretKey pk request := view <$> submission.signingOracle secretKey pk request
   check := submission.checkForgery
 
 def interactWith (scheme : Interface) (adversary : Adversary submission.sizes)
-    (seed : Seed) (pk : PublicKey) : Nat → adversary.State → Transcript submission.sizes → OracleComp World AttackResult
+    (secretKey : SecretKey) (pk : PublicKey) : Nat → adversary.State → Transcript submission.sizes → OracleComp World AttackResult
   | 0,_,transcript => pure ⟨false,transcript.hashCalls⟩
   | rounds+1,state,transcript =>
       match adversary.step state with
       | .submit candidate => (scheme.check pk transcript candidate).liftComp World
       | .hash input resume => do
           let answer ← liftM (HashSpec.query input)
-          interactWith scheme adversary seed pk rounds (resume answer) {transcript with hashCalls:=transcript.hashCalls+1}
+          interactWith scheme adversary secretKey pk rounds (resume answer) {transcript with hashCalls:=transcript.hashCalls+1}
       | .sign request resume => do
           if transcript.signingRequests<LIFETIME then
-            let result ← (scheme.sign seed pk request).liftComp World
-            interactWith scheme adversary seed pk rounds (resume result.1) (recordView transcript request.message result)
+            let result ← (scheme.sign secretKey pk request).liftComp World
+            interactWith scheme adversary secretKey pk rounds (resume result.1) (recordView transcript request.message result)
           else pure ⟨false,transcript.hashCalls⟩
       | .sample n resume => do
           let answer ← liftM (unifSpec.query n)
-          interactWith scheme adversary seed pk rounds (resume answer) transcript
-      | .step next => interactWith scheme adversary seed pk rounds next transcript
+          interactWith scheme adversary secretKey pk rounds (resume answer) transcript
+      | .step next => interactWith scheme adversary secretKey pk rounds next transcript
 
 noncomputable def experimentWith (scheme : Interface) (adversary : Adversary submission.sizes) (rounds : Nat) : ProbComp AttackResult :=
   withRandomness do
-    let seed ← liftM sampleSeed
-    let keygen ← (scheme.keygen seed).liftComp World
+    let secretKey ← liftM sampleSecretKey
+    let keygen ← (scheme.keygen secretKey).liftComp World
     let some (pk,cache) := keygen.1 | pure ⟨false,keygen.2⟩
-    interactWith scheme adversary seed pk rounds (adversary.initial pk cache) {hashCalls:=keygen.2}
+    interactWith scheme adversary secretKey pk rounds (adversary.initial pk cache) {hashCalls:=keygen.2}
 
-theorem actual_interact (adversary : Adversary submission.sizes) (seed : Seed) (pk : PublicKey)
+theorem actual_interact (adversary : Adversary submission.sizes) (secretKey : SecretKey) (pk : PublicKey)
     (rounds : Nat) (state : adversary.State) (transcript : Transcript submission.sizes) :
-    interactWith actualInterface adversary seed pk rounds state transcript=
-      submission.interact adversary seed pk rounds state transcript := by
+    interactWith actualInterface adversary secretKey pk rounds state transcript=
+      submission.interact adversary secretKey pk rounds state transcript := by
   induction rounds generalizing state transcript with
   | zero => rfl
   | succ rounds ih =>
@@ -72,11 +72,11 @@ theorem actual_interact (adversary : Adversary submission.sizes) (seed : Seed) (
     case hash input resume => simp only [ih]
     case sign request resume =>
       split
-      · change ((view <$> submission.signingOracle seed pk request).liftComp World >>= _) = _
+      · change ((view <$> submission.signingOracle secretKey pk request).liftComp World >>= _) = _
         rw [OracleComp.liftComp_map,bind_map_left]
         apply bind_congr
         intro result
-        change interactWith actualInterface adversary seed pk rounds (resume result.value)
+        change interactWith actualInterface adversary secretKey pk rounds (resume result.value)
           (recordView transcript request.message (view result)) = _
         rw [record_view]
         exact ih _ _
@@ -88,7 +88,7 @@ theorem actual_experiment (adversary : Adversary submission.sizes) (rounds : Nat
   unfold experimentWith Submission.securityExperiment
   congr 1
   apply bind_congr
-  intro seed
+  intro secretKey
   simp only [actualInterface,OracleComp.liftComp_map,bind_map_left,view]
   apply bind_congr
   intro result
@@ -96,6 +96,6 @@ theorem actual_experiment (adversary : Adversary submission.sizes) (rounds : Nat
   | none => rfl
   | some pair =>
     rcases pair with ⟨pk,cache⟩
-    exact actual_interact adversary seed pk rounds (adversary.initial pk cache) {hashCalls:=result.hashCalls}
+    exact actual_interact adversary secretKey pk rounds (adversary.initial pk cache) {hashCalls:=result.hashCalls}
 
 end SigGolfCandidate.Hypertree.SecurityBytecode

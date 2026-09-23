@@ -10,32 +10,32 @@ set_option backward.isDefEq.respectTransparency false
 set_option maxRecDepth 4096
 open scoped Classical
 
-theorem located_not_seed (query : Query) (position : Position) (located : locate query = some position) :
-    ¬SeedEligible query := by
+theorem located_not_secretKey (query : Query) (position : Position) (located : locate query = some position) :
+    ¬SecretKeyEligible query := by
   unfold locate at located
   split at located
   next found =>
     obtain ⟨payload, equal⟩ := found.choose_spec
     rw [← equal]
     cases found.choose with
-    | chain address step => exact SecurityDomains.not_seedEligible_addressedInput 2 _ _ _ _ _ _ (by decide) (by decide)
-    | leaf level tree side => exact SecurityDomains.not_seedEligible_addressedInput 3 _ _ _ _ _ _ (by decide) (by decide)
-    | node level tree => exact SecurityDomains.not_seedEligible_addressedInput 4 _ _ _ _ _ _ (by decide) (by decide)
+    | chain address step => exact SecurityDomains.not_secretKeyEligible_addressedInput 2 _ _ _ _ _ _ (by decide) (by decide)
+    | leaf level tree side => exact SecurityDomains.not_secretKeyEligible_addressedInput 3 _ _ _ _ _ _ (by decide) (by decide)
+    | node level tree => exact SecurityDomains.not_secretKeyEligible_addressedInput 4 _ _ _ _ _ _ (by decide) (by decide)
   next absent => cases located
 
 theorem parsed_graph_mono (history : History) (query : Query) (parsed : Option (Message × Bytes 32))
-    (seedEligible cached : Bool) (answer : BitVec 256) :
-    history.counts.graph ≤ (recordParsed history query parsed seedEligible cached answer).counts.graph := by
+    (secretKeyEligible cached : Bool) (answer : BitVec 256) :
+    history.counts.graph ≤ (recordParsed history query parsed secretKeyEligible cached answer).counts.graph := by
   cases parsed with
   | some pair => exact Nat.le_refl _
   | none =>
-    cases seedEligible <;> simp only [recordParsed, Bool.false_eq_true, if_false, if_true] <;> omega
+    cases secretKeyEligible <;> simp only [recordParsed, Bool.false_eq_true, if_false, if_true] <;> omega
 
 attribute [local irreducible] recordParsed
 
 theorem public_graph_mono (pk : PublicKey) (history : History) (query : Query) (cached : Bool) (answer : BitVec 256) :
     history.counts.graph ≤ (recordPublic pk history query cached answer).counts.graph :=
-  parsed_graph_mono history query (parse pk query) (decide (SeedEligible query)) cached answer
+  parsed_graph_mono history query (parse pk query) (decide (SecretKeyEligible query)) cached answer
 
 theorem public_graph_located (pk : PublicKey) (history : History) (query : Query) (cached : Bool)
     (answer : BitVec 256) (position : Position) (located : locate query = some position) :
@@ -48,12 +48,12 @@ theorem public_graph_located (pk : PublicKey) (history : History) (query : Query
       have outside := locate_index pk pair.1 pair.2
       rw [serialized, located] at outside
       cases outside
-  change (recordParsed history query (parse pk query) (decide (SeedEligible query)) cached answer).counts.graph = _
+  change (recordParsed history query (parse pk query) (decide (SecretKeyEligible query)) cached answer).counts.graph = _
   rw [unparsed]
-  simp only [decide_eq_false (located_not_seed query position located), recordParsed, Bool.false_eq_true, if_false]
+  simp only [decide_eq_false (located_not_secretKey query position located), recordParsed, Bool.false_eq_true, if_false]
 
 /-- The shared query classifier spends graph credits only on its own class.
-Seed and parsed-index queries pass through with zero graph-contact tests. -/
+Secret key and parsed-index queries pass through with zero graph-contact tests. -/
 theorem public_record_credit {α : Type} (allowance : α → Nat) (pk : PublicKey) (history : History)
     (metadata : MetadataTable) (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) (query : Query)
     (next : BitVec 256 → QueryCache PointSpec → QueryCache HashSpec → Program α)
@@ -84,7 +84,7 @@ theorem indexStep_credit {α : Type} (allowance : α → Nat) (spent : Nat)
   | none => exact fun answer => credit answer _
 
 /-- Actual graph tests are charged to graph-class calls in the same adaptive
-execution, preserving the seed and index portions of the shared budget. -/
+execution, preserving the secret key and index portions of the shared budget. -/
 theorem compile_credit {α : Type} (nonces : NonceTable) (metadata : MetadataTable) (pk : PublicKey)
     (view : View α) (remaining : Nat) (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec)
     (history : History) :
@@ -137,7 +137,7 @@ theorem start_tests_le {α : Type} (nonces : NonceTable) (metadata : MetadataTab
   simpa only [Nat.zero_add] using run_credit _ _ 0 (start_credit nonces metadata pk view budget) _ _ result member
 
 /-- Graph-contact probability uses only graph-class charged calls in this same
-simulation. The nonce/index and seed classes retain their own budget shares. -/
+simulation. The nonce/index and secret key classes retain their own budget shares. -/
 theorem start_bad_le {α : Type} (nonces : NonceTable) (metadata : MetadataTable) (pk : PublicKey)
     (view : View α) (budget : Nat) :
     Pr[fun result => result.bad = true |

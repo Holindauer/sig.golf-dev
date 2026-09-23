@@ -29,9 +29,9 @@ theorem BottomLeafFrame.keep (s final : MachineState) (pointer : Nat) (side : Bo
   simp only [wordAddress, BitVec.toNat_ofNat] at h
   omega
 
-theorem treeContext_after_bottom_leaf (s final : MachineState) (seed : Seed) (pointer tree : Nat)
-    (side : Bool) (valid : CapturePointerValid pointer) (data : TreeContext s seed 0 tree)
-    (frame : BottomLeafFrame s final pointer side) : TreeContext final seed 0 tree := by
+theorem treeContext_after_bottom_leaf (s final : MachineState) (secretKey : SecretKey) (pointer tree : Nat)
+    (side : Bool) (valid : CapturePointerValid pointer) (data : TreeContext s secretKey 0 tree)
+    (frame : BottomLeafFrame s final pointer side) : TreeContext final secretKey 0 tree := by
   have keep := frame.keep s final pointer side valid
   constructor
   · rw [keep _ (by decide) (by decide) (by decide) (by unfold OutsideBottomWork; cases side <;> decide) (by decide)]
@@ -43,7 +43,7 @@ theorem treeContext_after_bottom_leaf (s final : MachineState) (seed : Seed) (po
   · intro i
     rw [keep _ (by fin_cases i <;> decide) (by fin_cases i <;> decide) (by fin_cases i <;> decide)
       (by fin_cases i <;> unfold OutsideBottomWork <;> cases side <;> decide) (by fin_cases i <;> decide)]
-    exact data.seedEq i
+    exact data.secretKeyEq i
 
 theorem bottomSettings_after_leaf (s final : MachineState) (pointer : Nat) (side selected : Bool)
     (valid : CapturePointerValid pointer) (settings : BottomTreeSettings s pointer selected)

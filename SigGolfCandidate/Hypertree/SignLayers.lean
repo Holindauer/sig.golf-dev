@@ -18,15 +18,15 @@ theorem loopBlocks_succ (count level : Nat) :
   by_cases h : level=0 <;> simp [h] <;> omega
 
 /-- The complete 160-layer actual signer loop, including all serialized signature fields. -/
-theorem sign_layers (hash : Hash) (seed : Seed) (count : Nat) :
+theorem sign_layers (hash : Hash) (secretKey : SecretKey) (count : Nat) :
     ∀ (s : MachineState) (level index : Nat) (current : Reference.Digest),
     level+count=160 → index<2^192 → s.pc=(if level=160 then 0x12f8 else 0x1220) →
-    LoopData s seed level index current →
+    LoopData s secretKey level index current →
     ∃ final instructions cycles, Trace hash sign s instructions cycles (loopCalls count level) (loopBlocks count level) final ∧
       instructions ≤ 100000*count ∧ cycles ≤ 105000*count ∧ final.pc=0x12f8 ∧
       (∀ i : Fin 2, final.getMem (wordAddress 0x80500 i.val) =
-        (Reference.rootsAfter hash seed count level index current).extractLsb' (64*i.val) 64) ∧
-      LayersStored final level (Reference.signLayers hash seed count level index current) ∧
+        (Reference.rootsAfter hash secretKey count level index current).extractLsb' (64*i.val) 64) ∧
+      LayersStored final level (Reference.signLayers hash secretKey count level index current) ∧
       (∀ address : Nat, address<0x80000 → address%8=0 → address<0x20060+layerOffset level →
         final.getMem (BitVec.ofNat 64 address) = s.getMem (BitVec.ofNat 64 address)) := by
   induction count with
@@ -41,9 +41,9 @@ theorem sign_layers (hash : Hash) (seed : Seed) (count : Nat) :
     intro s level index current total small pc data
     have bound : level<160 := by omega
     have startPC : s.pc=0x1220 := by simpa only [if_neg (show level≠160 by omega)] using pc
-    obtain ⟨next,n,c,run,nb,cb,nextPC,nextData,stored,frame⟩ := sign_layer hash s seed level index current startPC bound small data
+    obtain ⟨next,n,c,run,nb,cb,nextPC,nextData,stored,frame⟩ := sign_layer hash s secretKey level index current startPC bound small data
     obtain ⟨final,ns,cs,rest,nsb,csb,finalPC,root,storedRest,restFrame⟩ :=
-      ih next (level+1) (index/2) (Reference.treeRoot hash seed level (index/2)) (by omega) (by omega) nextPC nextData
+      ih next (level+1) (index/2) (Reference.treeRoot hash secretKey level (index/2)) (by omega) (by omega) nextPC nextData
     refine ⟨final,n+ns,c+cs,?_,?_,?_,finalPC,root,?_,?_⟩
     · simpa only [loopCalls_succ,loopBlocks_succ] using run.trans rest
     · have : n≤100000 := by split at nb <;> omega

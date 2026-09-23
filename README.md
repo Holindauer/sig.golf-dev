@@ -25,7 +25,7 @@ Every object has a fixed size in bytes:
 | Object            |                Bytes |
 | ----------------- | -------------------: |
 | Message digest    |                   32 |
-| Seed              |                   16 |
+| Secret key        |                   16 |
 | Public key        |                   16 |
 | Cache             |       2^17 (128 KiB) |
 | Compact signature |              `S` ≥ 1 |
@@ -33,47 +33,47 @@ Every object has a fixed size in bytes:
 
 ## Programs
 
-| Program  | Inputs                           | Outputs                          | Context     |
-| -------- | -------------------------------- | -------------------------------- | ----------- |
-| `keygen` | Seed                             | Public key and cache, or failure | Enclave     |
-| `sign`   | Seed, public key, cache, message | Signature or failure             | Enclave     |
-| `expand` | Message, public key, signature   | Witness or failure               | Prover host |
-| `verify` | Message, public key, witness     | Accept or reject                 | zkVM        |
+| Program  | Inputs                                 | Outputs                          | Context     |
+| -------- | -------------------------------------- | -------------------------------- | ----------- |
+| `keygen` | Secret key                             | Public key and cache, or failure | Enclave     |
+| `sign`   | Secret key, public key, cache, message | Signature or failure             | Enclave     |
+| `expand` | Message, public key, signature         | Witness or failure               | Prover host |
+| `verify` | Message, public key, witness           | Accept or reject                 | zkVM        |
 
-The seed is secret. The cache is public and untrusted. `expand` converts the compact signature into a verification witness, for example by restoring pruned Merkle paths. It may simply copy the signature when `S = W`.
+The secret key remains private. The cache is public and untrusted. `expand` converts the compact signature into a verification witness, for example by restoring pruned Merkle paths. It may simply copy the signature when `S = W`.
 
 ## Model and costs
 
 All programs and the adversary share a random oracle H.
 
-Security counts calls to H. Program budgets and HASH cycles count compressions: hashing n bits costs `max(1, ceil(n / 512))` compressions.
+Security counts calls to H. Program budgets and HASH cycles count compressions: hashing n bits costs `max(1, ⌈n / 512⌉)` compressions.
 
 RiscV cycle breakdown:
 
-| Operation                                        | Cost                                                   |
-| ------------------------------------------------ | ------------------------------------------------------ |
-| Ordinary instruction, including loads and stores | 1 cycle                                                |
-| HASH                                             | 8 cycles per compression (no extra instruction charge) |
-| HALT                                             | 1 cycle                                                |
+| Operation            | Cost                                                   |
+| -------------------- | ------------------------------------------------------ |
+| Ordinary instruction | 1 cycle                                                |
+| HASH                 | 8 cycles per compression (no extra instruction charge) |
+| HALT                 | 1 cycle                                                |
 
 ## Required Lean statements
 
 ### Honest execution
 
-For any `seed`, `message` and oracle H, consider the following experiment:
+For any `secretKey`, `message` and oracle H, consider the following experiment:
 
-1. `keygen(seed)` returns the `public key` and `cache`.
-2. `sign(seed, public key, cache, message)` returns the `signature`.
+1. `keygen(secretKey)` returns the `public key` and `cache`.
+2. `sign(secretKey, public key, cache, message)` returns the `signature`.
 3. `expand(message, public key, signature)` returns the `witness`.
 4. `verify(message, public key, witness)` returns the verdict.
 
 Stop at the first failure. We say the `experiment succeeds` when all stages succeed and verification accepts.
 
-`K_P` counts program P's compressions in this experiment, including retries and failed attempts; it is zero if P is never reached. For each fixed seed and H, `Kmax_P` is the maximum of `K_P` over all messages. `BUDGET_P` denotes P's named budget.
+`K_P` counts program P's compressions in this experiment, including retries and failed attempts; it is zero if P is never reached. For each fixed secret key and H, `Kmax_P` is the maximum of `K_P` over all messages. `BUDGET_P` denotes P's named budget.
 
-1. **Success:** for every seed, `Pr_H[experiment succeeds for every message] >= 1 - FAILURE`.
-2. **Compression budgets:** for every seed, `E_H[2^(Kmax_P / BUDGET_P)] <= 2` for each P in {`keygen`, `sign`, `expand`}.
-3. **Verification cycles:** for every seed, message and oracle, if the experiment succeeds, `verify` uses at most `C` cycles.
+1. **Success:** for every secret key, `Pr_H[experiment succeeds for every message] >= 1 - FAILURE`.
+2. **Compression budgets:** for every secret key, `E_H[2^(Kmax_P / BUDGET_P)] <= 2` for each P in {`keygen`, `sign`, `expand`}.
+3. **Verification cycles:** for every secret key, message and oracle, if the experiment succeeds, `verify` uses at most `C` cycles.
 
 `Pr_H` means the probability over H. `E_H` means the expected value over H.
 
@@ -81,18 +81,18 @@ Stop at the first failure. We say the `experiment succeeds` when all stages succ
 
 Consider the following experiment for a classical probabilistic adversary `A` with unrestricted computation and an integer hash-call budget `Q >= 1`:
 
-1. Sample H and a uniform seed independently. Initialize an empty transcript T and count all calls to H throughout the experiment.
-2. Run `keygen(seed)`. Failure ends the experiment without a win; otherwise give `A` the public key and cache.
+1. Sample H and a uniform secret key independently. Initialize an empty transcript T and count all calls to H throughout the experiment.
+2. Run `keygen(secretKey)`. Failure ends the experiment without a win; otherwise give `A` the public key and cache.
 3. `A` may then adaptively query two oracles:
    - **`random_oracle(input_A)`:** return H(input_A).
-   - **`signing_oracle(message_A, cache_A)`:** run `sign(seed, public key, cache_A, message_A)` using the original seed and public key. Return the signature or failure. Add each returned `(message_A, signature)` to T. Allow at most `LIFETIME` requests.
+   - **`signing_oracle(message_A, cache_A)`:** run `sign(secretKey, public key, cache_A, message_A)` using the original secret key and public key. Return the signature or failure. Add each returned `(message_A, signature)` to T. Allow at most `LIFETIME` requests.
 4. `A` makes one final submission, choosing either form below:
    - **witness weak unforgeability:** submit `(message_A, witness_A)`. `A` wins if `verify(message_A, public key, witness_A)` accepts, and no pair in T has message `message_A`, and the total hash-call count is at most Q
    - **signature strong unforgeability:** submit `(message_A, signature_A)`. `A` wins if `expand(message_A, public key, signature_A)` returns a witness that `verify` accepts, and `(message_A, signature_A)` is not in T, and the total hash-call count is at most Q.
 
 The total hash-call count includes key generation, signing, `A`’s queries, and final expansion and verification when performed.
 
-**Security:** for every A and `Q >= 1`, `Pr[A wins] <= Q / 2^SECURITY_BITS`, over the seed, H, and `A`’s private randomness.
+**Security:** for every A and `Q >= 1`, `Pr[A wins] <= Q / 2^SECURITY_BITS`, over the secret key, H, and `A`’s private randomness.
 
 ### Program requirements
 
@@ -120,7 +120,7 @@ Inputs and outputs use the same addresses, fixed for each submission:
 | Address                     | Buffer     |
 | --------------------------- | ---------- |
 | `0x00`                      | Message    |
-| `0x20`                      | Seed       |
+| `0x20`                      | Secret key |
 | `0x40`                      | Public key |
 | `0x60`                      | Cache      |
 | `0x20060`                   | Signature  |

@@ -12,8 +12,8 @@ def Submission.score (submission : Submission) (cycles : Nat) : Nat :=
   submission.sizes.signature * cycles
 
 def Input (sizes : Sizes) : Phase → Type
-  | .keygen => Seed
-  | .sign => Seed × PublicKey × Cache × Message
+  | .keygen => SecretKey
+  | .sign => SecretKey × PublicKey × Cache × Message
   | .expand => Message × PublicKey × Bytes sizes.signature
   | .verify => Message × PublicKey × Bytes sizes.witness
 
@@ -31,9 +31,9 @@ def readBuffer (state : MachineState) (address n : Nat) : Bytes n :=
     (fun acc i => acc + (state.getByte (BitVec.ofNat 64 (address + i))).toNat * 2 ^ (8 * i)) 0)
 
 def inputBuffers (sizes : Sizes) : (phase : Phase) → Input sizes phase → List (Nat × List Byte)
-  | .keygen, seed => [(0x20, bytes seed)]
-  | .sign, (seed, pk, cache, message) =>
-      [(0x20, bytes seed), (0x40, bytes pk), (0x60, bytes cache),
+  | .keygen, secretKey => [(0x20, bytes secretKey)]
+  | .sign, (secretKey, pk, cache, message) =>
+      [(0x20, bytes secretKey), (0x40, bytes pk), (0x60, bytes cache),
         (0, bytes message)]
   | .expand, (message, pk, signature) =>
       [(0, bytes message), (0x40, bytes pk), (Riscv.signatureBase, bytes signature)]
@@ -91,13 +91,13 @@ def recordCost (costs : Phase → Nat) (phase : Phase) (cost : Nat) : Phase → 
   fun other => if other = phase then cost else costs other
 
 /-- One honest pipeline. Failed phases remain charged; phases not reached cost zero. -/
-def Submission.honest (submission : Submission) (seed : Seed) (message : Message) :
+def Submission.honest (submission : Submission) (secretKey : SecretKey) (message : Message) :
     OracleComp HashSpec HonestResult := do
   let mut costs : Phase → Nat := fun _ => 0
-  let keygen ← submission.run .keygen seed
+  let keygen ← submission.run .keygen secretKey
   costs := recordCost costs .keygen keygen.hashCompressions
   let some (pk, cache) := keygen.value | return ⟨false, costs, 0⟩
-  let sign ← submission.run .sign (seed, pk, cache, message)
+  let sign ← submission.run .sign (secretKey, pk, cache, message)
   costs := recordCost costs .sign sign.hashCompressions
   let some signature := sign.value | return ⟨false, costs, 0⟩
   let expand ← submission.run .expand (message, pk, signature)
@@ -112,10 +112,10 @@ structure HonestSummary where
   maxCosts : Phase → Nat := fun _ => 0
 
 /-- All messages are evaluated against the same H. The maximum is taken before expectation, not over separate random-oracle experiments. This finite traversal defines a distribution; it is not an executable benchmark. -/
-noncomputable def Submission.allMessages (submission : Submission) (seed : Seed) :
+noncomputable def Submission.allMessages (submission : Submission) (secretKey : SecretKey) :
     OracleComp HashSpec HonestSummary :=
   (Finset.univ : Finset Message).toList.foldlM (fun summary message => do
-    let result ← submission.honest seed message
+    let result ← submission.honest secretKey message
     return ⟨summary.allSucceed && result.success,
       fun phase => max (summary.maxCosts phase) (result.costs phase)⟩) {}
 

@@ -14,10 +14,10 @@ theorem fixed_hash_of_support {α : Type} (program : OracleComp HashSpec α) (va
     ⟨result.2, by simpa only [eq] using hresult⟩
   exact ⟨hash,heval⟩
 
-theorem eval_keygen (hash : Hash) (seed : Seed) :
-    evalWithAnswerFn hash (submission.run .keygen seed) =
-      ⟨some (Reference.keygen hash seed,KeygenFunctional.zeroCache),true,81342,739,761⟩ :=
-  KeygenFunctional.run_exact hash seed
+theorem eval_keygen (hash : Hash) (secretKey : SecretKey) :
+    evalWithAnswerFn hash (submission.run .keygen secretKey) =
+      ⟨some (Reference.keygen hash secretKey,KeygenFunctional.zeroCache),true,81342,739,761⟩ :=
+  KeygenFunctional.run_exact hash secretKey
 
 /-- An abstract version of the organizer pipeline keeps proof reduction independent of bytecode. -/
 def pipeline {σ ω : Type} (keygen : OracleComp HashSpec (RunResult (PublicKey × Cache)))
@@ -49,9 +49,9 @@ theorem pipeline_cost {σ ω : Type} (hash : Hash) (keygen : OracleComp HashSpec
     · simp [recordCost]
   · simp [recordCost]
 
-theorem honest_eq_pipeline (s : Submission) (seed : Seed) (message : Message) :
-    s.honest seed message = pipeline (s.run .keygen seed)
-      (fun pk cache => s.run .sign (seed,pk,cache,message))
+theorem honest_eq_pipeline (s : Submission) (secretKey : SecretKey) (message : Message) :
+    s.honest secretKey message = pipeline (s.run .keygen secretKey)
+      (fun pk cache => s.run .sign (secretKey,pk,cache,message))
       (fun pk signature => s.run .expand (message,pk,signature))
       (fun pk witness => s.run .verify (message,pk,witness)) := by
   simp only [Submission.honest,pipeline]
@@ -73,13 +73,13 @@ theorem honest_eq_pipeline (s : Submission) (seed : Seed) (message : Message) :
       | some witness => rfl
 
 /-- Later honest phases cannot change the already-recorded key-generation cost. -/
-theorem honest_cost (hash : Hash) (seed : Seed) (message : Message) :
-    (evalWithAnswerFn hash (submission.honest seed message)).costs .keygen = 761 := by
-  have h := pipeline_cost hash (submission.run .keygen seed)
-    (fun pk cache => submission.run .sign (seed,pk,cache,message))
+theorem honest_cost (hash : Hash) (secretKey : SecretKey) (message : Message) :
+    (evalWithAnswerFn hash (submission.honest secretKey message)).costs .keygen = 761 := by
+  have h := pipeline_cost hash (submission.run .keygen secretKey)
+    (fun pk cache => submission.run .sign (secretKey,pk,cache,message))
     (fun pk signature => submission.run .expand (message,pk,signature))
     (fun pk witness => submission.run .verify (message,pk,witness))
-  have costEq := congrArg (fun result : RunResult (PublicKey × Cache) => result.hashCompressions) (eval_keygen hash seed)
+  have costEq := congrArg (fun result : RunResult (PublicKey × Cache) => result.hashCompressions) (eval_keygen hash secretKey)
   have result := h.trans costEq
   rw [honest_eq_pipeline]
   exact result
@@ -99,27 +99,27 @@ theorem fold_max_cost (hash : Hash) (program : Message → OracleComp HashSpec H
     simp only [List.foldlM_cons,evalWithAnswerFn_bind,evalWithAnswerFn_pure]
     exact ih _ (max_le initialBound (cost message))
 
-theorem allMessages_cost (hash : Hash) (seed : Seed) :
-    (evalWithAnswerFn hash (submission.allMessages seed)).maxCosts .keygen ≤ 761 := by
+theorem allMessages_cost (hash : Hash) (secretKey : SecretKey) :
+    (evalWithAnswerFn hash (submission.allMessages secretKey)).maxCosts .keygen ≤ 761 := by
   unfold Submission.allMessages
-  exact fold_max_cost hash (submission.honest seed) .keygen 761
-    (fun message => (honest_cost hash seed message).le) _ {} (by decide)
+  exact fold_max_cost hash (submission.honest secretKey) .keygen 761
+    (fun message => (honest_cost hash secretKey message).le) _ {} (by decide)
 
-theorem support_cost (seed : Seed) (summary : HonestSummary)
-    (mem : summary ∈ support (withRandomOracle (submission.allMessages seed))) :
+theorem support_cost (secretKey : SecretKey) (summary : HonestSummary)
+    (mem : summary ∈ support (withRandomOracle (submission.allMessages secretKey))) :
     summary.maxCosts .keygen ≤ 761 := by
-  obtain ⟨hash,eq⟩ := fixed_hash_of_support (submission.allMessages seed) summary mem
+  obtain ⟨hash,eq⟩ := fixed_hash_of_support (submission.allMessages secretKey) summary mem
   rw [← eq]
-  exact allMessages_cost hash seed
+  exact allMessages_cost hash secretKey
 
 /-- The actual organizer exponential-moment inequality for the keygen phase. -/
-theorem compression_bound (seed : Seed) :
-    expectedValue (withRandomOracle (submission.allMessages seed))
+theorem compression_bound (secretKey : SecretKey) :
+    expectedValue (withRandomOracle (submission.allMessages secretKey))
       (fun summary => ENNReal.ofReal (Real.rpow 2
         ((summary.maxCosts .keygen : ℝ) / (Phase.keygen.budget : ℝ)))) ≤ 2 := by
   apply expectedValue_le_of_support
   intro summary mem
-  have bound : (summary.maxCosts .keygen : ℝ) ≤ 761 := by exact_mod_cast support_cost seed summary mem
+  have bound : (summary.maxCosts .keygen : ℝ) ≤ 761 := by exact_mod_cast support_cost secretKey summary mem
   have exponent : (summary.maxCosts .keygen : ℝ) / (Phase.keygen.budget : ℝ) ≤ 1 := by
     change (summary.maxCosts .keygen : ℝ) / (1048576 : ℝ) ≤ 1
     apply (div_le_one (by norm_num : (0 : ℝ) < 1048576)).2
@@ -129,13 +129,13 @@ theorem compression_bound (seed : Seed) :
   simpa only [Real.rpow_one,ENNReal.ofReal_ofNat] using ENNReal.ofReal_le_ofReal power
 
 /-- Key generation cannot fail in the actual lazy-random-oracle experiment. -/
-theorem keygen_success_probability (seed : Seed) :
-    Pr[fun result => result.value.isSome = true | withRandomOracle (submission.run .keygen seed)] = 1 := by
+theorem keygen_success_probability (secretKey : SecretKey) :
+    Pr[fun result => result.value.isSome = true | withRandomOracle (submission.run .keygen secretKey)] = 1 := by
   rw [probEvent_eq_one_iff]
   constructor
   · exact NeverFail.probFailure_eq_zero
   · intro result mem
-    obtain ⟨hash,eq⟩ := fixed_hash_of_support (submission.run .keygen seed) result mem
+    obtain ⟨hash,eq⟩ := fixed_hash_of_support (submission.run .keygen secretKey) result mem
     rw [← eq,eval_keygen]
     rfl
 

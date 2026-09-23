@@ -23,7 +23,7 @@ noncomputable def joint (publicCache : Cache) (adversary : Adversary submission.
   pure (nonces, result)
 
 /-- The graph game hop transports an arbitrary joint event; in particular its
-seed component is retained rather than added from another distribution. -/
+secret key component is retained rather than added from another distribution. -/
 theorem joint_le_union (publicCache : Cache) (adversary : Adversary submission.sizes)
     (rounds budget : Nat) (event : TrueResult → Prop) :
     Pr[event | joint publicCache adversary rounds budget] ≤
@@ -44,37 +44,37 @@ theorem joint_le_union (publicCache : Cache) (adversary : Adversary submission.s
     (fun result => event (nonces, result))
 
 noncomputable def experiment (publicCache : Cache) (adversary : Adversary submission.sizes)
-    (rounds budget : Nat) : ProbComp (SecuritySeedMonitor.Outcome TrueResult) :=
-  SecuritySeedMonitor.experiment (joint publicCache adversary rounds budget) (fun result => result.2.history.seedInputs)
+    (rounds budget : Nat) : ProbComp (SecuritySecretKeyMonitor.Outcome TrueResult) :=
+  SecuritySecretKeyMonitor.experiment (joint publicCache adversary rounds budget) (fun result => result.2.history.secretKeyInputs)
 
-/-- Exact same-seed, same-history union transfer to the fully concrete common
+/-- Exact same-secret key, same-history union transfer to the fully concrete common
 experiment whose four-event probability has already been bounded. -/
 theorem experiment_le_union (publicCache : Cache) (adversary : Adversary submission.sizes)
-    (rounds budget : Nat) (event : Seed → TrueResult → Prop) :
-    Pr[fun result => event result.seed result.value | experiment publicCache adversary rounds budget] ≤
+    (rounds budget : Nat) (event : SecretKey → TrueResult → Prop) :
+    Pr[fun result => event result.secretKey result.value | experiment publicCache adversary rounds budget] ≤
       Pr[fun result => SecurityMonitorCombined.GraphBad result ∨
-        event result.seed (result.value.1, result.value.2.value) |
+        event result.secretKey (result.value.1, result.value.2.value) |
         SecurityMonitorCombined.experiment publicCache adversary rounds budget] := by
-  have left := SecuritySeedMonitor.seed_first (joint publicCache adversary rounds budget)
-    (fun result => result.2.history.seedInputs)
-  have right := SecuritySeedMonitor.seed_first (SecurityMonitorNonceView.joint publicCache adversary rounds budget)
-    (fun result => result.2.value.history.seedInputs)
-  have levent := probEvent_congr' (p := fun result => event result.seed result.value)
-    (q := fun result => event result.seed result.value) (fun _ _ => Iff.rfl) left
+  have left := SecuritySecretKeyMonitor.secretKey_first (joint publicCache adversary rounds budget)
+    (fun result => result.2.history.secretKeyInputs)
+  have right := SecuritySecretKeyMonitor.secretKey_first (SecurityMonitorNonceView.joint publicCache adversary rounds budget)
+    (fun result => result.2.value.history.secretKeyInputs)
+  have levent := probEvent_congr' (p := fun result => event result.secretKey result.value)
+    (q := fun result => event result.secretKey result.value) (fun _ _ => Iff.rfl) left
   have revent := probEvent_congr' (p := fun result => SecurityMonitorCombined.GraphBad result ∨
-      event result.seed (result.value.1, result.value.2.value))
+      event result.secretKey (result.value.1, result.value.2.value))
     (q := fun result => SecurityMonitorCombined.GraphBad result ∨
-      event result.seed (result.value.1, result.value.2.value)) (fun _ _ => Iff.rfl) right
-  change Pr[fun result => event result.seed result.value | SecuritySeedMonitor.experiment _ _] ≤ _
+      event result.secretKey (result.value.1, result.value.2.value)) (fun _ _ => Iff.rfl) right
+  change Pr[fun result => event result.secretKey result.value | SecuritySecretKeyMonitor.experiment _ _] ≤ _
   rw [levent]
   change _ ≤ Pr[fun result => SecurityMonitorCombined.GraphBad result ∨
-    event result.seed (result.value.1, result.value.2.value) | SecuritySeedMonitor.experiment _ _]
+    event result.secretKey (result.value.1, result.value.2.value) | SecuritySecretKeyMonitor.experiment _ _]
   rw [revent]
   simp only [bind_pure_comp, probEvent_bind_eq_tsum, probEvent_map, Function.comp_def,
-    SecuritySeedMonitor.annotate, SecurityMonitorCombined.GraphBad]
+    SecuritySecretKeyMonitor.annotate, SecurityMonitorCombined.GraphBad]
   apply ENNReal.tsum_le_tsum
-  intro seed
-  exact mul_le_mul' le_rfl (joint_le_union publicCache adversary rounds budget (event seed))
+  intro secretKey
+  exact mul_le_mul' le_rfl (joint_le_union publicCache adversary rounds budget (event secretKey))
 
 /-- info: 'SigGolfCandidate.Hypertree.SecurityMonitorGraphMixture.experiment_le_union' depends on axioms: [propext,
  Classical.choice,

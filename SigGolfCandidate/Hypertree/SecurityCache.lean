@@ -134,7 +134,7 @@ theorem prob_le_stopped_add_stop {α : Type} (bad : Query → Prop) [DecidablePr
         (mul_le_mul' le_rfl (ih result.1 result.2)).trans_eq (mul_add ..)
 
 /-- Cache replacement costs only the chance of querying a differing input in the
-replacement world. This is the cache-hybrid step for erasing seed-dependent entries. -/
+replacement world. This is the cache-hybrid step for erasing secret key-dependent entries. -/
 theorem prob_cache_change_le {α : Type} (bad : Query → Prop) [DecidablePred bad]
     (computation : OracleComp World α) (left right : QueryCache HashSpec)
     (agree : AgreeOutside bad left right) (event : α → Prop) :

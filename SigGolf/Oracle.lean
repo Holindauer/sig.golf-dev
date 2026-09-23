@@ -13,11 +13,11 @@ abbrev World := unifSpec + HashSpec
 noncomputable def withRandomOracle {α : Type} (program : OracleComp HashSpec α) : ProbComp α :=
   (simulateQ (randomOracle : QueryImpl HashSpec (StateT (QueryCache HashSpec) ProbComp)) program).run' ∅
 
-/-- Private coins and the seed sampler do not replace or reset the shared oracle. -/
+/-- Private coins and the secret key sampler do not replace or reset the shared oracle. -/
 noncomputable def withRandomness {α : Type} (program : OracleComp World α) : ProbComp α :=
   (simulateQ (unifFwdImpl HashSpec +
     (randomOracle : QueryImpl HashSpec (StateT (QueryCache HashSpec) ProbComp))) program).run' ∅
 
-noncomputable def sampleSeed : ProbComp Seed := $ᵗ Seed
+noncomputable def sampleSecretKey : ProbComp SecretKey := $ᵗ SecretKey
 
 end SigGolf

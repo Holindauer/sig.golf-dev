@@ -8,15 +8,15 @@ set_option linter.unusedSimpArgs false
 def LeafSignatureSettings (s : MachineState) (pointer : Nat) (message : Reference.Digest) : Prop :=
   ∀ chain, CaptureSettings s pointer chain (Reference.digit message chain)
 
-def EndpointsBefore (s : MachineState) (hash : Hash) (seed : Seed) (level tree : Nat) (side : Bool)
+def EndpointsBefore (s : MachineState) (hash : Hash) (secretKey : SecretKey) (level tree : Nat) (side : Bool)
     (count : Nat) : Prop := ∀ chain : Reference.Chain, chain.val < count → ∀ i : Fin 2,
       s.getMem (KeygenEndpoint.endpointAddress chain.val i.val) =
-        (Reference.endpoint hash seed level tree side chain).extractLsb' (64*i.val) 64
+        (Reference.endpoint hash secretKey level tree side chain).extractLsb' (64*i.val) 64
 
-def SignatureBefore (s : MachineState) (hash : Hash) (seed : Seed) (pointer level tree : Nat)
+def SignatureBefore (s : MachineState) (hash : Hash) (secretKey : SecretKey) (pointer level tree : Nat)
     (side : Bool) (message : Reference.Digest) (count : Nat) : Prop :=
   ∀ chain : Reference.Chain, chain.val < count →
-    CapturedValue s pointer chain ((Reference.signLayer hash seed level tree side message).values chain)
+    CapturedValue s pointer chain ((Reference.signLayer hash secretKey level tree side message).values chain)
 
 def OutsideLeafWork (a : Word) : Prop := OutsideChainWork a ∧ a ≠ 0x80430 ∧
   ∀ chain : Reference.Chain, ∀ i : Fin 2, a ≠ KeygenEndpoint.endpointAddress chain.val i.val

@@ -7,8 +7,8 @@ open scoped Classical
 set_option backward.isDefEq.respectTransparency false
 set_option maxRecDepth 4096
 
-/-- A deterministic extension at one dummy seed, used only to reuse deterministic
-reference extraction. No distributional relationship with the sampled seed is asserted. -/
+/-- A deterministic extension at one dummy secret key, used only to reuse deterministic
+reference extraction. No distributional relationship with the sampled secret key is asserted. -/
 noncomputable def residual (privateAnswers : PrivateTable) (base : Hash) : Hash :=
   fun query => if found : ∃ slot, input 0 slot = query then privateAnswers found.choose else base query
 
@@ -20,7 +20,7 @@ theorem residual_private (privateAnswers : PrivateTable) (base : Hash) (slot : S
   next missing => exact False.elim (missing ⟨slot, rfl⟩)
 
 theorem residual_public (privateAnswers : PrivateTable) (base : Hash) (query : Query)
-    (safe : ¬SeedEligible query) : residual privateAnswers base query = base query := by
+    (safe : ¬SecretKeyEligible query) : residual privateAnswers base query = base query := by
   unfold residual
   split
   next found => obtain ⟨slot, same⟩ := found; exact False.elim (safe ⟨0, slot, same⟩)
@@ -41,7 +41,7 @@ theorem hash_as_derived (privateAnswers : PrivateTable) (graph : Labels) (base :
   rfl
 
 theorem hash_public (privateAnswers : PrivateTable) (graph : Labels) (base : Hash) (query : Query)
-    (safe : ¬SeedEligible query) :
+    (safe : ¬SecretKeyEligible query) :
     hash privateAnswers graph base query = programmed privateAnswers graph base query := by
   unfold hash programmed
   split
@@ -54,7 +54,7 @@ theorem query_public (privateAnswers : PrivateTable) (graph : Labels) (base : Ha
     query (hash privateAnswers graph base) tag level tree leaf chain step payload =
       query (programmed privateAnswers graph base) tag level tree leaf chain step payload :=
   hash_public privateAnswers graph base _
-    (SecurityDomains.not_seedEligible_addressedInput tag level tree leaf chain step payload notChain notNonce)
+    (SecurityDomains.not_secretKeyEligible_addressedInput tag level tree leaf chain step payload notChain notNonce)
 
 theorem chainHash_public (privateAnswers : PrivateTable) (graph : Labels) (base : Hash)
     (level tree : Nat) (side : Bool) (chain : Chain) :

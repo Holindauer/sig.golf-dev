@@ -4,7 +4,7 @@ namespace SigGolfCandidate.Hypertree.KeygenFunctional
 open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 OracleComp Keygen KeygenResource
 set_option maxRecDepth 4096
 
-/-- The candidate's public cache contains no seed-dependent state. -/
+/-- The candidate's public cache contains no secret key-dependent state. -/
 def zeroCache : Cache := 0
 
 theorem decode_zero_cache (s : MachineState)
@@ -23,17 +23,17 @@ theorem decode_zero_cache (s : MachineState)
   rw [zero _ lower upper]
   simp [zeroCache, extractByte]
 
-theorem executes_zero_cache (hash : Hash) (seed : Seed) :
-    ∃ final, Executes hash keygen (seedState seed) 75993 ⟨.success,final,81342,739,761⟩ ∧
+theorem executes_zero_cache (hash : Hash) (secretKey : SecretKey) :
+    ∃ final, Executes hash keygen (secretKeyState secretKey) 75993 ⟨.success,final,81342,739,761⟩ ∧
       (∀ i : Fin 2, final.getMem (Signing.wordAddress 0x40 i.val)=
-        (Reference.keygen hash seed).extractLsb' (64*i.val) 64) ∧
+        (Reference.keygen hash secretKey).extractLsb' (64*i.val) 64) ∧
       readBuffer final 0x60 CACHE_BYTES=zeroCache := by
   obtain ⟨root,treeTrace,treePC,treeSP,words,frame⟩ :=
-    KeygenTree.execute_framed hash (prefixState (seedState seed)) (prefix_pc _ (seed_pc seed))
-      (by rw [prefix_sp,seed_sp]) 159 0 seed (by decide) (prefix_context seed)
-  have returned : root.pc=0x1014 := by rw [treePC,prefix_ra _ (seed_pc seed)]; decide
+    KeygenTree.execute_framed hash (prefixState (secretKeyState secretKey)) (prefix_pc _ (secretKey_pc secretKey))
+      (by rw [prefix_sp,secretKey_sp]) 159 0 secretKey (by decide) (prefix_context secretKey)
+  have returned : root.pc=0x1014 := by rw [treePC,prefix_ra _ (secretKey_pc secretKey)]; decide
   refine ⟨Expansion.finishState (outputCopied root),
-    executes_of_tree_trace hash (seedState seed) root (seed_pc seed) 75969 81318 739 761 treeTrace returned,?_,?_⟩
+    executes_of_tree_trace hash (secretKeyState secretKey) root (secretKey_pc secretKey) 75969 81318 739 761 treeTrace returned,?_,?_⟩
   · intro i
     fin_cases i
     · rw [finish_mem]; exact words 0
@@ -44,19 +44,19 @@ theorem executes_zero_cache (hash : Hash) (seed : Seed) :
     have h48 : a ≠ 0x48 := by intro eq; rw [eq] at lower; change 0x60 ≤ 0x48 at lower; omega
     have hl : a ≠ 0x80400 := by intro eq; rw [eq] at upper; change 0x80400 < 0x80000 at upper; omega
     rw [finish_mem,if_neg h48,if_neg h40,frame a upper,prefix_mem,if_neg hl]
-    exact seed_zero seed a (by omega)
+    exact secretKey_zero secretKey a (by omega)
 
 /-- Exact typed key generation, including its canonical zero cache. -/
-theorem run_exact (hash : Hash) (seed : Seed) :
-    submission.runWith hash .keygen seed =
-      ⟨some (Reference.keygen hash seed,zeroCache),true,81342,739,761⟩ := by
-  obtain ⟨final,trace,words,cache⟩ := executes_zero_cache hash seed
-  have run := runWith_of_executes submission hash .keygen seed (seedState seed) 75993
-    ⟨.success,final,81342,739,761⟩ (seed_loaded seed) trace (by decide)
+theorem run_exact (hash : Hash) (secretKey : SecretKey) :
+    submission.runWith hash .keygen secretKey =
+      ⟨some (Reference.keygen hash secretKey,zeroCache),true,81342,739,761⟩ := by
+  obtain ⟨final,trace,words,cache⟩ := executes_zero_cache hash secretKey
+  have run := runWith_of_executes submission hash .keygen secretKey (secretKeyState secretKey) 75993
+    ⟨.success,final,81342,739,761⟩ (secretKey_loaded secretKey) trace (by decide)
   rw [run]
   change (⟨some (readBuffer final 0x40 16,readBuffer final 0x60 CACHE_BYTES),true,81342,739,761⟩ :
     RunResult (PublicKey×Cache)) = _
-  rw [decode_publicKey hash seed final words,cache]
+  rw [decode_publicKey hash secretKey final words,cache]
   rfl
 
 /-- info: 'SigGolfCandidate.Hypertree.KeygenFunctional.run_exact' depends on axioms: [propext, Classical.choice, Quot.sound] -/

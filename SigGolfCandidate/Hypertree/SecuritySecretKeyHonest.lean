@@ -1,7 +1,7 @@
 import SigGolfCandidate.Hypertree.SecurityMonitorView
 import SigGolfCandidate.Hypertree.SecurityDomains
 
-namespace SigGolfCandidate.Hypertree.SecuritySeedHonest
+namespace SigGolfCandidate.Hypertree.SecuritySecretKeyHonest
 open SigGolf OracleComp OracleSpec Reference SecurityDerivation SecurityGameHop SecuritySeparation
 set_option backward.isDefEq.respectTransparency false
 set_option maxRecDepth 4096
@@ -32,21 +32,21 @@ theorem Safe.ask {ι : Type} {spec : OracleSpec ι} (allowed : spec.Domain → P
 
 def allowed : SplitWorld.Domain → Prop
   | .inl _ => True
-  | .inr input => ¬ SeedEligible input
+  | .inr input => ¬ SecretKeyEligible input
 
-/-- Safe honest blocks pass through the seed stop without changing the program
+/-- Safe honest blocks pass through the secret key stop without changing the program
 or observing any of the monitor's decisions. -/
-theorem Safe.stop_bind {α β : Type} (seed : Seed) {program : OracleComp GameWorld α}
-    (safe : Safe (fun query => ¬isBad seed query) program) (next : α → OracleComp GameWorld β) :
-    stop seed (program >>= next) = (program >>= fun value => stop seed (next value)) := by
+theorem Safe.stop_bind {α β : Type} (secretKey : SecretKey) {program : OracleComp GameWorld α}
+    (safe : Safe (fun query => ¬isBad secretKey query) program) (next : α → OracleComp GameWorld β) :
+    stop secretKey (program >>= next) = (program >>= fun value => stop secretKey (next value)) := by
   induction safe with
   | pure value => simp only [pure_bind]
   | query input continuation good safe ih =>
     rw [bind_assoc, stop_query_bind, if_neg good, bind_assoc]
     exact bind_congr ih
 
-theorem Safe.lift {α : Type} (seed : Seed) {program : OracleComp SplitWorld α}
-    (safe : Safe allowed program) : Safe (fun query => ¬isBad seed query) (program.liftComp GameWorld) := by
+theorem Safe.lift {α : Type} (secretKey : SecretKey) {program : OracleComp SplitWorld α}
+    (safe : Safe allowed program) : Safe (fun query => ¬isBad secretKey query) (program.liftComp GameWorld) := by
   induction safe with
   | pure value => exact Safe.pure _
   | query input next good safe ih =>
@@ -54,28 +54,28 @@ theorem Safe.lift {α : Type} (seed : Seed) {program : OracleComp SplitWorld α}
     change Safe _ (liftM (GameWorld.query (.inr input)) >>= _)
     apply Safe.query _ _ _ ih
     cases input with
-    | inl slot => simp only [isBad, publicSeedHit, not_false_eq_true]
+    | inl slot => simp only [isBad, publicSecretKeyHit, not_false_eq_true]
     | inr query => exact fun hit => good hit.1
 
 @[simp] theorem ask (tag level tree leaf chain step : Nat) (payload : List Byte)
     (notChain : tag % 256 ≠ 1) (notNonce : tag % 256 ≠ 6) :
-    Safe (fun query => ¬SeedEligible query) (SecurityReference.ask tag level tree leaf chain step payload) :=
-  Safe.ask _ _ (SecurityDomains.not_seedEligible_addressedInput _ _ _ _ _ _ _ notChain notNonce)
+    Safe (fun query => ¬SecretKeyEligible query) (SecurityReference.ask tag level tree leaf chain step payload) :=
+  Safe.ask _ _ (SecurityDomains.not_secretKeyEligible_addressedInput _ _ _ _ _ _ _ notChain notNonce)
 
 @[simp] theorem chainHash (level tree : Nat) (side : Bool) (chain : Chain) (step : Nat) (value : Digest) :
-    Safe (fun query => ¬SeedEligible query) (SecurityReference.chainHash level tree side chain step value) :=
+    Safe (fun query => ¬SecretKeyEligible query) (SecurityReference.chainHash level tree side chain step value) :=
   (ask 2 level tree (sideNumber side) chain.val step (bytes value) (by decide) (by decide)).map truncate
 
 @[simp] theorem compressLeaf (level tree : Nat) (side : Bool) (values : Chain → Digest) :
-    Safe (fun query => ¬SeedEligible query) (SecurityReference.compressLeaf level tree side values) :=
+    Safe (fun query => ¬SecretKeyEligible query) (SecurityReference.compressLeaf level tree side values) :=
   (ask 3 level tree (sideNumber side) 0 0 _ (by decide) (by decide)).map truncate
 
 @[simp] theorem node (level tree : Nat) (left right : Digest) :
-    Safe (fun query => ¬SeedEligible query) (SecurityReference.node level tree left right) :=
+    Safe (fun query => ¬SecretKeyEligible query) (SecurityReference.node level tree left right) :=
   (ask 4 level tree 0 0 0 _ (by decide) (by decide)).map truncate
 
 @[simp] theorem publicCall {α : Type} {program : OracleComp HashSpec α}
-    (safe : Safe (fun query => ¬SeedEligible query) program) : Safe allowed (SecurityIdealKeygen.publicCall program) := by
+    (safe : Safe (fun query => ¬SecretKeyEligible query) program) : Safe allowed (SecurityIdealKeygen.publicCall program) := by
   induction safe with
   | pure value => exact Safe.pure _
   | query input next good safe ih =>
@@ -88,8 +88,8 @@ theorem Safe.lift {α : Type} (seed : Seed) {program : OracleComp SplitWorld α}
   (Safe.ask (spec := SplitWorld) allowed (.inl (.chain address)) trivial).map truncate
 
 theorem walk {α : Type} (body : Nat → α → OracleComp HashSpec α) (start count : Nat) (value : α)
-    (safe : ∀ step value, Safe (fun query => ¬SeedEligible query) (body step value)) :
-    Safe (fun query => ¬SeedEligible query) (SecurityReference.walk body start count value) := by
+    (safe : ∀ step value, Safe (fun query => ¬SecretKeyEligible query) (body step value)) :
+    Safe (fun query => ¬SecretKeyEligible query) (SecurityReference.walk body start count value) := by
   induction count generalizing start value with
   | zero => exact Safe.pure _
   | succ count ih => exact (safe start value).bind _ (fun value' => ih (start+1) value')
@@ -121,4 +121,4 @@ theorem treeRoot (level : Fin 160) (tree : BitVec 192) : Safe allowed (SecurityI
 
 theorem keygen : Safe allowed SecurityIdealKeygen.keygen := treeRoot ⟨159, by decide⟩ 0
 
-end SigGolfCandidate.Hypertree.SecuritySeedHonest
+end SigGolfCandidate.Hypertree.SecuritySecretKeyHonest

@@ -63,13 +63,13 @@ theorem read_reference (s : MachineState) (signature : Reference.Signature)
     simpa only [compact,Compact.ofReference,List.getElem_cons_zero,List.drop_succ_cons,List.drop_zero] using result
 
 /-- Actual signer output memory decodes to the canonical typed signature. -/
-theorem read_sign (hash : Hash) (s : MachineState) (seed : Seed) (pk : PublicKey) (message : Message)
+theorem read_sign (hash : Hash) (s : MachineState) (secretKey : SecretKey) (pk : PublicKey) (message : Message)
     (randomizer : ∀ i : Fin 4, s.getMem (wordAddress 0x20060 i.val) =
-      (Reference.randomizer hash seed message).extractLsb' (64*i.val) 64)
-    (stored : LayersStored s 0 (Reference.sign hash seed pk message).layers) :
+      (Reference.randomizer hash secretKey message).extractLsb' (64*i.val) 64)
+    (stored : LayersStored s 0 (Reference.sign hash secretKey pk message).layers) :
     readBuffer s 0x20060 signatureBytes =
-      (signCompact hash seed pk message).wire (signCompact_valid hash seed pk message) := by
-  exact read_reference s (Reference.sign hash seed pk message) (Reference.sign_layers_length _ _ _ _ _ _) randomizer stored
+      (signCompact hash secretKey pk message).wire (signCompact_valid hash secretKey pk message) := by
+  exact read_reference s (Reference.sign hash secretKey pk message) (Reference.sign_layers_length _ _ _ _ _ _) randomizer stored
 
 /-- info: 'SigGolfCandidate.Hypertree.SignWire.read_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

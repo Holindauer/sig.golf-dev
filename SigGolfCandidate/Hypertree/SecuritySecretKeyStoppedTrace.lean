@@ -1,14 +1,14 @@
-import SigGolfCandidate.Hypertree.SecuritySeedViewStop
+import SigGolfCandidate.Hypertree.SecuritySecretKeyViewStop
 
-namespace SigGolfCandidate.Hypertree.SecuritySeedStoppedTrace
-open SigGolf OracleComp OracleComp.EvalDist OracleSpec SecuritySeed SecurityDerivation
+namespace SigGolfCandidate.Hypertree.SecuritySecretKeyStoppedTrace
+open SigGolf OracleComp OracleComp.EvalDist OracleSpec SecuritySecretKey SecurityDerivation
   SecuritySeparation SecurityGameHop SecurityBudget
 set_option backward.isDefEq.respectTransparency false
 set_option maxRecDepth 4096
 open scoped Classical
 
-noncomputable def keep {α : Type} (seed : Seed) (result : α × List Query) : Option α :=
-  if SeedHitTrace result.2 seed then none else some result.1
+noncomputable def keep {α : Type} (secretKey : SecretKey) (result : α × List Query) : Option α :=
+  if SecretKeyHitTrace result.2 secretKey then none else some result.1
 
 private theorem run_query {σ α : Type} (implementation : QueryImpl GameWorld (StateT σ ProbComp))
     (input : GameWorld.Domain) (next : GameWorld.Range input → OracleComp GameWorld α) (cache : σ) :
@@ -33,20 +33,20 @@ private theorem map_const {α β : Type} (program : ProbComp α) (value : β) :
   simp only [map_eq_pure_bind, probOutput_bind_const]
   simp
 
-/-- Stopping before a seed guess is exactly forgetting seed-hit outcomes of the
+/-- Stopping before a secret key guess is exactly forgetting secret key-hit outcomes of the
 full passive trace. The retained output can contain all other counters/results. -/
 theorem stopped_eq_trace {σ α : Type} (implementation : QueryImpl GameWorld (StateT σ ProbComp))
-    (seed : Seed) (program : OracleComp GameWorld α) (cache : σ) :
-    𝒮[(simulateQ implementation (stop seed program)).run' cache] =
-      𝒮[keep seed <$> (simulateQ implementation (tracePublic program)).run' cache] := by
+    (secretKey : SecretKey) (program : OracleComp GameWorld α) (cache : σ) :
+    𝒮[(simulateQ implementation (stop secretKey program)).run' cache] =
+      𝒮[keep secretKey <$> (simulateQ implementation (tracePublic program)).run' cache] := by
   induction program using OracleComp.inductionOn generalizing cache with
-  | pure value => simp [keep, SeedHitTrace]
+  | pure value => simp [keep, SecretKeyHitTrace]
   | query_bind input next ih =>
     rw [stop_query_bind, tracePublic_query_bind]
-    by_cases hit : isBad seed input
+    by_cases hit : isBad secretKey input
     · rw [if_pos hit, run_query]
       simp only [bind_pure_comp, run_map, map_bind, Functor.map_map]
-      have constant : (fun result : α × List Query => keep seed (result.1, prependPublic input result.2)) =
+      have constant : (fun result : α × List Query => keep secretKey (result.1, prependPublic input result.2)) =
           fun _ => (none : Option α) := by
         funext result
         simp only [keep, hit_prepend, hit, true_or, if_true]
@@ -65,7 +65,7 @@ theorem stopped_eq_trace {σ α : Type} (implementation : QueryImpl GameWorld (S
       funext tail
       simp only [keep, hit_prepend, hit, false_or]
 
-/-- Logging seed-eligible public inputs leaves the actual output unchanged. -/
+/-- Logging secret key-eligible public inputs leaves the actual output unchanged. -/
 theorem trace_output {α : Type} (program : OracleComp GameWorld α) :
     Prod.fst <$> tracePublic program = program := by
   induction program using OracleComp.inductionOn with
@@ -82,38 +82,38 @@ theorem run_trace_output {σ α : Type} (implementation : QueryImpl GameWorld (S
   rw [←run_map, trace_output]
 
 /-- A successful real run is included in a single ideal-world union event:
-the same result succeeds, or its passive seed trace hits. No expected cost is
-transferred between games and no separate additive seed penalty is introduced. -/
-theorem real_le_ideal_union {α : Type} (seed : Seed) (program : OracleComp GameWorld α) (event : α → Prop) :
-    Pr[event | (simulateQ (realGameOracle seed) program).run' ∅] ≤
-      Pr[fun result => event result.1 ∨ SeedHitTrace result.2 seed |
+the same result succeeds, or its passive secret key trace hits. No expected cost is
+transferred between games and no separate additive secret key penalty is introduced. -/
+theorem real_le_ideal_union {α : Type} (secretKey : SecretKey) (program : OracleComp GameWorld α) (event : α → Prop) :
+    Pr[event | (simulateQ (realGameOracle secretKey) program).run' ∅] ≤
+      Pr[fun result => event result.1 ∨ SecretKeyHitTrace result.2 secretKey |
         (simulateQ idealGameOracle (tracePublic program)).run' (∅, ∅)] := by
   let lifted : Option α → Prop := fun value => match value with | none => True | some value => event value
-  have same : 𝒮[keep seed <$> (simulateQ (realGameOracle seed) (tracePublic program)).run' ∅] =
-      𝒮[keep seed <$> (simulateQ idealGameOracle (tracePublic program)).run' (∅, ∅)] := by
+  have same : 𝒮[keep secretKey <$> (simulateQ (realGameOracle secretKey) (tracePublic program)).run' ∅] =
+      𝒮[keep secretKey <$> (simulateQ idealGameOracle (tracePublic program)).run' (∅, ∅)] := by
     rw [←stopped_eq_trace, ←stopped_eq_trace,
-      SecurityGameHop.stopped_separation seed program ∅ (∅, ∅) (by constructor <;> intros <;> rfl)]
+      SecurityGameHop.stopped_separation secretKey program ∅ (∅, ∅) (by constructor <;> intros <;> rfl)]
   have events := probEvent_congr' (p := lifted) (q := lifted) (fun _ _ => Iff.rfl) same
   rw [probEvent_map, probEvent_map] at events
-  have keep_event (result : α × List Query) : lifted (keep seed result) ↔ event result.1 ∨ SeedHitTrace result.2 seed := by
+  have keep_event (result : α × List Query) : lifted (keep secretKey result) ↔ event result.1 ∨ SecretKeyHitTrace result.2 secretKey := by
     simp only [keep]
     split <;> simp_all [lifted]
   simp_rw [Function.comp_def, keep_event] at events
-  rw [←events, ←run_trace_output (realGameOracle seed) program ∅, probEvent_map]
+  rw [←events, ←run_trace_output (realGameOracle secretKey) program ∅, probEvent_map]
   exact probEvent_mono (fun _ _ h => Or.inl h)
 
 /-- The union coupling applies directly to the organizer's total-call cutoff,
 including executions which exhaust the budget during an honest block. -/
-theorem real_cutoff_le_ideal_union {α : Type} (seed : Seed) (program : OracleComp GameWorld α)
+theorem real_cutoff_le_ideal_union {α : Type} (secretKey : SecretKey) (program : OracleComp GameWorld α)
     (budget : Nat) (event : Option α → Prop) :
-    Pr[event | (simulateQ (realGameOracle seed) (cutoff program budget)).run' ∅] ≤
-      Pr[fun result => event result.1 ∨ SeedHitTrace result.2 seed |
+    Pr[event | (simulateQ (realGameOracle secretKey) (cutoff program budget)).run' ∅] ≤
+      Pr[fun result => event result.1 ∨ SecretKeyHitTrace result.2 secretKey |
         (simulateQ idealGameOracle (tracePublic (cutoff program budget))).run' (∅, ∅)] :=
-  real_le_ideal_union seed (cutoff program budget) event
+  real_le_ideal_union secretKey (cutoff program budget) event
 
-/-- info: 'SigGolfCandidate.Hypertree.SecuritySeedStoppedTrace.real_cutoff_le_ideal_union' depends on axioms: [propext,
+/-- info: 'SigGolfCandidate.Hypertree.SecuritySecretKeyStoppedTrace.real_cutoff_le_ideal_union' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
 #guard_msgs in
 #print axioms real_cutoff_le_ideal_union
-end SigGolfCandidate.Hypertree.SecuritySeedStoppedTrace
+end SigGolfCandidate.Hypertree.SecuritySecretKeyStoppedTrace

@@ -32,31 +32,31 @@ theorem digest_eq_of_words (left right : Reference.Digest)
   omega
 
 /-- The official loaded prefix satisfies every hypothesis of the complete loop. -/
-theorem loaded_loop_data (hash : Hash) (seed : Seed) (pk : PublicKey) (cache : Cache) (message : Message) :
-    ∃ initial ready, initialState submission .sign (seed,pk,cache,message)=some initial ∧
+theorem loaded_loop_data (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (cache : Cache) (message : Message) :
+    ∃ initial ready, initialState submission .sign (secretKey,pk,cache,message)=some initial ∧
       Trace hash sign initial 226 256 2 4 ready ∧ ready.pc=0x1220 ∧
-      LoopData ready seed 0 (Reference.indexOf hash pk message (Reference.randomizer hash seed message)).toNat 0 ∧
+      LoopData ready secretKey 0 (Reference.indexOf hash pk message (Reference.randomizer hash secretKey message)).toNat 0 ∧
       (∀ i : Fin 4, ready.getMem (wordAddress 0x20060 i.val)=
-        (Reference.randomizer hash seed message).extractLsb' (64*i.val) 64) ∧
+        (Reference.randomizer hash secretKey message).extractLsb' (64*i.val) 64) ∧
       (∀ i : Fin 2, ready.getMem (wordAddress 0x40 i.val)=pk.extractLsb' (64*i.val) 64) := by
   obtain ⟨initial,ready,loaded,run,pc,index,sp,level,mode,ptr,lo,hi,randomizer,frame⟩ :=
-    loaded_loop_entry hash seed pk cache message
-  have loadedSeed := digest_words_of_bytes initial 0x20 seed (by decide) (by decide)
-    (Loader.sign_seed submission (admitted.2 .sign) seed pk cache message initial loaded)
+    loaded_loop_entry hash secretKey pk cache message
+  have loadedSecretKey := digest_words_of_bytes initial 0x20 secretKey (by decide) (by decide)
+    (Loader.sign_secretKey submission (admitted.2 .sign) secretKey pk cache message initial loaded)
   have loadedPk := digest_words_of_bytes initial 0x40 pk (by decide) (by decide)
-    (Loader.sign_publicKey submission (admitted.2 .sign) seed pk cache message initial loaded)
+    (Loader.sign_publicKey submission (admitted.2 .sign) secretKey pk cache message initial loaded)
   refine ⟨initial,ready,loaded,run,pc,?_,randomizer,?_⟩
   · constructor
     · exact sp
     · exact level
-    · have eq : (Reference.indexOf hash pk message (Reference.randomizer hash seed message)).zeroExtend 192 =
-          BitVec.ofNat 192 (Reference.indexOf hash pk message (Reference.randomizer hash seed message)).toNat := by
+    · have eq : (Reference.indexOf hash pk message (Reference.randomizer hash secretKey message)).zeroExtend 192 =
+          BitVec.ofNat 192 (Reference.indexOf hash pk message (Reference.randomizer hash secretKey message)).toNat := by
         apply BitVec.eq_of_toNat_eq
         simp
       rw [←eq]; exact index
     · intro i
       rw [frame _ (by fin_cases i <;> decide) (by intro j; fin_cases i <;> fin_cases j <;> decide)]
-      exact loadedSeed i
+      exact loadedSecretKey i
     · exact mode
     · exact ptr
     · intro i

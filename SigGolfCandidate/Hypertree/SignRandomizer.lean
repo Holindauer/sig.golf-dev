@@ -172,7 +172,7 @@ theorem hash_answer_frame (s : MachineState) (answer : BitVec 256)
   rw [if_neg h3, if_neg h2, if_neg h1, if_neg h0]
 
 /-- The first HASH/copy block also preserves every word outside the answer and
-32-byte signature prefix, which includes all seed, public-key and message inputs. -/
+32-byte signature prefix, which includes all secret key, public-key and message inputs. -/
 theorem randomizer_trace_frame (hash : Hash) (s : MachineState) (pc : s.pc = 0x10b4) :
     ∃ final, Trace hash sign s 36 51 1 2 final ∧ final.pc = 0x10fc ∧
       (∀ i : Fin 4, final.getMem (wordAddress 0x20060 i.val) =

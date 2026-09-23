@@ -14,19 +14,19 @@ set_option maxRecDepth 4096
   exact ⟨message, public_guesses_preserved pk history query cached answer _ member⟩
 
  theorem parsed_trace_hit (history : History) (query : Query) (parsed : Option (Message × Bytes 32))
-    (seed : Bool) (answer : BitVec 256) :
-    (recordParsed history query parsed seed true answer).indexTrace = history.indexTrace := by
+    (secretKey : Bool) (answer : BitVec 256) :
+    (recordParsed history query parsed secretKey true answer).indexTrace = history.indexTrace := by
   cases parsed with
-  | none => cases seed <;> rfl
+  | none => cases secretKey <;> rfl
   | some pair => cases pair; rfl
 
- theorem parsed_trace_none (history : History) (query : Query) (seed cached : Bool) (answer : BitVec 256) :
-    (recordParsed history query none seed cached answer).indexTrace = history.indexTrace := by
-  cases seed <;> rfl
+ theorem parsed_trace_none (history : History) (query : Query) (secretKey cached : Bool) (answer : BitVec 256) :
+    (recordParsed history query none secretKey cached answer).indexTrace = history.indexTrace := by
+  cases secretKey <;> rfl
 
  theorem parsed_trace_fresh (history : History) (query : Query) (pair : Message × Bytes 32)
-    (seed : Bool) (answer : BitVec 256) :
-    (recordParsed history query (some pair) seed false answer).indexTrace =
+    (secretKey : Bool) (answer : BitVec 256) :
+    (recordParsed history query (some pair) secretKey false answer).indexTrace =
       history.indexTrace ++ [(false, answer.extractLsb' 0 160)] := by cases pair; rfl
 
 attribute [local irreducible] recordParsed indexInput

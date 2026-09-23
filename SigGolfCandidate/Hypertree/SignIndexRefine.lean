@@ -122,31 +122,31 @@ theorem index_refines (hash : Hash) (s : MachineState) (pk : PublicKey) (message
 
 /-- The organizer's typed sign input executes both reference oracle computations and
 reaches the main hypertree loop with the exact reference 160-bit index. -/
-theorem loaded_index_refines (hash : Hash) (seed : Seed) (pk : PublicKey)
+theorem loaded_index_refines (hash : Hash) (secretKey : SecretKey) (pk : PublicKey)
     (cache : Cache) (message : Message) :
     ∃ initial final,
-      initialState submission .sign (seed, pk, cache, message) = some initial ∧
+      initialState submission .sign (secretKey, pk, cache, message) = some initial ∧
       Trace hash sign initial 226 256 2 4 final ∧ final.pc = 0x1220 ∧
       readBuffer final 0x80408 20 =
-        Reference.indexOf hash pk message (Reference.randomizer hash seed message) := by
-  obtain ⟨initial, loaded, pc⟩ := initialState_exists submission admitted .sign (seed, pk, cache, message)
-  obtain ⟨randomized, randomTrace, randomPC, randomWords, frame⟩ := entry_randomizer_refines_frame hash initial seed message pc
-    (Loader.sign_seed submission (admitted.2 .sign) seed pk cache message initial loaded)
-    (Loader.sign_message submission (admitted.2 .sign) seed pk cache message initial loaded)
+        Reference.indexOf hash pk message (Reference.randomizer hash secretKey message) := by
+  obtain ⟨initial, loaded, pc⟩ := initialState_exists submission admitted .sign (secretKey, pk, cache, message)
+  obtain ⟨randomized, randomTrace, randomPC, randomWords, frame⟩ := entry_randomizer_refines_frame hash initial secretKey message pc
+    (Loader.sign_secretKey submission (admitted.2 .sign) secretKey pk cache message initial loaded)
+    (Loader.sign_message submission (admitted.2 .sign) secretKey pk cache message initial loaded)
   have pkBytes : ∀ i, i < 16 → randomized.getByte (BitVec.ofNat 64 (0x40 + i)) = pk.extractLsb' (8 * i) 8 := by
     intro i hi
     rw [low_words_byte initial randomized frame 0x40 i (by decide) (by omega)]
-    exact Loader.sign_publicKey submission (admitted.2 .sign) seed pk cache message initial loaded i hi
+    exact Loader.sign_publicKey submission (admitted.2 .sign) secretKey pk cache message initial loaded i hi
   have msgBytes : ∀ i, i < 32 → randomized.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8 * i) 8 := by
     intro i hi
     have unchanged := low_words_byte initial randomized frame 0 i (by decide) (by omega)
     simp only [Nat.zero_add] at unchanged
     rw [unchanged]
-    exact Loader.sign_message submission (admitted.2 .sign) seed pk cache message initial loaded i hi
-  have randBytes := bytes_of_answer_words randomized 0x20060 (Reference.randomizer hash seed message)
+    exact Loader.sign_message submission (admitted.2 .sign) secretKey pk cache message initial loaded i hi
+  have randBytes := bytes_of_answer_words randomized 0x20060 (Reference.randomizer hash secretKey message)
     (by decide) (by decide) randomWords
   obtain ⟨final, indexTrace, finalPC, index⟩ := index_refines hash randomized pk message
-    (Reference.randomizer hash seed message) randomPC pkBytes msgBytes randBytes
+    (Reference.randomizer hash secretKey message) randomPC pkBytes msgBytes randBytes
   exact ⟨initial, final, loaded, randomTrace.trans indexTrace, finalPC, index⟩
 
 /-- info: 'SigGolfCandidate.Hypertree.Signing.loaded_index_refines' depends on axioms: [propext, Classical.choice, Quot.sound] -/

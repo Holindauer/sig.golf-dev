@@ -5,10 +5,10 @@ open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 Keygen Verifying
 set_option maxRecDepth 4096
 set_option linter.unusedSimpArgs false
 
-structure TreeContext (s : MachineState) (seed : Seed) (level tree : Nat) : Prop where
+structure TreeContext (s : MachineState) (secretKey : SecretKey) (level tree : Nat) : Prop where
   levelEq : s.getMem 0x80400 = BitVec.ofNat 64 level
   indexEq : ∀ i : Fin 3, s.getMem (wordAddress 0x80408 i.val) = (BitVec.ofNat 192 tree).extractLsb' (64*i.val) 64
-  seedEq : ∀ i : Fin 2, s.getMem (wordAddress 0x20 i.val) = seed.extractLsb' (64*i.val) 64
+  secretKeyEq : ∀ i : Fin 2, s.getMem (wordAddress 0x20 i.val) = secretKey.extractLsb' (64*i.val) 64
 
 def SignatureWordsOutside (pointer : Nat) (a : Word) : Prop :=
   ∀ chain : Reference.Chain, ∀ i : Fin 2, a ≠ wordAddress (pointer + 16 * chain.val) i.val
@@ -44,9 +44,9 @@ theorem UpperLeafFrame.keep (s final : MachineState) (pointer : Nat) (side selec
     (range : a.toNat < 0x20060 ∨ 0x80000 ≤ a.toNat) : final.getMem a = s.getMem a :=
   frame a stack outside (fun _ => signatureWordsOutside_range pointer valid a range)
 
-theorem treeContext_after_leaf (s final : MachineState) (seed : Seed) (pointer level tree : Nat)
-    (side selected : Bool) (valid : CapturePointerValid pointer) (data : TreeContext s seed level tree)
-    (frame : UpperLeafFrame s final pointer side selected) : TreeContext final seed level tree := by
+theorem treeContext_after_leaf (s final : MachineState) (secretKey : SecretKey) (pointer level tree : Nat)
+    (side selected : Bool) (valid : CapturePointerValid pointer) (data : TreeContext s secretKey level tree)
+    (frame : UpperLeafFrame s final pointer side selected) : TreeContext final secretKey level tree := by
   have keep := frame.keep s final pointer side selected valid
   constructor
   · rw [keep _ (by decide) (outsideLeaf_regions side _ (by decide) (by decide) (by decide)) (by decide)]
@@ -60,7 +60,7 @@ theorem treeContext_after_leaf (s final : MachineState) (seed : Seed) (pointer l
     rw [keep _ (by fin_cases i <;> decide)
       (outsideLeaf_regions side _ (by fin_cases i <;> decide) (by fin_cases i <;> decide) (by fin_cases i <;> decide))
       (by fin_cases i <;> decide)]
-    exact data.seedEq i
+    exact data.secretKeyEq i
 
 theorem treeSettings_after_leaf (s final : MachineState) (pointer : Nat) (side selected : Bool)
     (message : Reference.Digest) (valid : CapturePointerValid pointer) (settings : TreeSettings s pointer message selected)
@@ -88,9 +88,9 @@ theorem treeSettings_after_leaf (s final : MachineState) (pointer : Nat) (side s
       all_goals omega
     · simp only [wordAddress, BitVec.toNat_ofNat]; omega
 
-theorem treeControl_context (s : MachineState) (seed : Seed) (level tree : Nat) (side : Bool) (jump : BitVec 21)
-    (data : TreeContext s seed level tree) :
-    LeafContext (KeygenTreeControl.state s (BitVec.ofNat 12 (Reference.sideNumber side)) jump) seed level tree side := by
+theorem treeControl_context (s : MachineState) (secretKey : SecretKey) (level tree : Nat) (side : Bool) (jump : BitVec 21)
+    (data : TreeContext s secretKey level tree) :
+    LeafContext (KeygenTreeControl.state s (BitVec.ofNat 12 (Reference.sideNumber side)) jump) secretKey level tree side := by
   constructor
   · rw [KeygenTreeControl.mem, if_neg (by decide)]; exact data.levelEq
   · rw [KeygenTreeControl.mem, if_pos rfl]; cases side <;> rfl
@@ -99,7 +99,7 @@ theorem treeControl_context (s : MachineState) (seed : Seed) (level tree : Nat) 
     exact data.indexEq i
   · intro i
     rw [KeygenTreeControl.mem, if_neg (by fin_cases i <;> decide)]
-    exact data.seedEq i
+    exact data.secretKeyEq i
 
 theorem treeControl_settings (s : MachineState) (pointer : Nat) (message : Reference.Digest) (selected : Bool)
     (side : BitVec 12) (jump : BitVec 21) (settings : TreeSettings s pointer message selected) :

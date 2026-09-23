@@ -47,23 +47,23 @@ theorem low_outside_node (a : Word) (low : a.toNat < 0x80000) :
 
 /-- The entire actual signer upper tree call produces the reference parent root and
 complete reference layer signature, with exact739oraclecalls/761compressions. -/
-theorem sign_upper_tree (hash : Hash) (s : MachineState) (seed : Seed) (pointer level tree : Nat)
+theorem sign_upper_tree (hash : Hash) (s : MachineState) (secretKey : SecretKey) (pointer level tree : Nat)
     (message : Reference.Digest) (selected : Bool) (pc : s.pc = 0x13c8) (sp : s.getReg .x2 = 0x1000000)
     (nonzero : BitVec.ofNat 64 level ≠ 0) (valid : CapturePointerValid pointer)
-    (data : TreeContext s seed level tree) (settings : TreeSettings s pointer message selected) :
+    (data : TreeContext s secretKey level tree) (settings : TreeSettings s pointer message selected) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 739 761 final ∧
       instructions ≤ 98806 ∧ cycles ≤ 104155 ∧
       final.pc = s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (wordAddress 0x80500 i.val) =
-        (Reference.treeRoot hash seed level tree).extractLsb' (64*i.val) 64) ∧
-      UpperLayerStored final pointer (Reference.signLayer hash seed level tree selected message) ∧
+        (Reference.treeRoot hash secretKey level tree).extractLsb' (64*i.val) 64) ∧
+      UpperLayerStored final pointer (Reference.signLayer hash secretKey level tree selected message) ∧
       (∀ a, OutsideTreeWork a → SignatureWordsOutside pointer a → SiblingWordsOutside pointer a → final.getMem a = s.getMem a) := by
   obtain ⟨leaves, leafSteps, leafCycles, pre, leafStepsBound, leafCyclesBound, leavesPC, leavesSP, saved,
     leavesContext, leavesSettings, roots, signature, leavesFrame⟩ :=
-    sign_upper_tree_leaves hash s seed pointer level tree message selected pc sp nonzero valid data settings
+    sign_upper_tree_leaves hash s secretKey pointer level tree message selected pc sp nonzero valid data settings
   have levelNonzero : leaves.getMem 0x80400 ≠ 0 := by rw [leavesContext.levelEq]; exact nonzero
   obtain ⟨prepared, siblingTrace, preparedPC, sibling, preparedSP, siblingFrame⟩ := sign_upper_sibling leaves pointer selected
-    (Reference.leafRoot hash seed level tree (!selected)) leavesPC valid leavesSettings.pointerEq leavesSettings.enabled
+    (Reference.leafRoot hash secretKey level tree (!selected)) leavesPC valid leavesSettings.pointerEq leavesSettings.enabled
     levelNonzero leavesSettings.selectorEq (roots (!selected))
   have keep (a : Word) (range : a.toNat < 0x20060 ∨ 0x80000 ≤ a.toNat) : prepared.getMem a = leaves.getMem a :=
     siblingFrame a (siblingWordsOutside_range pointer valid a range)
@@ -71,8 +71,8 @@ theorem sign_upper_tree (hash : Hash) (s : MachineState) (seed : Seed) (pointer 
   have indexEq : ∀ i : Fin 3, prepared.getMem (wordAddress 0x80408 i.val) = (BitVec.ofNat 192 tree).extractLsb' (64*i.val) 64 := by
     intro i; rw [keep _ (by fin_cases i <;> decide)]; exact leavesContext.indexEq i
   have children : ∀ i : Fin 4, prepared.getMem (wordAddress 0x80520 i.val) =
-      if i.val < 2 then (Reference.leafRoot hash seed level tree false).extractLsb' (64*i.val) 64
-      else (Reference.leafRoot hash seed level tree true).extractLsb' (64*(i.val-2)) 64 := by
+      if i.val < 2 then (Reference.leafRoot hash secretKey level tree false).extractLsb' (64*i.val) 64
+      else (Reference.leafRoot hash secretKey level tree true).extractLsb' (64*(i.val-2)) 64 := by
     intro i
     rw [keep _ (by fin_cases i <;> decide)]
     fin_cases i
@@ -83,8 +83,8 @@ theorem sign_upper_tree (hash : Hash) (s : MachineState) (seed : Seed) (pointer 
   have psp : prepared.getReg .x2 = 0xfffff0 := preparedSP.trans leavesSP
   have psaved : prepared.getMem 0xfffff0 = s.getReg .x1 := by rw [keep _ (by decide), saved]
   obtain ⟨final, post, finalPC, finalSP, root, finalFrame⟩ := KeygenNode.compute_return sign hash 0x1460 sign_node_body_code
-    sign_node_return_code prepared preparedPC level tree (Reference.leafRoot hash seed level tree false)
-    (Reference.leafRoot hash seed level tree true) levelEq indexEq children
+    sign_node_return_code prepared preparedPC level tree (Reference.leafRoot hash secretKey level tree false)
+    (Reference.leafRoot hash secretKey level tree true) levelEq indexEq children
     (by rw [psp]; decide) (by rw [psp]; decide) (by rw [psp]; decide) (by rw [psp]; decide)
   have lowFrame (a : Word) (low : a.toNat < 0x80000) : final.getMem a = prepared.getMem a := by
     obtain ⟨hi, ha, hc⟩ := low_outside_node a low

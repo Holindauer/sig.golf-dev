@@ -66,7 +66,7 @@ theorem nonce_private (privateAnswers : PrivateTable) (graph : Labels) (base : H
   rw [programmed_private, residual_private]
 
 /-- The deterministic completion reproduces the actual graph signature for every
-private table; its dummy seed is merely a proof device, never sampled or guessed. -/
+private table; its dummy secret key is merely a proof device, never sampled or guessed. -/
 theorem signCompact_graph (privateAnswers : PrivateTable) (graph : Labels) (base : Hash)
     (pk : PublicKey) (message : Message) :
     signCompact (hash privateAnswers graph base) 0 pk message =

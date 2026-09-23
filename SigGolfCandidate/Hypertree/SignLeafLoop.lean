@@ -5,18 +5,18 @@ open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 Keygen Verifying
 set_option maxRecDepth 4096
 
 /-- Previously completed endpoint and signature slots survive the next chain iteration. -/
-theorem iteration_prefixes (s final : MachineState) (hash : Hash) (seed : Seed) (pointer level tree : Nat)
+theorem iteration_prefixes (s final : MachineState) (hash : Hash) (secretKey : SecretKey) (pointer level tree : Nat)
     (side : Bool) (message : Reference.Digest) (current : Reference.Chain)
     (valid : CapturePointerValid pointer)
-    (oldEndpoints : EndpointsBefore s hash seed level tree side current.val)
-    (oldSignature : SignatureBefore s hash seed pointer level tree side message current.val)
+    (oldEndpoints : EndpointsBefore s hash secretKey level tree side current.val)
+    (oldSignature : SignatureBefore s hash secretKey pointer level tree side message current.val)
     (endpoint : ∀ i : Fin 2, final.getMem (KeygenEndpoint.endpointAddress current.val i.val) =
-      (Reference.endpoint hash seed level tree side current).extractLsb' (64*i.val) 64)
-    (captured : CapturedValue final pointer current ((Reference.signLayer hash seed level tree side message).values current))
+      (Reference.endpoint hash secretKey level tree side current).extractLsb' (64*i.val) 64)
+    (captured : CapturedValue final pointer current ((Reference.signLayer hash secretKey level tree side message).values current))
     (frame : ∀ a, OutsideIteration current a →
       (∀ i : Fin 2, a ≠ wordAddress (pointer + 16 * current.val) i.val) → final.getMem a = s.getMem a) :
-    EndpointsBefore final hash seed level tree side (current.val+1) ∧
-      SignatureBefore final hash seed pointer level tree side message (current.val+1) := by
+    EndpointsBefore final hash secretKey level tree side (current.val+1) ∧
+      SignatureBefore final hash secretKey pointer level tree side message (current.val+1) := by
   constructor
   · intro chain less i
     by_cases same : chain = current
@@ -45,18 +45,18 @@ theorem iteration_prefixes (s final : MachineState) (hash : Hash) (seed : Seed) 
 
 /-- Complete the remaining upper-leaf chains for the selected leaf, retaining both
 endpoint and signature prefixes and counting every compression exactly. -/
-theorem sign_selected_leaf_loop (hash : Hash) (s : MachineState) (seed : Seed) (pointer level tree start remaining : Nat)
+theorem sign_selected_leaf_loop (hash : Hash) (s : MachineState) (secretKey : SecretKey) (pointer level tree start remaining : Nat)
     (side : Bool) (message : Reference.Digest)
     (pc : s.pc = if start = 46 then 0x18c8 else 0x1584) (length : start + remaining = 46)
     (upper : level ≠ 0) (valid : CapturePointerValid pointer)
-    (data : LeafData s seed level tree side start) (settings : LeafSignatureSettings s pointer message)
-    (endpoints : EndpointsBefore s hash seed level tree side start)
-    (signature : SignatureBefore s hash seed pointer level tree side message start) :
+    (data : LeafData s secretKey level tree side start) (settings : LeafSignatureSettings s pointer message)
+    (endpoints : EndpointsBefore s hash secretKey level tree side start)
+    (signature : SignatureBefore s hash secretKey pointer level tree side message start) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles (8*remaining) (8*remaining) final ∧
       instructions ≤ 1059 * remaining ∧ cycles ≤ 1115 * remaining ∧ final.pc = 0x18c8 ∧
-      LeafData final seed level tree side 46 ∧
-      EndpointsBefore final hash seed level tree side 46 ∧
-      SignatureBefore final hash seed pointer level tree side message 46 ∧
+      LeafData final secretKey level tree side 46 ∧
+      EndpointsBefore final hash secretKey level tree side 46 ∧
+      SignatureBefore final hash secretKey pointer level tree side message 46 ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, OutsideLeafWork a →
         (∀ chain : Reference.Chain, ∀ i : Fin 2, a ≠ wordAddress (pointer + 16 * chain.val) i.val) → final.getMem a = s.getMem a) := by
@@ -72,10 +72,10 @@ theorem sign_selected_leaf_loop (hash : Hash) (s : MachineState) (seed : Seed) (
     let chain : Reference.Chain := ⟨start, bound⟩
     have prePC : s.pc = 0x1584 := by rw [pc, if_neg (by omega)]
     obtain ⟨next, steps, cycles, pre, stepsBound, cyclesBound, nextPC, nextData, endpoint,
-      captured, nextRA, nextSP, nextFrame⟩ := sign_selected_iteration hash s seed pointer level tree side chain message
+      captured, nextRA, nextSP, nextFrame⟩ := sign_selected_iteration hash s secretKey pointer level tree side chain message
         prePC upper valid data (settings chain)
     have nextSettings := settings.iteration s next pointer chain message valid nextFrame
-    obtain ⟨nextEndpoints, nextSignature⟩ := iteration_prefixes s next hash seed pointer level tree side message chain
+    obtain ⟨nextEndpoints, nextSignature⟩ := iteration_prefixes s next hash secretKey pointer level tree side message chain
       valid endpoints signature endpoint captured nextFrame
     obtain ⟨final, finalSteps, finalCycles, tail, finalStepsBound, finalCyclesBound, finalPC, finalData,
       finalEndpoints, finalSignature, finalRA, finalSP, finalFrame⟩ := ih next (start+1) nextPC (by omega)
@@ -87,19 +87,19 @@ theorem sign_selected_leaf_loop (hash : Hash) (s : MachineState) (seed : Seed) (
       rw [finalFrame a outside signatureOutside, nextFrame a ⟨outside.1, outside.2.1, outside.2.2 chain⟩ (signatureOutside chain)]
 
 /-- All46selected-chain signatures and endpoints are generated by the actual signer bytecode. -/
-theorem sign_selected_leaf_chains (hash : Hash) (s : MachineState) (seed : Seed) (pointer level tree : Nat)
+theorem sign_selected_leaf_chains (hash : Hash) (s : MachineState) (secretKey : SecretKey) (pointer level tree : Nat)
     (side : Bool) (message : Reference.Digest) (pc : s.pc = 0x1584) (upper : level ≠ 0)
-    (valid : CapturePointerValid pointer) (data : LeafData s seed level tree side 0)
+    (valid : CapturePointerValid pointer) (data : LeafData s secretKey level tree side 0)
     (settings : LeafSignatureSettings s pointer message) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 368 368 final ∧
       instructions ≤ 48714 ∧ cycles ≤ 51290 ∧ final.pc = 0x18c8 ∧
-      LeafData final seed level tree side 46 ∧
-      EndpointsBefore final hash seed level tree side 46 ∧
-      SignatureBefore final hash seed pointer level tree side message 46 ∧
+      LeafData final secretKey level tree side 46 ∧
+      EndpointsBefore final hash secretKey level tree side 46 ∧
+      SignatureBefore final hash secretKey pointer level tree side message 46 ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, OutsideLeafWork a →
         (∀ chain : Reference.Chain, ∀ i : Fin 2, a ≠ wordAddress (pointer + 16 * chain.val) i.val) → final.getMem a = s.getMem a) :=
-  sign_selected_leaf_loop hash s seed pointer level tree 0 46 side message pc (by decide) upper valid data settings
+  sign_selected_leaf_loop hash s secretKey pointer level tree 0 46 side message pc (by decide) upper valid data settings
     (by intro chain lt; omega) (by intro chain lt; omega)
 
 set_option format.width 200

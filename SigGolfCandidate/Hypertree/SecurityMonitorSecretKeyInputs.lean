@@ -1,24 +1,24 @@
-import SigGolfCandidate.Hypertree.SecuritySeedTraceHistory
-import SigGolfCandidate.Hypertree.SecuritySeedMonitor
+import SigGolfCandidate.Hypertree.SecuritySecretKeyTraceHistory
+import SigGolfCandidate.Hypertree.SecuritySecretKeyMonitor
 
-namespace SigGolfCandidate.Hypertree.SecurityMonitorSeedInputs
+namespace SigGolfCandidate.Hypertree.SecurityMonitorSecretKeyInputs
 open SigGolf OracleComp OracleSpec Reference SecurityGraphFactor SecurityGraphPassive
   SecurityMonitorView SecurityMonitorIndexState SecurityMonitorGraphView SecurityMonitorGraphCoupling
-  SecuritySeparation SecuritySeed
+  SecuritySeparation SecuritySecretKey
 set_option backward.isDefEq.respectTransparency false
 set_option maxRecDepth 4096
 set_option linter.constructorNameAsVariable false
 attribute [local irreducible] recordParsed
 
-/-- Every recorded seed probe lies in a real seed-derivation domain. -/
-def Eligible (history : History) : Prop := ∀ query ∈ history.seedInputs, SeedEligible query
+/-- Every recorded secret key probe lies in a real secret key-derivation domain. -/
+def Eligible (history : History) : Prop := ∀ query ∈ history.secretKeyInputs, SecretKeyEligible query
 
 @[simp] theorem eligible_empty : Eligible {} := by intro query member; cases member
 
 theorem Eligible.recordPublic {history : History} (eligible : Eligible history) (pk : PublicKey)
     (query : Query) (cached : Bool) (answer : BitVec 256) : Eligible (SecurityMonitorIndexState.recordPublic pk history query cached answer) := by
   intro other member
-  rw [SecuritySeedTraceView.public_seedInputs] at member
+  rw [SecuritySecretKeyTraceView.public_secretKeyInputs] at member
   split at member
   next domain =>
     rcases List.mem_cons.mp member with same | later
@@ -76,10 +76,10 @@ theorem start_eligible {α : Type} (factors : Factors) (pk : PublicKey) (view : 
     exact eligible_empty
 
 /-- Chronological trace order and the passive history's reverse order describe
-exactly the same seed-contact event. -/
-theorem hit_reverse_iff (history : History) (eligible : Eligible history) (seed : Seed) :
-    SeedHitTrace history.seedInputs.reverse seed ↔ SecuritySeedMonitor.Hit history.seedInputs seed := by
-  simp only [SeedHitTrace, SecuritySeedMonitor.Hit, List.mem_reverse, SecuritySeedMonitor.mem_eligible]
+exactly the same secret key-contact event. -/
+theorem hit_reverse_iff (history : History) (eligible : Eligible history) (secretKey : SecretKey) :
+    SecretKeyHitTrace history.secretKeyInputs.reverse secretKey ↔ SecuritySecretKeyMonitor.Hit history.secretKeyInputs secretKey := by
+  simp only [SecretKeyHitTrace, SecuritySecretKeyMonitor.Hit, List.mem_reverse, SecuritySecretKeyMonitor.mem_eligible]
   constructor
   · rintro ⟨query, member, hit⟩
     exact ⟨query, ⟨member,eligible query member⟩,hit⟩
@@ -87,4 +87,4 @@ theorem hit_reverse_iff (history : History) (eligible : Eligible history) (seed 
     exact ⟨query,member,hit⟩
 
 #print axioms start_eligible
-end SigGolfCandidate.Hypertree.SecurityMonitorSeedInputs
+end SigGolfCandidate.Hypertree.SecurityMonitorSecretKeyInputs

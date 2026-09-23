@@ -5,24 +5,24 @@ open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 Keygen Verifying
 set_option maxRecDepth 4096
 
 /-- A full actual signing iteration, including the loop's advance and branch. -/
-theorem sign_layer (hash : Hash) (s : MachineState) (seed : Seed) (level index : Nat)
+theorem sign_layer (hash : Hash) (s : MachineState) (secretKey : SecretKey) (level index : Nat)
     (current : Reference.Digest) (pc : s.pc = 0x1220) (bound : level < 160) (small : index < 2^192)
-    (data : LoopData s seed level index current) :
+    (data : LoopData s secretKey level index current) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles
       (if level = 0 then 5 else 739) (if level = 0 then 5 else 761) final ∧
       instructions ≤ (if level = 0 then 564 else 99313) ∧ cycles ≤ (if level = 0 then 599 else 104662) ∧
       final.pc = (if level+1=160 then 0x12f8 else 0x1220) ∧
-      LoopData final seed (level+1) (index/2) (Reference.treeRoot hash seed level (index/2)) ∧
+      LoopData final secretKey (level+1) (index/2) (Reference.treeRoot hash secretKey level (index/2)) ∧
       LayerStored final (0x20060+layerOffset level) level
-        (Reference.signLayer hash seed level (index/2) (index%2==1) current) ∧
+        (Reference.signLayer hash secretKey level (index/2) (index%2==1) current) ∧
       (∀ address : Nat, address<0x80000 → address%8=0 →
         OutsideLayer (0x20060+layerOffset level) level (BitVec.ofNat 64 address) →
         final.getMem (BitVec.ofNat 64 address) = s.getMem (BitVec.ofNat 64 address)) := by
   obtain ⟨ready,pre,readyPC,readyRA,readySP,context,ptr,mode,selector,digits,preFrame⟩ :=
-    sign_layer_prepare hash s seed level index current pc bound small data
+    sign_layer_prepare hash s secretKey level index current pc bound small data
   have valid := sign_pointer_valid level bound
   obtain ⟨done,n,c,body,nb,cb,donePC,doneSP,root,stored,frame⟩ :=
-    sign_tree hash ready seed (0x20060+layerOffset level) level (index/2) current (index%2==1)
+    sign_tree hash ready secretKey (0x20060+layerOffset level) level (index/2) current (index%2==1)
       readyPC readySP bound valid context ptr (by rw [mode]; decide) selector digits
   have atAdvance : done.pc = 0x12ac := by rw [donePC,readyRA]; decide
   have keep (a : Word) (region : (0x80400≤a.toNat ∧ a.toNat<0x80428) ∨ (0x80440≤a.toNat ∧ a.toNat<0x80450)) :
@@ -52,7 +52,7 @@ theorem sign_layer (hash : Hash) (s : MachineState) (seed : Seed) (level index :
       have outside : OutsideLayer (0x20060+layerOffset level) level (wordAddress 0x20 i.val) := by
         left; simp only [wordAddress,BitVec.toNat_ofNat]; have := i.isLt; omega
       rw [advance_low_frame done _ low,frame _ (outsideTreeWork_low _ low) outside]
-      exact context.seedEq i
+      exact context.secretKeyEq i
     · rw [advanceState_mem,if_neg (by decide),if_neg (by decide),keep _ (by decide)]; exact mode
     · exact after.2
     · intro i

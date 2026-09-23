@@ -8,17 +8,17 @@ set_option maxRecDepth 4096
 set_option linter.unusedSimpArgs false
 
 /-- The exact reference tag6 query byte string. -/
-def randomizerPayload (seed : Seed) (message : Message) : List Byte :=
+def randomizerPayload (secretKey : SecretKey) (message : Message) : List Byte :=
   bytes (n := 8) (6 : BitVec 64) ++ bytes (n := 24) (0 : BitVec 192) ++
-    (bytes seed ++ bytes message)
+    (bytes secretKey ++ bytes message)
 
-@[simp] theorem randomizerPayload_length (seed : Seed) (message : Message) :
-    (randomizerPayload seed message).length = 80 := by simp [randomizerPayload, bytes]
+@[simp] theorem randomizerPayload_length (secretKey : SecretKey) (message : Message) :
+    (randomizerPayload secretKey message).length = 80 := by simp [randomizerPayload, bytes]
 
-theorem randomizerPayload_byte (seed : Seed) (message : Message) (i : Fin 80) :
-    (randomizerPayload seed message)[i.val]'(by simp) =
+theorem randomizerPayload_byte (secretKey : SecretKey) (message : Message) (i : Fin 80) :
+    (randomizerPayload secretKey message)[i.val]'(by simp) =
       if i.val = 0 then 6 else if i.val < 32 then 0 else
-        if i.val < 48 then seed.extractLsb' (8 * (i.val - 32)) 8
+        if i.val < 48 then secretKey.extractLsb' (8 * (i.val - 32)) 8
         else message.extractLsb' (8 * (i.val - 48)) 8 := by
   fin_cases i <;> simp [randomizerPayload, bytes, List.getElem_append]
 
@@ -30,37 +30,37 @@ theorem randomizerHashState_byte (s : MachineState) (a : Word) :
   simp only [MachineState.getByte, randomizerHashState_mem]
 
 /-- The bytecode's first oracle input is exactly the reference randomizer query.
-Only the seed and message loader facts are needed; all scratch preparation is proved. -/
-theorem randomizer_query (original ready : MachineState) (seed : Seed) (message : Message)
-    (hseed : ∀ i, i < 16 → original.getByte (BitVec.ofNat 64 (0x20 + i)) = seed.extractLsb' (8 * i) 8)
+Only the secret key and message loader facts are needed; all scratch preparation is proved. -/
+theorem randomizer_query (original ready : MachineState) (secretKey : SecretKey) (message : Message)
+    (hsecretKey : ∀ i, i < 16 → original.getByte (BitVec.ofNat 64 (0x20 + i)) = secretKey.extractLsb' (8 * i) 8)
     (hmessage : ∀ i, i < 32 → original.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8 * i) 8)
     (words : ∀ i : Fin 10, ready.getMem (wordAddress 0x80000 i.val) = randomizerInputWord original i) :
-    hashInput (randomizerHashState ready) = Reference.packed (randomizerPayload seed message) := by
-  apply Serialization.hashInput_of_list (randomizerHashState ready) 0x80000 (randomizerPayload seed message)
+    hashInput (randomizerHashState ready) = Reference.packed (randomizerPayload secretKey message) := by
+  apply Serialization.hashInput_of_list (randomizerHashState ready) 0x80000 (randomizerPayload secretKey message)
   · exact (randomizerHashState_regs ready).2.1
   · rw [(randomizerHashState_regs ready).2.2.1, randomizerPayload_length]; rfl
   · intro i hi
     have bound : i < 80 := by simpa using hi
     rw [randomizerHashState_byte, prepared_randomizer_bytes original ready words ⟨i, bound⟩,
-      randomizerInputByte_spec, randomizerPayload_byte seed message ⟨i, bound⟩]
+      randomizerInputByte_spec, randomizerPayload_byte secretKey message ⟨i, bound⟩]
     dsimp only
     split_ifs with h0 h32 h48
     · rfl
     · rfl
-    · exact hseed (i - 32) (by omega)
+    · exact hsecretKey (i - 32) (by omega)
     · exact hmessage (i - 48) (by omega)
 
 /-- Actual entry-to-randomizer execution refines the reference function, for every
 fixed oracle. The typed loader can discharge the two explicit input-byte hypotheses. -/
-theorem entry_randomizer_refines (hash : Hash) (s : MachineState) (seed : Seed) (message : Message)
+theorem entry_randomizer_refines (hash : Hash) (s : MachineState) (secretKey : SecretKey) (message : Message)
     (pc : s.pc = 0x1000)
-    (hseed : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x20 + i)) = seed.extractLsb' (8 * i) 8)
+    (hsecretKey : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x20 + i)) = secretKey.extractLsb' (8 * i) 8)
     (hmessage : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8 * i) 8) :
     ∃ final, Trace hash sign s 105 120 1 2 final ∧ final.pc = 0x10fc ∧
       ∀ i : Fin 4, final.getMem (wordAddress 0x20060 i.val) =
-        (Reference.randomizer hash seed message).extractLsb' (64 * i.val) 64 := by
+        (Reference.randomizer hash secretKey message).extractLsb' (64 * i.val) 64 := by
   obtain ⟨ready, final, trace, finalpc, words, output⟩ := entry_randomizer_trace hash s pc
-  have query := randomizer_query s ready seed message hseed hmessage words
+  have query := randomizer_query s ready secretKey message hsecretKey hmessage words
   refine ⟨final, trace, finalpc, ?_⟩
   intro i
   rw [output i, query]
@@ -71,20 +71,20 @@ theorem entry_randomizer_refines (hash : Hash) (s : MachineState) (seed : Seed) 
 #print axioms entry_randomizer_refines
 
 /-- The exact typed signer loader followed by real bytecode emits the reference
-randomizer, for every seed, public key, untrusted cache, message and oracle. -/
-theorem loaded_randomizer_refines (hash : Hash) (seed : Seed) (pk : PublicKey)
+randomizer, for every secret key, public key, untrusted cache, message and oracle. -/
+theorem loaded_randomizer_refines (hash : Hash) (secretKey : SecretKey) (pk : PublicKey)
     (cache : Cache) (message : Message) :
     ∃ initial final,
-      initialState submission .sign (seed, pk, cache, message) = some initial ∧
+      initialState submission .sign (secretKey, pk, cache, message) = some initial ∧
       Trace hash sign initial 105 120 1 2 final ∧ final.pc = 0x10fc ∧
-      readBuffer final 0x20060 32 = Reference.randomizer hash seed message := by
-  obtain ⟨initial, loaded, pc⟩ := initialState_exists submission admitted .sign (seed, pk, cache, message)
-  obtain ⟨final, trace, finalpc, words⟩ := entry_randomizer_refines hash initial seed message pc
-    (Loader.sign_seed submission (admitted.2 .sign) seed pk cache message initial loaded)
-    (Loader.sign_message submission (admitted.2 .sign) seed pk cache message initial loaded)
+      readBuffer final 0x20060 32 = Reference.randomizer hash secretKey message := by
+  obtain ⟨initial, loaded, pc⟩ := initialState_exists submission admitted .sign (secretKey, pk, cache, message)
+  obtain ⟨final, trace, finalpc, words⟩ := entry_randomizer_refines hash initial secretKey message pc
+    (Loader.sign_secretKey submission (admitted.2 .sign) secretKey pk cache message initial loaded)
+    (Loader.sign_message submission (admitted.2 .sign) secretKey pk cache message initial loaded)
   refine ⟨initial, final, loaded, trace, finalpc, ?_⟩
   apply Memory.readBuffer_of_bytes
-  exact bytes_of_answer_words final 0x20060 (Reference.randomizer hash seed message)
+  exact bytes_of_answer_words final 0x20060 (Reference.randomizer hash secretKey message)
     (by decide) (by decide) words
 
 /-- info: 'SigGolfCandidate.Hypertree.Signing.loaded_randomizer_refines' depends on axioms: [propext,
@@ -94,17 +94,17 @@ theorem loaded_randomizer_refines (hash : Hash) (seed : Seed) (pk : PublicKey)
 #print axioms loaded_randomizer_refines
 
 /-- Stronger first-stage refinement retaining all low-memory inputs for the index hash. -/
-theorem entry_randomizer_refines_frame (hash : Hash) (s : MachineState) (seed : Seed) (message : Message)
+theorem entry_randomizer_refines_frame (hash : Hash) (s : MachineState) (secretKey : SecretKey) (message : Message)
     (pc : s.pc = 0x1000)
-    (hseed : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x20 + i)) = seed.extractLsb' (8 * i) 8)
+    (hsecretKey : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x20 + i)) = secretKey.extractLsb' (8 * i) 8)
     (hmessage : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8 * i) 8) :
     ∃ final, Trace hash sign s 105 120 1 2 final ∧ final.pc = 0x10fc ∧
       (∀ i : Fin 4, final.getMem (wordAddress 0x20060 i.val) =
-        (Reference.randomizer hash seed message).extractLsb' (64 * i.val) 64) ∧
+        (Reference.randomizer hash secretKey message).extractLsb' (64 * i.val) 64) ∧
       (∀ a, a.toNat < 0x20060 → final.getMem a = s.getMem a) := by
   obtain ⟨ready, prepared, readypc, words, prepareFrame⟩ := randomizer_prepare s pc
   obtain ⟨final, trace, finalpc, output, frame⟩ := randomizer_trace_frame hash ready readypc
-  have query := randomizer_query s ready seed message hseed hmessage words
+  have query := randomizer_query s ready secretKey message hsecretKey hmessage words
   refine ⟨final, prepared.trace.trans trace, finalpc, ?_, ?_⟩
   · intro i
     rw [output i, query]

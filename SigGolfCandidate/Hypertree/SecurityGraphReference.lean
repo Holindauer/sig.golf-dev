@@ -6,8 +6,8 @@ open scoped Classical
 set_option backward.isDefEq.respectTransparency false
 set_option maxRecDepth 4096
 
-def derived (residual : Hash) (seed : Seed) : Slot → BitVec 256 :=
-  fun slot => residual (SecurityDerivation.input seed slot)
+def derived (residual : Hash) (secretKey : SecretKey) : Slot → BitVec 256 :=
+  fun slot => residual (SecurityDerivation.input secretKey slot)
 
 /-- One full output is planted at each separated canonical graph input. -/
 noncomputable def programmed (privateAnswers : Slot → BitVec 256) (labels : Labels) (residual : Hash) : Hash :=
@@ -26,35 +26,35 @@ theorem programmed_graph (privateAnswers : Slot → BitVec 256) (labels : Labels
     rw [same]
   next absent => exact False.elim (absent ⟨position, rfl⟩)
 
-theorem graphInput_not_seedEligible (privateAnswers : Slot → BitVec 256) (position : Position)
-    (labels : Labels) : ¬SeedEligible (position.input privateAnswers labels) := by
+theorem graphInput_not_secretKeyEligible (privateAnswers : Slot → BitVec 256) (position : Position)
+    (labels : Labels) : ¬SecretKeyEligible (position.input privateAnswers labels) := by
   cases position with
   | chain address step =>
-    exact SecurityDomains.not_seedEligible_addressedInput 2 _ _ _ _ _ _ (by decide) (by decide)
+    exact SecurityDomains.not_secretKeyEligible_addressedInput 2 _ _ _ _ _ _ (by decide) (by decide)
   | leaf level tree side =>
-    exact SecurityDomains.not_seedEligible_addressedInput 3 _ _ _ _ _ _ (by decide) (by decide)
+    exact SecurityDomains.not_secretKeyEligible_addressedInput 3 _ _ _ _ _ _ (by decide) (by decide)
   | node level tree =>
-    exact SecurityDomains.not_seedEligible_addressedInput 4 _ _ _ _ _ _ (by decide) (by decide)
+    exact SecurityDomains.not_secretKeyEligible_addressedInput 4 _ _ _ _ _ _ (by decide) (by decide)
 
 /-- Planting public graph labels cannot change either secret-chain derivations or
-message-randomizer derivations at any seed. -/
+message-randomizer derivations at any secret key. -/
 theorem programmed_private (privateAnswers : Slot → BitVec 256) (labels : Labels) (residual : Hash)
-    (seed : Seed) (slot : Slot) :
-    programmed privateAnswers labels residual (SecurityDerivation.input seed slot) =
-      residual (SecurityDerivation.input seed slot) := by
+    (secretKey : SecretKey) (slot : Slot) :
+    programmed privateAnswers labels residual (SecurityDerivation.input secretKey slot) =
+      residual (SecurityDerivation.input secretKey slot) := by
   unfold programmed
   split
   next found =>
     obtain ⟨position, same⟩ := found
-    exact False.elim (graphInput_not_seedEligible privateAnswers position labels (same ▸ seedEligible_input seed slot))
+    exact False.elim (graphInput_not_secretKeyEligible privateAnswers position labels (same ▸ secretKeyEligible_input secretKey slot))
   next absent => rfl
 
 /-- The signer secret is unchanged by graph programming, at the actual reference input. -/
-theorem programmed_secret (residual : Hash) (seed : Seed) (labels : Labels) (address : ChainAddress) :
-    secret (programmed (derived residual seed) labels residual) seed address.level.val address.tree.toNat
-      address.side address.chain = truncate (derived residual seed (.chain address)) := by
-  change truncate (programmed (derived residual seed) labels residual
-    (SecurityDerivation.input seed (.chain address))) = _
+theorem programmed_secret (residual : Hash) (secretKey : SecretKey) (labels : Labels) (address : ChainAddress) :
+    secret (programmed (derived residual secretKey) labels residual) secretKey address.level.val address.tree.toNat
+      address.side address.chain = truncate (derived residual secretKey (.chain address)) := by
+  change truncate (programmed (derived residual secretKey) labels residual
+    (SecurityDerivation.input secretKey (.chain address))) = _
   rw [programmed_private]
   rfl
 
@@ -75,28 +75,28 @@ theorem programmed_chain_step (privateAnswers : Slot → BitVec 256) (labels : L
 
 /-- Every actual reference walk through seven planted steps reads the designated
 independent point; this includes every possible WOTS signing digit. -/
-theorem programmed_walk (residual : Hash) (seed : Seed) (labels : Labels) (address : ChainAddress)
+theorem programmed_walk (residual : Hash) (secretKey : SecretKey) (labels : Labels) (address : ChainAddress)
     (count : Nat) (bound : count ≤ 7) :
-    walk (chainHash (programmed (derived residual seed) labels residual)
+    walk (chainHash (programmed (derived residual secretKey) labels residual)
       address.level.val address.tree.toNat address.side address.chain) 0 count
-      (secret (programmed (derived residual seed) labels residual) seed address.level.val
+      (secret (programmed (derived residual secretKey) labels residual) secretKey address.level.val
         address.tree.toNat address.side address.chain) =
-      chainPoint (derived residual seed) labels address ⟨count, by omega⟩ := by
+      chainPoint (derived residual secretKey) labels address ⟨count, by omega⟩ := by
   induction count with
-  | zero => simpa only [walk, chainPoint, ↓reduceDIte] using programmed_secret residual seed labels address
+  | zero => simpa only [walk, chainPoint, ↓reduceDIte] using programmed_secret residual secretKey labels address
   | succ count ih =>
     rw [walk_append _ 0 count 1]
     simp only [walk, Nat.zero_add]
     rw [ih (by omega)]
-    have step := programmed_chain_step (derived residual seed) labels residual address ⟨count, by omega⟩
+    have step := programmed_chain_step (derived residual secretKey) labels residual address ⟨count, by omega⟩
     simpa only [chainPoint, Nat.add_eq_zero_iff, Nat.one_ne_zero, and_false, ↓reduceDIte,
       Nat.add_sub_cancel] using step
 
 /-- The exact reference WOTS endpoint is the final canonical chain label. -/
-theorem programmed_endpoint (residual : Hash) (seed : Seed) (labels : Labels) (address : ChainAddress) :
-    endpoint (programmed (derived residual seed) labels residual) seed address.level.val
+theorem programmed_endpoint (residual : Hash) (secretKey : SecretKey) (labels : Labels) (address : ChainAddress) :
+    endpoint (programmed (derived residual secretKey) labels residual) secretKey address.level.val
       address.tree.toNat address.side address.chain = truncate (labels (.chain address 6)) := by
-  exact programmed_walk residual seed labels address 7 (by decide)
+  exact programmed_walk residual secretKey labels address 7 (by decide)
 
 def leafLabel (labels : Labels) (level : Fin 160) (tree : BitVec 192) (side : Bool) : Digest :=
   if level.val = 0 then truncate (labels (.chain ⟨level, tree, side, 0⟩ 0))
@@ -104,46 +104,46 @@ def leafLabel (labels : Labels) (level : Fin 160) (tree : BitVec 192) (side : Bo
 
 /-- Actual binary-tree leaves recover the sampled graph labels at both the
 bottom preimage layer and all upper WOTS layers. -/
-theorem programmed_leafRoot (residual : Hash) (seed : Seed) (labels : Labels)
+theorem programmed_leafRoot (residual : Hash) (secretKey : SecretKey) (labels : Labels)
     (level : Fin 160) (tree : BitVec 192) (side : Bool) :
-    leafRoot (programmed (derived residual seed) labels residual) seed level.val tree.toNat side =
+    leafRoot (programmed (derived residual secretKey) labels residual) secretKey level.val tree.toNat side =
       leafLabel labels level tree side := by
   by_cases bottom : level.val = 0
   · simp only [leafRoot, leafLabel, if_pos bottom]
-    rw [programmed_secret residual seed labels ⟨level, tree, side, 0⟩]
-    exact programmed_chain_step (derived residual seed) labels residual ⟨level, tree, side, 0⟩ 0
+    rw [programmed_secret residual secretKey labels ⟨level, tree, side, 0⟩]
+    exact programmed_chain_step (derived residual secretKey) labels residual ⟨level, tree, side, 0⟩ 0
   · simp only [leafRoot, leafLabel, if_neg bottom]
-    have endpoints : endpoint (programmed (derived residual seed) labels residual) seed level.val tree.toNat side =
+    have endpoints : endpoint (programmed (derived residual secretKey) labels residual) secretKey level.val tree.toNat side =
         fun chain => truncate (labels (.chain ⟨level, tree, side, chain⟩ 6)) := by
       funext chain
-      exact programmed_endpoint residual seed labels ⟨level, tree, side, chain⟩
+      exact programmed_endpoint residual secretKey labels ⟨level, tree, side, chain⟩
     rw [endpoints]
-    change truncate (programmed (derived residual seed) labels residual
-      ((Position.leaf level tree side).input (derived residual seed) labels)) = _
+    change truncate (programmed (derived residual secretKey) labels residual
+      ((Position.leaf level tree side).input (derived residual secretKey) labels)) = _
     rw [programmed_graph]
 
 /-- The actual reference public key and every child-tree message are designated
 node labels. The probability proof can therefore identify their independence from
 WOTS interior points without treating reference hashing as an independent oracle. -/
-theorem programmed_treeRoot (residual : Hash) (seed : Seed) (labels : Labels)
+theorem programmed_treeRoot (residual : Hash) (secretKey : SecretKey) (labels : Labels)
     (level : Fin 160) (tree : BitVec 192) :
-    treeRoot (programmed (derived residual seed) labels residual) seed level.val tree.toNat =
+    treeRoot (programmed (derived residual secretKey) labels residual) secretKey level.val tree.toNat =
       truncate (labels (.node level tree)) := by
   rw [treeRoot, programmed_leafRoot, programmed_leafRoot]
-  change truncate (programmed (derived residual seed) labels residual
-    ((Position.node level tree).input (derived residual seed) labels)) = _
+  change truncate (programmed (derived residual secretKey) labels residual
+    ((Position.node level tree).input (derived residual secretKey) labels)) = _
   rw [programmed_graph]
 
 /-- Signing reveals exactly the canonical point selected by each WOTS digit. -/
-theorem programmed_sign_fragment (residual : Hash) (seed : Seed) (labels : Labels)
+theorem programmed_sign_fragment (residual : Hash) (secretKey : SecretKey) (labels : Labels)
     (level : Fin 160) (tree : BitVec 192) (side : Bool) (message : Digest) (chain : Chain) :
-    (signLayer (programmed (derived residual seed) labels residual) seed level.val tree.toNat side message).values chain =
-      if level.val = 0 then chainPoint (derived residual seed) labels ⟨level, tree, side, chain⟩ 0
-      else chainPoint (derived residual seed) labels ⟨level, tree, side, chain⟩ (digit message chain) := by
+    (signLayer (programmed (derived residual secretKey) labels residual) secretKey level.val tree.toNat side message).values chain =
+      if level.val = 0 then chainPoint (derived residual secretKey) labels ⟨level, tree, side, chain⟩ 0
+      else chainPoint (derived residual secretKey) labels ⟨level, tree, side, chain⟩ (digit message chain) := by
   by_cases bottom : level.val = 0
   · simp only [signLayer, if_pos bottom]
-    exact programmed_secret residual seed labels ⟨level, tree, side, chain⟩
+    exact programmed_secret residual secretKey labels ⟨level, tree, side, chain⟩
   · simp only [signLayer, if_neg bottom]
-    exact programmed_walk residual seed labels ⟨level, tree, side, chain⟩ (digit message chain).val (by omega)
+    exact programmed_walk residual secretKey labels ⟨level, tree, side, chain⟩ (digit message chain).val (by omega)
 
 end SigGolfCandidate.Hypertree.SecurityGraphReference

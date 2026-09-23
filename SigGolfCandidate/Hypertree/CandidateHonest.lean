@@ -38,26 +38,26 @@ theorem pipeline_success {σ ω : Type} (hash : Hash) (keygen : OracleComp HashS
   cases phase <;> rfl
 
 /-- Every message succeeds against each single fixed oracle, with exact budgeted-phase costs. -/
-theorem honest_exact (hash : Hash) (seed : Seed) (message : Message) :
+theorem honest_exact (hash : Hash) (secretKey : SecretKey) (message : Message) :
     ∃ cycles calls blocks, cycles≤5883520 ∧ calls≤51841 ∧ blocks≤53602 ∧
-      evalWithAnswerFn hash (submission.honest seed message)=
+      evalWithAnswerFn hash (submission.honest secretKey message)=
         ⟨true,fun phase => match phase with | .keygen => 761 | .sign => 121008 | .expand => 0 | .verify => blocks,cycles⟩ := by
-  let pk := Reference.keygen hash seed
-  let signature := (signCompact hash seed pk message).wire (signCompact_valid hash seed pk message)
-  obtain ⟨signCycles,_,signRun⟩ := Signing.sign_run_honest hash seed KeygenFunctional.zeroCache message
+  let pk := Reference.keygen hash secretKey
+  let signature := (signCompact hash secretKey pk message).wire (signCompact_valid hash secretKey pk message)
+  obtain ⟨signCycles,_,signRun⟩ := Signing.sign_run_honest hash secretKey KeygenFunctional.zeroCache message
   obtain ⟨cycles,calls,blocks,cycleBound,callBound,blockBound,verifyRun⟩ := Verifying.run_refines hash pk message signature
   have correct : Reference.verify hash pk message (decode signature).toReference := by
     rw [wire_decode]
-    exact signCompact_correct hash seed message
+    exact signCompact_correct hash secretKey message
   rw [if_pos correct] at verifyRun
   refine ⟨cycles,calls,blocks,cycleBound,callBound,blockBound,?_⟩
   rw [honest_eq_pipeline]
-  exact pipeline_success hash (submission.run .keygen seed)
-    (fun p c => submission.run .sign (seed,p,c,message))
+  exact pipeline_success hash (submission.run .keygen secretKey)
+    (fun p c => submission.run .sign (secretKey,p,c,message))
     (fun p sig => submission.run .expand (message,p,sig))
     (fun p wit => submission.run .verify (message,p,wit)) pk KeygenFunctional.zeroCache signature signature
     81342 739 761 signCycles 117508 121008 89733 0 0 cycles calls blocks
-    (KeygenFunctional.run_exact hash seed) signRun (expand_exact hash message pk signature) verifyRun
+    (KeygenFunctional.run_exact hash secretKey) signRun (expand_exact hash message pk signature) verifyRun
 
 /-- info: 'SigGolfCandidate.Hypertree.Candidate.honest_exact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

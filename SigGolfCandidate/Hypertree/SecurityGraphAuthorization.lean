@@ -83,17 +83,17 @@ theorem bottom_source_unauthorized (metadata : MetadataTable) (signed : Finset (
 
 /-- Reference extraction identifies a genuinely unopened graph coordinate once
 its canonical child and chain point have been related to the sampled graph. -/
-theorem earlier_point_unauthorized (hash : Hash) (seed : Seed) (factors : Factors)
+theorem earlier_point_unauthorized (hash : Hash) (secretKey : SecretKey) (factors : Factors)
     (signed : Finset (BitVec 160)) (level : Fin 160) (index : Nat)
     (bound : index < 2 ^ 192) (upper : 0 < level.val)
     (message : Digest) (signature : LayerSignature)
-    (child : SecurityPath.canonicalChild hash seed level.val index =
+    (child : SecurityPath.canonicalChild hash secretKey level.val index =
       truncate (factors.2.2 (.node ⟨level.val - 1, by omega⟩ (BitVec.ofNat 192 index))))
     (points : ∀ chain, signature.values chain =
       walk (chainHash hash level.val (index / 2) (index % 2 == 1) chain) 0
-        (digit message chain).val (secret hash seed level.val (index / 2) (index % 2 == 1) chain) →
+        (digit message chain).val (secret hash secretKey level.val (index / 2) (index % 2 == 1) chain) →
       signature.values chain = truncate (factors.1 (pathAddress level index chain, digit message chain)))
-    (exposure : SecurityPath.EarlierPointExposure hash seed level.val index message signature) :
+    (exposure : SecurityPath.EarlierPointExposure hash secretKey level.val index message signature) :
     ∃ chain, ¬Authorized factors.2.2 signed (pathAddress level index chain, digit message chain) ∧
       signature.values chain = truncate (factors.1 (pathAddress level index chain, digit message chain)) := by
   obtain ⟨chain, earlier, same⟩ := exposure

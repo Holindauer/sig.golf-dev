@@ -7,19 +7,19 @@ set_option maxRecDepth 4096
 /-- A reusable bridge from uniform deterministic honest costs to the organizer's shared-oracle moment. -/
 theorem compression_of_honest_cost (candidate : Submission) (phase : Phase)
     (positive : 0 < phase.budget)
-    (bounded : ∀ hash seed message,
-      (evalWithAnswerFn hash (candidate.honest seed message)).costs phase ≤ phase.budget)
-    (seed : Seed) :
-    expectedValue (withRandomOracle (candidate.allMessages seed))
+    (bounded : ∀ hash secretKey message,
+      (evalWithAnswerFn hash (candidate.honest secretKey message)).costs phase ≤ phase.budget)
+    (secretKey : SecretKey) :
+    expectedValue (withRandomOracle (candidate.allMessages secretKey))
       (fun summary => ENNReal.ofReal (Real.rpow 2 ((summary.maxCosts phase : ℝ) / (phase.budget : ℝ)))) ≤ 2 := by
   apply expectedValue_le_of_support
   intro summary mem
-  obtain ⟨hash,eq⟩ := fixed_hash_of_support (candidate.allMessages seed) summary mem
+  obtain ⟨hash,eq⟩ := fixed_hash_of_support (candidate.allMessages secretKey) summary mem
   have maximum : summary.maxCosts phase ≤ phase.budget := by
     rw [← eq]
     unfold Submission.allMessages
-    exact fold_max_cost hash (candidate.honest seed) phase phase.budget
-      (bounded hash seed) _ {} (Nat.zero_le _)
+    exact fold_max_cost hash (candidate.honest secretKey) phase phase.budget
+      (bounded hash secretKey) _ {} (Nat.zero_le _)
   have denom : (0 : ℝ) < phase.budget := by exact_mod_cast positive
   have exponent : (summary.maxCosts phase : ℝ) / (phase.budget : ℝ) ≤ 1 := by
     apply (div_le_one denom).2
@@ -30,14 +30,14 @@ theorem compression_of_honest_cost (candidate : Submission) (phase : Phase)
 
 /-- Assemble all budgeted phases once their honest deterministic cost bounds are proved. -/
 theorem compressionBounds_of_honest_cost (candidate : Submission)
-    (bounded : ∀ hash seed message phase, phase ∈ Phase.budgeted →
-      (evalWithAnswerFn hash (candidate.honest seed message)).costs phase ≤ phase.budget) :
+    (bounded : ∀ hash secretKey message phase, phase ∈ Phase.budgeted →
+      (evalWithAnswerFn hash (candidate.honest secretKey message)).costs phase ≤ phase.budget) :
     candidate.CompressionBounds := by
-  intro seed phase mem
+  intro secretKey phase mem
   apply compression_of_honest_cost candidate phase
   · cases phase <;> simp_all [Phase.budgeted,Phase.budget,BUDGET_KEYGEN,BUDGET_SIGN,BUDGET_EXPAND]
-  · intro hash seed message
-    exact bounded hash seed message phase mem
+  · intro hash secretKey message
+    exact bounded hash secretKey message phase mem
 
 
 theorem fold_all_succeed (hash : Hash) (program : Message → OracleComp HashSpec HonestResult)
@@ -55,17 +55,17 @@ theorem fold_all_succeed (hash : Hash) (program : Message → OracleComp HashSpe
 
 /-- This bridge has an explicit premise: bytecode correctness must first prove every honest pipeline succeeds. -/
 theorem complete_of_honest_success (candidate : Submission)
-    (success : ∀ hash seed message, (evalWithAnswerFn hash (candidate.honest seed message)).success = true) :
+    (success : ∀ hash secretKey message, (evalWithAnswerFn hash (candidate.honest secretKey message)).success = true) :
     candidate.Complete := by
-  intro seed
-  have certain : Pr[fun summary => summary.allSucceed = true | withRandomOracle (candidate.allMessages seed)] = 1 := by
+  intro secretKey
+  have certain : Pr[fun summary => summary.allSucceed = true | withRandomOracle (candidate.allMessages secretKey)] = 1 := by
     rw [probEvent_eq_one_iff]
     refine ⟨NeverFail.probFailure_eq_zero,?_⟩
     intro summary mem
-    obtain ⟨hash,eq⟩ := fixed_hash_of_support (candidate.allMessages seed) summary mem
+    obtain ⟨hash,eq⟩ := fixed_hash_of_support (candidate.allMessages secretKey) summary mem
     rw [← eq]
     unfold Submission.allMessages
-    exact fold_all_succeed hash (candidate.honest seed) (success hash seed) _ {} rfl
+    exact fold_all_succeed hash (candidate.honest secretKey) (success hash secretKey) _ {} rfl
   rw [certain]
   exact tsub_le_self
 

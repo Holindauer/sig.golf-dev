@@ -60,29 +60,29 @@ theorem endpoint_separate (left right : Reference.Chain) (i j : Fin 2) (ne : lef
   have := j.isLt
   omega
 
-def Endpoints (hash : Hash) (seed : Seed) (level tree : Nat) (side : Bool) (n : Nat) (s : MachineState) : Prop :=
+def Endpoints (hash : Hash) (secretKey : SecretKey) (level tree : Nat) (side : Bool) (n : Nat) (s : MachineState) : Prop :=
   ∀ chain : Reference.Chain, chain.val<n → ∀ i : Fin 2,
     s.getMem (KeygenEndpoint.endpointAddress chain.val i.val) =
-      (Reference.endpoint hash seed level tree side chain).extractLsb' (64*i.val) 64
+      (Reference.endpoint hash secretKey level tree side chain).extractLsb' (64*i.val) 64
 
 /-- One outer iteration derives a secret, performs seven chain rounds, and saves its endpoint. -/
 theorem iteration (hash : Hash) (s : MachineState) (pc : s.pc=0x1204)
-    (level tree : Nat) (side : Bool) (chain : Reference.Chain) (seed : Seed)
-    (context : Context level tree side seed s)
+    (level tree : Nat) (side : Bool) (chain : Reference.Chain) (secretKey : SecretKey)
+    (context : Context level tree side secretKey s)
     (counter : s.getMem 0x80430=BitVec.ofNat 64 chain.val)
-    (before : Endpoints hash seed level tree side chain.val s) :
+    (before : Endpoints hash secretKey level tree side chain.val s) :
     ∃ final, Trace hash keygen s 811 867 8 8 final ∧
       final.pc=(if chain.val+1=46 then 0x1548 else 0x1204) ∧
-      Context level tree side seed final ∧ final.getMem 0x80430=BitVec.ofNat 64 (chain.val+1) ∧
-      Endpoints hash seed level tree side (chain.val+1) final ∧
+      Context level tree side secretKey final ∧ final.getMem 0x80430=BitVec.ofNat 64 (chain.val+1) ∧
+      Endpoints hash secretKey level tree side (chain.val+1) final ∧
       final.getReg .x1=s.getReg .x1 ∧ final.getReg .x2=s.getReg .x2 ∧
       (∀ a, Outside a → final.getMem a=s.getMem a) := by
-  obtain ⟨ready,pre,rpc,inv,rra,rsp,rframe⟩ := KeygenSecretStart.prepare hash s pc level tree side chain seed context counter
+  obtain ⟨ready,pre,rpc,inv,rra,rsp,rframe⟩ := KeygenSecretStart.prepare hash s pc level tree side chain secretKey context counter
   obtain ⟨ended,rounds,epc,einv,era,esp,eframe⟩ :=
     KeygenChainLoop.run hash 7 ready rpc level tree 0 side chain _ (by decide) inv
   obtain ⟨final,post,fpc,fcounter,words,fra,fsp,fframe⟩ :=
     KeygenEndpoint.store_endpoint keygen 0x14f4 (-832) KeygenEndpoint.keygen_code ended chain
-      (Reference.endpoint hash seed level tree side chain) epc einv.chainWord einv.valueWords
+      (Reference.endpoint hash secretKey level tree side chain) epc einv.chainWord einv.valueWords
   have finalFrame (a : Word) (outside : Outside a) : final.getMem a=s.getMem a := by
     rw [fframe a outside.1 (by
       intro i
@@ -95,7 +95,7 @@ theorem iteration (hash : Hash) (s : MachineState) (pc : s.pc=0x1204)
     · rw [finalFrame _ (by decide)]; exact context.levelWord
     · rw [finalFrame _ (by decide)]; exact context.leafWord
     · intro i; rw [finalFrame _ (by fin_cases i <;> decide)]; exact context.indexWords i
-    · intro i; rw [finalFrame _ (by fin_cases i <;> decide)]; exact context.seedWords i
+    · intro i; rw [finalFrame _ (by fin_cases i <;> decide)]; exact context.secretKeyWords i
     · rw [finalFrame _ (by decide)]; exact context.modeWord
   · intro old lt i
     by_cases eq : old=chain
@@ -107,14 +107,14 @@ theorem iteration (hash : Hash) (s : MachineState) (pc : s.pc=0x1204)
 
 /-- All46endpoint slots are populated with their exact reference values. -/
 theorem loop (hash : Hash) (count : Nat) (s : MachineState) (n level tree : Nat)
-    (side : Bool) (seed : Seed) (length : n+count=46)
+    (side : Bool) (secretKey : SecretKey) (length : n+count=46)
     (pc : s.pc=(if n=46 then 0x1548 else 0x1204))
-    (context : Context level tree side seed s)
+    (context : Context level tree side secretKey s)
     (counter : s.getMem 0x80430=BitVec.ofNat 64 n)
-    (before : Endpoints hash seed level tree side n s) :
+    (before : Endpoints hash secretKey level tree side n s) :
     ∃ final, Trace hash keygen s (811*count) (867*count) (8*count) (8*count) final ∧
-      final.pc=0x1548 ∧ Context level tree side seed final ∧
-      final.getMem 0x80430=46 ∧ Endpoints hash seed level tree side 46 final ∧
+      final.pc=0x1548 ∧ Context level tree side secretKey final ∧
+      final.getMem 0x80430=46 ∧ Endpoints hash secretKey level tree side 46 final ∧
       final.getReg .x1=s.getReg .x1 ∧ final.getReg .x2=s.getReg .x2 ∧
       (∀ a, Outside a → final.getMem a=s.getMem a) := by
   induction count generalizing s n with
@@ -126,7 +126,7 @@ theorem loop (hash : Hash) (count : Nat) (s : MachineState) (n level tree : Nat)
   | succ count ih =>
     have hn : n<46 := by omega
     obtain ⟨next,pre,npc,ncontext,ncounter,nendpoints,nra,nsp,nframe⟩ :=
-      iteration hash s (by simpa [show n≠46 by omega] using pc) level tree side ⟨n,hn⟩ seed context counter before
+      iteration hash s (by simpa [show n≠46 by omega] using pc) level tree side ⟨n,hn⟩ secretKey context counter before
     obtain ⟨final,tail,fpc,fcontext,fcounter,fendpoints,fra,fsp,fframe⟩ :=
       ih next (n+1) (by omega) npc ncontext ncounter nendpoints
     refine ⟨final,?_,fpc,fcontext,fcounter,fendpoints,fra.trans nra,fsp.trans nsp,?_⟩
@@ -134,10 +134,10 @@ theorem loop (hash : Hash) (count : Nat) (s : MachineState) (n level tree : Nat)
     · intro a outside; rw [fframe a outside,nframe a outside]
 
 /-- The endpoint invariant is exactly the92-word layout expected by leaf compression. -/
-theorem endpoint_words (hash : Hash) (seed : Seed) (level tree : Nat) (side : Bool) (s : MachineState)
-    (all : Endpoints hash seed level tree side 46 s) :
+theorem endpoint_words (hash : Hash) (secretKey : SecretKey) (level tree : Nat) (side : Bool) (s : MachineState)
+    (all : Endpoints hash secretKey level tree side 46 s) :
     ∀ i : Fin 92, s.getMem (Signing.wordAddress 0x80800 i.val) =
-      KeygenLeafHeader.endpointWord (Reference.endpoint hash seed level tree side) i := by
+      KeygenLeafHeader.endpointWord (Reference.endpoint hash secretKey level tree side) i := by
   intro i
   have hc : i.val/2<46 := by have := i.isLt; omega
   have hw : i.val%2<2 := by omega

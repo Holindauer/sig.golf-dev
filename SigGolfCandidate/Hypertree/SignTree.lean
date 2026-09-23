@@ -36,9 +36,9 @@ theorem outsideLayer_sibling (pointer level : Nat) (valid : CapturePointerValid 
   split at outside <;> rename_i hl <;> simp_all <;> omega
 
 /-- Both signer tree paths produce exactly the reference layer's serialized fields. -/
-theorem sign_tree (hash : Hash) (s : MachineState) (seed : Seed) (pointer level tree : Nat)
+theorem sign_tree (hash : Hash) (s : MachineState) (secretKey : SecretKey) (pointer level tree : Nat)
     (message : Reference.Digest) (selected : Bool) (pc : s.pc = 0x13c8) (sp : s.getReg .x2 = 0x1000000)
-    (bound : level < 160) (valid : CapturePointerValid pointer) (data : TreeContext s seed level tree)
+    (bound : level < 160) (valid : CapturePointerValid pointer) (data : TreeContext s secretKey level tree)
     (ptr : s.getMem 0x80448 = BitVec.ofNat 64 pointer) (enabled : s.getMem 0x80440 ≠ 0)
     (selector : s.getMem 0x80420 = BitVec.ofNat 64 (Reference.sideNumber selected))
     (digits : level ≠ 0 → ∀ chain : Reference.Chain,
@@ -48,13 +48,13 @@ theorem sign_tree (hash : Hash) (s : MachineState) (seed : Seed) (pointer level 
       instructions ≤ (if level = 0 then 513 else 98806) ∧ cycles ≤ (if level = 0 then 548 else 104155) ∧
       final.pc = s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (wordAddress 0x80500 i.val) =
-        (Reference.treeRoot hash seed level tree).extractLsb' (64*i.val) 64) ∧
-      LayerStored final pointer level (Reference.signLayer hash seed level tree selected message) ∧
+        (Reference.treeRoot hash secretKey level tree).extractLsb' (64*i.val) 64) ∧
+      LayerStored final pointer level (Reference.signLayer hash secretKey level tree selected message) ∧
       (∀ a, OutsideTreeWork a → OutsideLayer pointer level a → final.getMem a = s.getMem a) := by
   by_cases zero : level = 0
   · subst level
     obtain ⟨final,n,c,run,nb,cb,fpc,fsp,root,stored,frame⟩ :=
-      sign_bottom_tree hash s seed pointer tree selected pc sp valid data ⟨ptr,enabled,selector⟩
+      sign_bottom_tree hash s secretKey pointer tree selected pc sp valid data ⟨ptr,enabled,selector⟩
     refine ⟨final,n,c,run,nb,cb,fpc,fsp,root,?_,?_⟩
     · simpa [LayerStored,BottomLayerStored,Reference.signLayer] using stored
     · intro a work outside
@@ -68,7 +68,7 @@ theorem sign_tree (hash : Hash) (s : MachineState) (seed : Seed) (pointer level 
       change level % 2^64 = 0 at h
       omega
     obtain ⟨final,n,c,run,nb,cb,fpc,fsp,root,stored,frame⟩ :=
-      sign_upper_tree hash s seed pointer level tree message selected pc sp wordNonzero valid data
+      sign_upper_tree hash s secretKey pointer level tree message selected pc sp wordNonzero valid data
         ⟨ptr,enabled,selector,digits zero⟩
     refine ⟨final,n,c,?_,?_,?_,fpc,fsp,root,?_,?_⟩
     · simpa only [if_neg zero] using run

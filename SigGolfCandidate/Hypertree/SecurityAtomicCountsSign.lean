@@ -80,7 +80,7 @@ theorem randomizedIndex (pk : PublicKey) (message : Message) :
         (fun answer => (nonce, answer.extractLsb' 0 160)))
 
 /-- Full ideal signer query shape is constant for every possible oracle history,
-not only answers induced by a consistent function or seeded oracle. -/
+not only answers induced by a consistent function or secretKeyed oracle. -/
 theorem signCompact_queries (pk : PublicKey) (message : Message) :
     Queries (SecurityIdealSign.signCompact pk message) 117508 := by
   unfold SecurityIdealSign.signCompact

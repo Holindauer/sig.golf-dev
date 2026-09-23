@@ -18,15 +18,15 @@ theorem observe_coin_bind {α : Type} (n : Nat) (next : Fin (n+1) → OracleComp
 /-- Adaptive interaction preserves every adversary observation, signing history,
 private coin and total charged count, under the key established by key generation. -/
 theorem interact_equivalent_generic (left right : Interface) (fact : Hash → Prop)
-    (adversary : Adversary submission.sizes) (seed : Seed) (pk : PublicKey)
+    (adversary : Adversary submission.sizes) (secretKey : SecretKey) (pk : PublicKey)
     (rounds : Nat) (state : adversary.State) (transcript : Transcript submission.sizes)
     (cache : QueryCache HashSpec) (known : Knows cache fact)
     (sameSign : ∀ hash, fact hash → ∀ request,
-      evalWithAnswerFn hash (left.sign seed pk request)=evalWithAnswerFn hash (right.sign seed pk request))
+      evalWithAnswerFn hash (left.sign secretKey pk request)=evalWithAnswerFn hash (right.sign secretKey pk request))
     (sameCheck : ∀ hash transcript candidate,
       evalWithAnswerFn hash (left.check pk transcript candidate)=evalWithAnswerFn hash (right.check pk transcript candidate)) :
-    𝒮[observe (interactWith left adversary seed pk rounds state transcript) cache] =
-      𝒮[observe (interactWith right adversary seed pk rounds state transcript) cache] := by
+    𝒮[observe (interactWith left adversary secretKey pk rounds state transcript) cache] =
+      𝒮[observe (interactWith right adversary secretKey pk rounds state transcript) cache] := by
   induction rounds generalizing state transcript cache with
   | zero => rfl
   | succ rounds ih =>
@@ -46,8 +46,8 @@ theorem interact_equivalent_generic (left right : Interface) (fact : Hash → Pr
     case sign request resume =>
       split
       · calc
-          _ = 𝒮[observe ((right.sign seed pk request).liftComp World >>= fun result =>
-            interactWith left adversary seed pk rounds (resume result.1)
+          _ = 𝒮[observe ((right.sign secretKey pk request).liftComp World >>= fun result =>
+            interactWith left adversary secretKey pk rounds (resume result.1)
               (recordView transcript request.message result)) cache] :=
             contextual_equivalence_at _ _ _ cache (fun hash agree => sameSign hash (known hash agree) request)
           _ = _ := by
@@ -63,13 +63,13 @@ theorem interact_equivalent_generic (left right : Interface) (fact : Hash → Pr
       exact ih (resume answer) transcript cache known
     case step next => exact ih next transcript cache known
 
-theorem interact_equivalent (adversary : Adversary submission.sizes) (seed : Seed) (pk : PublicKey)
+theorem interact_equivalent (adversary : Adversary submission.sizes) (secretKey : SecretKey) (pk : PublicKey)
     (rounds : Nat) (state : adversary.State) (transcript : Transcript submission.sizes)
-    (cache : QueryCache HashSpec) (known : Knows cache (fun hash => Reference.keygen hash seed=pk)) :
-    𝒮[observe (interactWith actualInterface adversary seed pk rounds state transcript) cache] =
-      𝒮[observe (interactWith referenceInterface adversary seed pk rounds state transcript) cache] :=
-  interact_equivalent_generic actualInterface referenceInterface _ adversary seed pk rounds state transcript cache known
-    (fun hash valid request => sign_equivalent hash seed pk request valid)
+    (cache : QueryCache HashSpec) (known : Knows cache (fun hash => Reference.keygen hash secretKey=pk)) :
+    𝒮[observe (interactWith actualInterface adversary secretKey pk rounds state transcript) cache] =
+      𝒮[observe (interactWith referenceInterface adversary secretKey pk rounds state transcript) cache] :=
+  interact_equivalent_generic actualInterface referenceInterface _ adversary secretKey pk rounds state transcript cache known
+    (fun hash valid request => sign_equivalent hash secretKey pk request valid)
     (fun hash transcript candidate => check_equivalent hash pk transcript candidate)
 
 /-- info: 'SigGolfCandidate.Hypertree.SecurityBytecode.interact_equivalent' depends on axioms: [propext,

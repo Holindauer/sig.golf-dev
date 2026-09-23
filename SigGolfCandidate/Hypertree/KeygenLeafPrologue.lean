@@ -37,8 +37,8 @@ theorem pc (s : MachineState) (pc : s.pc=0x11cc) (sp : s.getReg .x2=0xfffff0)
 
 
 theorem context (s : MachineState) (sp : s.getReg .x2=0xfffff0)
-    (level tree : Nat) (side : Bool) (seed : Seed) (context : Context level tree side seed s) :
-    Context level tree side seed (ready s) := by
+    (level tree : Nat) (side : Bool) (secretKey : SecretKey) (context : Context level tree side secretKey s) :
+    Context level tree side secretKey (ready s) := by
   constructor
   · rw [frame _ sp _ (by decide) (by decide) (by decide)]; exact context.levelWord
   · rw [frame _ sp _ (by decide) (by decide) (by decide)]; exact context.leafWord
@@ -47,7 +47,7 @@ theorem context (s : MachineState) (sp : s.getReg .x2=0xfffff0)
     exact context.indexWords i
   · intro i
     rw [frame _ sp _ (by fin_cases i <;> decide) (by fin_cases i <;> decide) (by fin_cases i <;> decide)]
-    exact context.seedWords i
+    exact context.secretKeyWords i
   · rw [frame _ sp _ (by decide) (by decide) (by decide)]; exact context.modeWord
 
 theorem counter (s : MachineState) : (ready s).getMem 0x80430=0 := by
@@ -62,13 +62,13 @@ theorem block (s : MachineState) (pc : s.pc=0x11cc) (sp : s.getReg .x2=0xfffff0)
   exact ordinary_trans keygen _ _ _ 2 12 entered entry
 
 theorem prepare (s : MachineState) (atPC : s.pc=0x11cc) (sp : s.getReg .x2=0xfffff0)
-    (level tree : Nat) (side : Bool) (seed : Seed)
-    (nonzero : BitVec.ofNat 64 level ≠ 0) (ctx : Context level tree side seed s) :
+    (level tree : Nat) (side : Bool) (secretKey : SecretKey)
+    (nonzero : BitVec.ofNat 64 level ≠ 0) (ctx : Context level tree side secretKey s) :
     ∃ final, OrdinarySteps keygen s 14 final ∧ final.pc=0x1204 ∧
-      Context level tree side seed final ∧ final.getMem 0x80430=0 ∧
+      Context level tree side secretKey final ∧ final.getMem 0x80430=0 ∧
       final.getReg .x2=0xffffe0 ∧ final.getMem 0xffffe0=s.getReg .x1 ∧
       (∀ a, a≠0xffffe0 → a≠0x80430 → a≠0x80438 → final.getMem a=s.getMem a) := by
   exact ⟨ready s,block s atPC sp,pc s atPC sp level nonzero ctx.levelWord,
-    context s sp level tree side seed ctx,counter s,stack s sp,saved s sp,frame s sp⟩
+    context s sp level tree side secretKey ctx,counter s,stack s sp,saved s sp,frame s sp⟩
 
 end SigGolfCandidate.Hypertree.KeygenLeafPrologue

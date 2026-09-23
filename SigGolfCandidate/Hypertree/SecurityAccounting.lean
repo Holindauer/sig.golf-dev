@@ -13,7 +13,7 @@ theorem withoutReplacement_step (remaining trials : ℝ)
   field_simp
   ring
 
-/-- A trial against an independent hash target can be interleaved with seed
+/-- A trial against an independent hash target can be interleaved with secret key
 guesses without charging both classes the entire query budget. -/
 theorem independentTarget_step (remaining trials hazard : ℝ)
     (hremaining : 0 < remaining) (htrials : 1 ≤ trials) (hbudget : trials ≤ remaining)
@@ -34,30 +34,30 @@ theorem independentTarget_step (remaining trials hazard : ℝ)
     nlinarith
   nlinarith
 
-/-- An abstract adaptive search. `seed` removes one unsuccessful secret guess;
+/-- An abstract adaptive search. `secretKey` removes one unsuccessful secret guess;
 `target` tests one independent uniform hash value; `mix` permits private branching.
 Connecting the real random-oracle experiment to this abstraction is a separate obligation. -/
 inductive Search where
   | stop
-  | seed (next : Search)
+  | secretKey (next : Search)
   | target (next : Search)
   | mix (probability : ℝ) (left right : Search)
 
 def Search.queries : Search → Nat
   | .stop => 0
-  | .seed next | .target next => next.queries + 1
+  | .secretKey next | .target next => next.queries + 1
   | .mix _ left right => max left.queries right.queries
 
 def Search.Valid : Search → Prop
   | .stop => True
-  | .seed next | .target next => next.Valid
+  | .secretKey next | .target next => next.Valid
   | .mix p left right => 0 ≤ p ∧ p ≤ 1 ∧ left.Valid ∧ right.Valid
 
-/-- Risk under fresh uniform targets and a seed uniform over the remaining
-support. Seed successes and target successes terminate the search immediately. -/
+/-- Risk under fresh uniform targets and a secret key uniform over the remaining
+support. Secret key successes and target successes terminate the search immediately. -/
 noncomputable def Search.risk (space : Nat) : Nat → Search → ℝ
   | _, .stop => 0
-  | remaining, .seed next =>
+  | remaining, .secretKey next =>
       1 / remaining + (1 - 1 / remaining) * next.risk space (remaining - 1)
   | remaining, .target next =>
       1 / space + (1 - 1 / space) * next.risk space remaining
@@ -72,7 +72,7 @@ theorem Search.risk_le (search : Search) (space remaining : Nat)
     search.risk space remaining ≤ search.queries / (remaining : ℝ) := by
   induction search generalizing remaining with
   | stop => simp [Search.risk, Search.queries]
-  | seed next ih =>
+  | secretKey next ih =>
     simp only [Search.queries] at budget ⊢
     simp only [Search.risk]
     by_cases hlast : remaining = 1
@@ -141,13 +141,13 @@ theorem Search.initial_risk_le (search : Search) (space budget : Nat)
 
 /-- The intended reduction's query classes must share one budget. The theorem is
 only arithmetic: it does not assert that the real experiment satisfies these event bounds. -/
-theorem combine_query_classes (seedQueries targetQueries total : ℝ)
-    (hseed : 0 ≤ seedQueries) (htarget : 0 ≤ targetQueries)
-    (hbudget : seedQueries + targetQueries ≤ total) :
-    seedQueries / 2 ^ 128 + targetQueries / 2 ^ 128 +
+theorem combine_query_classes (secretKeyQueries targetQueries total : ℝ)
+    (hsecretKey : 0 ≤ secretKeyQueries) (htarget : 0 ≤ targetQueries)
+    (hbudget : secretKeyQueries + targetQueries ≤ total) :
+    secretKeyQueries / 2 ^ 128 + targetQueries / 2 ^ 128 +
       2 * 2 ^ 24 * total / 2 ^ 160 + total / 2 ^ 256 ≤ total / 2 ^ 127 := by
-  have htotal : 0 ≤ total := le_trans (add_nonneg hseed htarget) hbudget
-  have hmain : seedQueries / 2 ^ 128 + targetQueries / 2 ^ 128 ≤ total / 2 ^ 128 := by
+  have htotal : 0 ≤ total := le_trans (add_nonneg hsecretKey htarget) hbudget
+  have hmain : secretKeyQueries / 2 ^ 128 + targetQueries / 2 ^ 128 ≤ total / 2 ^ 128 := by
     rw [← add_div]
     exact div_le_div_of_nonneg_right hbudget (by positivity)
   calc

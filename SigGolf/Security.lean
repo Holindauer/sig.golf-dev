@@ -8,9 +8,9 @@ structure SigningRequest where
   cache : Cache
 
 /-- The attacker supplies only the message and cache. All signing work, including any internal search, is charged. -/
-def Submission.signingOracle (submission : Submission) (seed : Seed) (pk : PublicKey)
+def Submission.signingOracle (submission : Submission) (secretKey : SecretKey) (pk : PublicKey)
     (request : SigningRequest) : OracleComp HashSpec (RunResult (Bytes submission.sizes.signature)) :=
-  submission.run .sign (seed, pk, request.cache, request.message)
+  submission.run .sign (secretKey, pk, request.cache, request.message)
 
 inductive Forgery (sizes : Sizes) where
   | witness (message : Message) (witness : Bytes sizes.witness)
@@ -72,7 +72,7 @@ def Submission.checkForgery (submission : Submission) (pk : PublicKey)
 
 /-- Observation depth bounds only the prefix being observed, not the attacker. Security is required at every depth. A strategy can run indefinitely but wins only by making its single final submission. -/
 def Submission.interact (submission : Submission) (adversary : Adversary submission.sizes)
-    (seed : Seed) (pk : PublicKey) : Nat → adversary.State → Transcript submission.sizes →
+    (secretKey : SecretKey) (pk : PublicKey) : Nat → adversary.State → Transcript submission.sizes →
       OracleComp World AttackResult
   | 0, _, transcript => pure ⟨false, transcript.hashCalls⟩
   | rounds + 1, state, transcript =>
@@ -80,26 +80,26 @@ def Submission.interact (submission : Submission) (adversary : Adversary submiss
       | .submit candidate => liftM (submission.checkForgery pk transcript candidate)
       | .hash input resume => do
           let answer ← liftM (HashSpec.query input)
-          submission.interact adversary seed pk rounds (resume answer)
+          submission.interact adversary secretKey pk rounds (resume answer)
             { transcript with hashCalls := transcript.hashCalls + 1 }
       | .sign request resume => do
           if transcript.signingRequests < LIFETIME then
-            let result ← liftM (submission.signingOracle seed pk request)
-            submission.interact adversary seed pk rounds (resume result.value)
+            let result ← liftM (submission.signingOracle secretKey pk request)
+            submission.interact adversary secretKey pk rounds (resume result.value)
               (transcript.record request.message result)
           else return ⟨false, transcript.hashCalls⟩
       | .sample n resume => do
           let answer ← liftM (unifSpec.query n)
-          submission.interact adversary seed pk rounds (resume answer) transcript
-      | .step next => submission.interact adversary seed pk rounds next transcript
+          submission.interact adversary secretKey pk rounds (resume answer) transcript
+      | .step next => submission.interact adversary secretKey pk rounds next transcript
 
 noncomputable def Submission.securityExperiment (submission : Submission)
     (adversary : Adversary submission.sizes) (rounds : Nat) : ProbComp AttackResult :=
   withRandomness do
-    let seed ← liftM sampleSeed
-    let keygen ← liftM (submission.run .keygen seed)
+    let secretKey ← liftM sampleSecretKey
+    let keygen ← liftM (submission.run .keygen secretKey)
     let some (pk, cache) := keygen.value | return ⟨false, keygen.hashCalls⟩
-    submission.interact adversary seed pk rounds (adversary.initial pk cache)
+    submission.interact adversary secretKey pk rounds (adversary.initial pk cache)
       { hashCalls := keygen.hashCalls }
 
 /-- Both final-submission forms, every total-call budget, and every finite prefix of every adaptive strategy. There is no bound on attacker computation or private randomness. -/

@@ -59,7 +59,7 @@ theorem public_trace_none (pk : PublicKey) (history : History) (query : Query) (
     | some pair => simp only [found, Option.isSome_some, Bool.true_eq_false] at absent
   change (recordParsed history query _ _ cached answer).indexTrace = _
   rw [empty]
-  cases decide (SecuritySeparation.SeedEligible query) <;> rfl
+  cases decide (SecuritySeparation.SecretKeyEligible query) <;> rfl
 
 theorem public_trace_some (pk : PublicKey) (history : History) (query : Query) (cached : Bool) (answer : BitVec 256)
     (present : (SecurityIndexQuery.parse pk query).isSome = true) :

@@ -162,7 +162,7 @@ theorem risk_collision_le (cache : QueryCache PointSpec) (target : Digest) (next
   simpa only [first, probEvent_bind_eq_expectedValue, risk] using bound
 
 /-- Adaptive monitor failure is bounded by its actual expected test count. This
-is the form needed to combine disjoint seed, graph, nonce, and index query classes
+is the form needed to combine disjoint secret key, graph, nonce, and index query classes
 without charging the same global H-call budget several times. -/
 theorem risk_le_expected (strategy : Strategy) (cache : QueryCache PointSpec) :
     risk strategy cache ≤ cost strategy cache / 2 ^ 128 := by

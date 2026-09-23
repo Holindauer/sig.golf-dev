@@ -5,11 +5,11 @@ namespace SigGolfCandidate.Hypertree.Signing
 open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 Keygen Verifying
 set_option maxRecDepth 4096
 
-structure LeafContext (s : MachineState) (seed : Seed) (level tree : Nat) (side : Bool) : Prop where
+structure LeafContext (s : MachineState) (secretKey : SecretKey) (level tree : Nat) (side : Bool) : Prop where
   levelEq : s.getMem 0x80400 = BitVec.ofNat 64 level
   leafEq : s.getMem 0x80428 = BitVec.ofNat 64 (Reference.sideNumber side)
   indexEq : ∀ i : Fin 3, s.getMem (wordAddress 0x80408 i.val) = (BitVec.ofNat 192 tree).extractLsb' (64*i.val) 64
-  seedEq : ∀ i : Fin 2, s.getMem (wordAddress 0x20 i.val) = seed.extractLsb' (64*i.val) 64
+  secretKeyEq : ∀ i : Fin 2, s.getMem (wordAddress 0x20 i.val) = secretKey.extractLsb' (64*i.val) 64
 
 theorem sign_leaf_entry_code : KeygenLeafEntry.Code sign 0x1554 1116 := by decide
 
@@ -47,9 +47,9 @@ theorem leafReady_block (s : MachineState) (pc : s.pc = 0x154c) (sp : s.getReg .
   have entry := KeygenLeafEntry.block sign 0x1554 1116 sign_leaf_entry_code (enterState s) epc
   exact ordinary_trans sign _ _ _ 2 12 entered entry
 
-theorem leafReady_data (s : MachineState) (seed : Seed) (level tree : Nat) (side : Bool)
-    (sp : s.getReg .x2 = 0xfffff0) (data : LeafContext s seed level tree side) :
-    LeafData (leafReady s) seed level tree side 0 := by
+theorem leafReady_data (s : MachineState) (secretKey : SecretKey) (level tree : Nat) (side : Bool)
+    (sp : s.getReg .x2 = 0xfffff0) (data : LeafContext s secretKey level tree side) :
+    LeafData (leafReady s) secretKey level tree side 0 := by
   constructor
   · rw [leafReady_frame s sp _ (by decide) (by decide) (by decide)]; exact data.levelEq
   · rw [leafReady_frame s sp _ (by decide) (by decide) (by decide)]; exact data.leafEq
@@ -59,7 +59,7 @@ theorem leafReady_data (s : MachineState) (seed : Seed) (level tree : Nat) (side
     exact data.indexEq i
   · intro i
     rw [leafReady_frame s sp _ (by fin_cases i <;> decide) (by fin_cases i <;> decide) (by fin_cases i <;> decide)]
-    exact data.seedEq i
+    exact data.secretKeyEq i
 
 theorem leafReady_settings (s : MachineState) (pointer : Nat) (message : Reference.Digest)
     (sp : s.getReg .x2 = 0xfffff0) (settings : LeafSignatureSettings s pointer message) :

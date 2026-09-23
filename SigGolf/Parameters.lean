@@ -19,7 +19,7 @@ noncomputable def FAILURE : ENNReal := 1 / 2 ^ 256
 
 abbrev Byte := BitVec 8
 abbrev Bytes (n : Nat) := BitVec (8 * n)
-abbrev Seed := Bytes 16
+abbrev SecretKey := Bytes 16
 abbrev Message := Bytes 32
 abbrev PublicKey := Bytes 16
 abbrev Cache := Bytes CACHE_BYTES

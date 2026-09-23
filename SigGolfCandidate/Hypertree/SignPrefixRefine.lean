@@ -34,13 +34,13 @@ theorem index_refines_full (hash : Hash) (s : MachineState) (pk : PublicKey) (me
   · intro a outside
     exact (traceFrame a outside.2.1 outside.2.2).trans (prepareFrame a outside.1)
 
-theorem randomizer_refines_full (hash : Hash) (s : MachineState) (seed : Seed) (message : Message)
+theorem randomizer_refines_full (hash : Hash) (s : MachineState) (secretKey : SecretKey) (message : Message)
     (pc : s.pc = 0x1000)
-    (hseed : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x20+i)) = seed.extractLsb' (8*i) 8)
+    (hsecretKey : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x20+i)) = secretKey.extractLsb' (8*i) 8)
     (hmessage : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8*i) 8) :
     ∃ final, Trace hash sign s 105 120 1 2 final ∧ final.pc = 0x10fc ∧
       (∀ i : Fin 4, final.getMem (wordAddress 0x20060 i.val) =
-        (Reference.randomizer hash seed message).extractLsb' (64*i.val) 64) ∧
+        (Reference.randomizer hash secretKey message).extractLsb' (64*i.val) 64) ∧
       final.getMem 0x80440 = 1 ∧ final.getMem 0x80448 = 0x20080 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, (∀ i : Fin 14, a ≠ wordAddress 0x80000 i.val) →
         (∀ i : Fin 4, a ≠ wordAddress 0x80300 i.val) →
@@ -48,7 +48,7 @@ theorem randomizer_refines_full (hash : Hash) (s : MachineState) (seed : Seed) (
         a ≠ 0x80440 → a ≠ 0x80448 → final.getMem a = s.getMem a) := by
   obtain ⟨ready,prepare,rpc,words,prepareFrame,mode,pointer,readySP⟩ := randomizer_prepare_full s pc
   obtain ⟨final,run,fpc,output,frame,finalSP⟩ := randomizer_trace_full hash ready rpc
-  have query := randomizer_query s ready seed message hseed hmessage words
+  have query := randomizer_query s ready secretKey message hsecretKey hmessage words
   refine ⟨final,prepare.trace.trans run,fpc,?_,?_,?_,finalSP.trans readySP,?_⟩
   · intro i; rw [output i,query]; rfl
   · rw [frame _ (by intro i; fin_cases i <;> decide) (by intro i; fin_cases i <;> decide)]; exact mode
@@ -71,18 +71,18 @@ theorem outside_prefix_low (a : Word) (low : a.toNat < 0x20060) : OutsidePrefix 
   · exact outside 0x80448 1 (by decide) (by decide) 0
 
 /-- Full arbitrary-state signer prefix refinement, including persistent memory and stack. -/
-theorem entry_full (hash : Hash) (s : MachineState) (seed : Seed) (pk : PublicKey) (message : Message)
+theorem entry_full (hash : Hash) (s : MachineState) (secretKey : SecretKey) (pk : PublicKey) (message : Message)
     (pc : s.pc = 0x1000)
-    (hseed : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x20+i)) = seed.extractLsb' (8*i) 8)
+    (hsecretKey : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x20+i)) = secretKey.extractLsb' (8*i) 8)
     (hpk : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x40+i)) = pk.extractLsb' (8*i) 8)
     (hmessage : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8*i) 8) :
     ∃ final, Trace hash sign s 226 256 2 4 final ∧ final.pc = 0x1220 ∧
-      StoredIndex final ((Reference.indexOf hash pk message (Reference.randomizer hash seed message)).zeroExtend 192) ∧
+      StoredIndex final ((Reference.indexOf hash pk message (Reference.randomizer hash secretKey message)).zeroExtend 192) ∧
       (∀ i : Fin 4, final.getMem (wordAddress 0x20060 i.val) =
-        (Reference.randomizer hash seed message).extractLsb' (64*i.val) 64) ∧
+        (Reference.randomizer hash secretKey message).extractLsb' (64*i.val) 64) ∧
       final.getMem 0x80440 = 1 ∧ final.getMem 0x80448 = 0x20080 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, OutsidePrefix a → final.getMem a = s.getMem a) := by
-  obtain ⟨randomized,pre,rpc,randomWords,mode,pointer,rsp,rframe⟩ := randomizer_refines_full hash s seed message pc hseed hmessage
+  obtain ⟨randomized,pre,rpc,randomWords,mode,pointer,rsp,rframe⟩ := randomizer_refines_full hash s secretKey message pc hsecretKey hmessage
   have lowFrame (a : Word) (low : a.toNat < 0x20060) : randomized.getMem a = s.getMem a := by
     have outside := outside_prefix_low a low
     exact rframe a outside.1.1 outside.1.2.1 outside.2.1 outside.2.2.1 outside.2.2.2
@@ -94,7 +94,7 @@ theorem entry_full (hash : Hash) (s : MachineState) (seed : Seed) (pk : PublicKe
     have eq := low_words_byte s randomized lowFrame 0 i (by decide) (by omega)
     simp only [Nat.zero_add] at eq
     rw [eq]; exact hmessage i hi
-  obtain ⟨final,run,fpc,index,fsp,frame⟩ := index_refines_full hash randomized pk message (Reference.randomizer hash seed message)
+  obtain ⟨final,run,fpc,index,fsp,frame⟩ := index_refines_full hash randomized pk message (Reference.randomizer hash secretKey message)
     rpc pkBytes msgBytes (bytes_of_answer_words randomized 0x20060 _ (by decide) (by decide) randomWords)
   refine ⟨final,pre.trans run,fpc,index,?_,?_,?_,fsp.trans rsp,?_⟩
   · intro i

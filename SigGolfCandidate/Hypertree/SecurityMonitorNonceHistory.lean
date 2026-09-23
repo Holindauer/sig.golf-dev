@@ -41,12 +41,12 @@ noncomputable def annotate {α : Type} (nonces : NonceTable) (result : Result α
 
 theorem accumulate_parsed {α : Type} (nonces : NonceTable) (cache : SecurityNonceMonitor.NonceCache)
     (history : History) (tracked : Tracks cache history) (query : Query)
-    (parsed : Option (Message × Bytes 32)) (seedEligible cached : Bool) (answer : BitVec 256) (next : NP α) :
+    (parsed : Option (Message × Bytes 32)) (secretKeyEligible cached : Bool) (answer : BitVec 256) (next : NP α) :
     accumulate nonces history <$> SecurityNonceProgram.run nonces cache (guessParsed history parsed next) =
-      accumulate nonces (recordParsed history query parsed seedEligible cached answer) <$>
+      accumulate nonces (recordParsed history query parsed secretKeyEligible cached answer) <$>
         SecurityNonceProgram.run nonces cache next := by
   cases parsed with
-  | none => cases seedEligible <;> rfl
+  | none => cases secretKeyEligible <;> rfl
   | some pair =>
     rcases pair with ⟨message, nonce⟩
     change (accumulate nonces history <$> SecurityNonceProgram.run nonces cache
@@ -73,7 +73,7 @@ theorem accumulate_query {α : Type} (nonces : NonceTable) (cache : SecurityNonc
       accumulate nonces (recordPublic pk history query cached answer) <$>
         SecurityNonceProgram.run nonces cache next :=
   accumulate_parsed nonces cache history tracked query (SecurityIndexQuery.parse pk query)
-    (decide (SecuritySeparation.SeedEligible query)) cached answer next
+    (decide (SecuritySeparation.SecretKeyEligible query)) cached answer next
 
 @[simp] theorem accumulate_sign {α : Type} (nonces : NonceTable) (history : History)
     (message : Message) (cached : Bool) (answer : BitVec 256) (result : NO α) :
@@ -93,7 +93,7 @@ theorem accumulate_public_irrel {α : Type} (nonces : NonceTable) (history : His
     accumulate (α := α) nonces (recordPublic pk history query cached answer) =
       accumulate nonces (recordPublic pk history query cached other) :=
   accumulate_parsed_irrel nonces history query (SecurityIndexQuery.parse pk query)
-    (decide (SecuritySeparation.SeedEligible query)) cached answer other
+    (decide (SecuritySeparation.SecretKeyEligible query)) cached answer other
 
 /-- Joint flag/counter/output law: the nonce monitor's entire passive observation
 is already determined by the common final public history and the fixed table. -/

@@ -107,7 +107,7 @@ theorem completed_signed (factors : Factors) (base : Hash) (history : SecurityFo
   simp only [signedIndices, Signed, completed_index]
 
 /-- Strong-forgery extraction for arbitrary independent private values and graph
-labels. Every alternative is seed-free and tied to the actual accepted verifier path. -/
+labels. Every alternative is secret key-free and tied to the actual accepted verifier path. -/
 theorem strong_extraction (factors : Factors) (base : Hash) (history : SecurityForgery.History)
     (honest : HonestHistory factors base history) (message : Message) (signature : Compact)
     (accepted : Reference.verify (programmed (privateTable factors) (labels factors) base)

@@ -7,20 +7,20 @@ namespace SigGolfCandidate.Hypertree.KeygenTree
 open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 OracleComp Keygen KeygenSecretStart
 set_option maxRecDepth 4096
 
-theorem context_after_leaf (s t : MachineState) (level tree : Nat) (side : Bool) (seed : Seed)
-    (ctx : Context level tree side seed s)
+theorem context_after_leaf (s t : MachineState) (level tree : Nat) (side : Bool) (secretKey : SecretKey)
+    (ctx : Context level tree side secretKey s)
     (frame : ∀ a, KeygenLeafCall.Outside side a → t.getMem a=s.getMem a) :
-    Context level tree side seed t := by
+    Context level tree side secretKey t := by
   constructor
   · rw [frame _ (by cases side <;> decide)]; exact ctx.levelWord
   · rw [frame _ (by cases side <;> decide)]; exact ctx.leafWord
   · intro i; rw [frame _ (by cases side <;> fin_cases i <;> decide)]; exact ctx.indexWords i
-  · intro i; rw [frame _ (by cases side <;> fin_cases i <;> decide)]; exact ctx.seedWords i
+  · intro i; rw [frame _ (by cases side <;> fin_cases i <;> decide)]; exact ctx.secretKeyWords i
   · rw [frame _ (by cases side <;> decide)]; exact ctx.modeWord
 
 theorem control_context (s : MachineState) (old side : Bool) (jump : BitVec 21)
-    (level tree : Nat) (seed : Seed) (ctx : Context level tree old seed s) :
-    Context level tree side seed (KeygenTreeControl.state s (BitVec.ofNat 12 (Reference.sideNumber side)) jump) := by
+    (level tree : Nat) (secretKey : SecretKey) (ctx : Context level tree old secretKey s) :
+    Context level tree side secretKey (KeygenTreeControl.state s (BitVec.ofNat 12 (Reference.sideNumber side)) jump) := by
   constructor
   · rw [KeygenTreeControl.mem,if_neg (by decide)]; exact ctx.levelWord
   · rw [KeygenTreeControl.mem,if_pos rfl]; cases side <;> decide
@@ -29,14 +29,14 @@ theorem control_context (s : MachineState) (old side : Bool) (jump : BitVec 21)
     exact ctx.indexWords i
   · intro i
     rw [KeygenTreeControl.mem,if_neg (by fin_cases i <;> decide)]
-    exact ctx.seedWords i
+    exact ctx.secretKeyWords i
   · rw [KeygenTreeControl.mem,if_neg (by decide)]; exact ctx.modeWord
 
 def entered (s : MachineState) : MachineState := enterState s
 
 theorem entered_context (s : MachineState) (sp : s.getReg .x2=0x1000000)
-    (level tree : Nat) (seed : Seed) (ctx : Context level tree false seed s) :
-    Context level tree false seed (entered s) := by
+    (level tree : Nat) (secretKey : SecretKey) (ctx : Context level tree false secretKey s) :
+    Context level tree false secretKey (entered s) := by
   constructor
   · rw [entered,enter_mem,sp,if_neg (by decide)]; exact ctx.levelWord
   · rw [entered,enter_mem,sp,if_neg (by decide)]; exact ctx.leafWord
@@ -45,7 +45,7 @@ theorem entered_context (s : MachineState) (sp : s.getReg .x2=0x1000000)
     exact ctx.indexWords i
   · intro i
     rw [entered,enter_mem,sp,if_neg (by fin_cases i <;> decide)]
-    exact ctx.seedWords i
+    exact ctx.secretKeyWords i
   · rw [entered,enter_mem,sp,if_neg (by decide)]; exact ctx.modeWord
 
 def leftState (s : MachineState) := KeygenTreeControl.state (entered s) 0 364
@@ -71,15 +71,15 @@ theorem left_saved (s : MachineState) (sp : s.getReg .x2=0x1000000) :
   rw [leftState,KeygenTreeControl.mem,if_neg (by decide),entered,enter_mem,sp,if_pos (by decide)]
 
 theorem left_context (s : MachineState) (sp : s.getReg .x2=0x1000000)
-    (level tree : Nat) (seed : Seed) (ctx : Context level tree false seed s) :
-    Context level tree false seed (leftState s) :=
-  control_context (entered s) false false 364 level tree seed (entered_context s sp level tree seed ctx)
+    (level tree : Nat) (secretKey : SecretKey) (ctx : Context level tree false secretKey s) :
+    Context level tree false secretKey (leftState s) :=
+  control_context (entered s) false false 364 level tree secretKey (entered_context s sp level tree secretKey ctx)
 
 theorem start (s : MachineState) (pc : s.pc=0x1048) (sp : s.getReg .x2=0x1000000)
-    (level tree : Nat) (seed : Seed) (ctx : Context level tree false seed s) :
+    (level tree : Nat) (secretKey : SecretKey) (ctx : Context level tree false secretKey s) :
     ∃ ready, OrdinarySteps keygen s 7 ready ∧ ready.pc=0x11cc ∧ ready.getReg .x1=0x1064 ∧
-      ready.getReg .x2=0xfffff0 ∧ ready.getMem 0xfffff0=s.getReg .x1 ∧ Context level tree false seed ready := by
-  exact ⟨leftState s,left_block s pc sp,left_pc s pc,left_ra s pc,left_sp s sp,left_saved s sp,left_context s sp level tree seed ctx⟩
+      ready.getReg .x2=0xfffff0 ∧ ready.getMem 0xfffff0=s.getReg .x1 ∧ Context level tree false secretKey ready := by
+  exact ⟨leftState s,left_block s pc sp,left_pc s pc,left_ra s pc,left_sp s sp,left_saved s sp,left_context s sp level tree secretKey ctx⟩
 
 theorem skip_code : Signing.captureModeCode keygen 0x1078 92 := by
   intro s i pc
@@ -120,11 +120,11 @@ theorem left_low_frame (s : MachineState) (sp : s.getReg .x2=0x1000000)
   exact if_neg hs
 
 theorem start_framed (s : MachineState) (pc : s.pc=0x1048) (sp : s.getReg .x2=0x1000000)
-    (level tree : Nat) (seed : Seed) (ctx : Context level tree false seed s) :
+    (level tree : Nat) (secretKey : SecretKey) (ctx : Context level tree false secretKey s) :
     ∃ ready, OrdinarySteps keygen s 7 ready ∧ ready.pc=0x11cc ∧ ready.getReg .x1=0x1064 ∧
-      ready.getReg .x2=0xfffff0 ∧ ready.getMem 0xfffff0=s.getReg .x1 ∧ Context level tree false seed ready ∧
+      ready.getReg .x2=0xfffff0 ∧ ready.getMem 0xfffff0=s.getReg .x1 ∧ Context level tree false secretKey ready ∧
       (∀ a, a.toNat < 0x80000 → ready.getMem a=s.getMem a) := by
   exact ⟨leftState s,left_block s pc sp,left_pc s pc,left_ra s pc,left_sp s sp,left_saved s sp,
-    left_context s sp level tree seed ctx,left_low_frame s sp⟩
+    left_context s sp level tree secretKey ctx,left_low_frame s sp⟩
 
 end SigGolfCandidate.Hypertree.KeygenTree

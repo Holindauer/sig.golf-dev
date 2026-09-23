@@ -55,7 +55,7 @@ theorem completed_endpoint (privateAnswers : PrivateTable) (graph : Labels) (bas
   exact programmed_endpoint (residual privateAnswers base) 0 graph address
 
 /-- Deterministic reference extraction transports to the arbitrary-private graph
-without leaving any seed-realizability premise in the collision statement. -/
+without leaving any secret key-realizability premise in the collision statement. -/
 theorem layer_collision (privateAnswers : PrivateTable) (graph : Labels) (base : Hash)
     (level : Fin 160) (tree : BitVec 192) (side : Bool) (message : Digest) (signature : LayerSignature)
     (collision : LayerTargetCollision (hash privateAnswers graph base) 0 level.val tree.toNat side message signature) :

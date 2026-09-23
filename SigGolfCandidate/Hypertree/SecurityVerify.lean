@@ -63,15 +63,15 @@ theorem eval_verifyCompact_iff (hash : Hash) (pk : PublicKey) (message : Message
       Reference.verify hash pk message signature.toReference := by
   simp [verifyCompact, Reference.verify, Reference.indexOf, Compact.toReference]
 
-/-- The monadic reference pipeline accepts for every fixed oracle and seed. -/
-theorem correct (hash : Hash) (seed : Seed) (message : Message) :
+/-- The monadic reference pipeline accepts for every fixed oracle and secret key. -/
+theorem correct (hash : Hash) (secretKey : SecretKey) (message : Message) :
     evalWithAnswerFn hash (do
-      let pk ← SecurityReference.keygen seed
-      let signature ← SecurityReference.signCompact seed pk message
+      let pk ← SecurityReference.keygen secretKey
+      let signature ← SecurityReference.signCompact secretKey pk message
       verifyCompact pk message signature) = true := by
   simp only [evalWithAnswerFn_bind, eval_keygen, eval_signCompact]
-  exact (eval_verifyCompact_iff hash (Reference.keygen hash seed) message
-    (SignatureEncoding.signCompact hash seed (Reference.keygen hash seed) message)).mpr
-      (signCompact_correct hash seed message)
+  exact (eval_verifyCompact_iff hash (Reference.keygen hash secretKey) message
+    (SignatureEncoding.signCompact hash secretKey (Reference.keygen hash secretKey) message)).mpr
+      (signCompact_correct hash secretKey message)
 
 end SigGolfCandidate.Hypertree.SecurityVerify

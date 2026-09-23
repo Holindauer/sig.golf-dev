@@ -129,7 +129,7 @@ private def check (label : String) (condition : Bool) : IO Unit :=
   | some state =>
     check "fixed input buffers" (state.getByte 0 == 0x34 && state.getByte 0x40 == 0x56 &&
       state.getByte (BitVec.ofNat 64 (witnessBase toy.sizes)) == 0x78)
-    check "undeclared seed and cache are zero" (state.getByte 0x20 == 0 && state.getByte 0x60 == 0)
+    check "undeclared secretKey and cache are zero" (state.getByte 0x20 == 0 && state.getByte 0x60 == 0)
     check "initial registers" (state.pc == 0x1000 && state.getReg .x2 == 0x1000000 && state.getReg .x10 == 0)
   let signed := evalWithAnswerFn zeroHash (cacheEcho.signingOracle 0 0 ⟨7, 0xa5⟩)
   check "attacker cache reaches sign" (signed.value == some (0xa5 : BitVec 8) && signed.finished)

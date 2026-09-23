@@ -122,28 +122,28 @@ theorem prob_cutoff_eq_counted {σ α : Type}
       simp [bind_pure_comp, simulateQ_map, StateT.run'_eq, StateT.run_map,
         Functor.map_map, probEvent_bind_eq_tsum, probEvent_map, Function.comp_def, exceeded]
 
-/-- The seed-erasure bound applies to any strategy after total-call cutoff; no
+/-- The secret key-erasure bound applies to any strategy after total-call cutoff; no
 uniform query bound on an unbounded adversary is needed. -/
-theorem prob_cutoff_real_le_ideal_add_seed {α : Type} (program : OracleComp GameWorld α)
+theorem prob_cutoff_real_le_ideal_add_secretKey {α : Type} (program : OracleComp GameWorld α)
     (budget : Nat) (event : Option α → Prop) :
-    Pr[event | sampleSeed >>= fun seed =>
-      (simulateQ (realGameOracle seed) (cutoff program budget)).run' ∅] ≤
+    Pr[event | sampleSecretKey >>= fun secretKey =>
+      (simulateQ (realGameOracle secretKey) (cutoff program budget)).run' ∅] ≤
       Pr[event | (simulateQ idealGameOracle (cutoff program budget)).run' (∅, ∅)] +
         budget / (2 : ENNReal) ^ 128 :=
-  prob_real_le_ideal_add_seed (cutoff program budget) budget
+  prob_real_le_ideal_add_secretKey (cutoff program budget) budget
     (cutoff_publicTraceBound program (∅, ∅) budget) event
 
 /-- The quantitatively bounded game hop has the organizer's event shape:
 a successful outcome together with total H calls at most `budget`, for arbitrary
 adaptive computations. The ideal game's call count is retained as well. -/
-theorem prob_counted_real_le_ideal_add_seed {α : Type} (program : OracleComp GameWorld α)
+theorem prob_counted_real_le_ideal_add_secretKey {α : Type} (program : OracleComp GameWorld α)
     (budget : Nat) (event : α → Prop) :
-    Pr[fun result => event result.1 ∧ result.2 ≤ budget | sampleSeed >>= fun seed =>
-      (simulateQ (realGameOracle seed) (counted program)).run' ∅] ≤
+    Pr[fun result => event result.1 ∧ result.2 ≤ budget | sampleSecretKey >>= fun secretKey =>
+      (simulateQ (realGameOracle secretKey) (counted program)).run' ∅] ≤
       Pr[fun result => event result.1 ∧ result.2 ≤ budget |
         (simulateQ idealGameOracle (counted program)).run' (∅, ∅)] +
           budget / (2 : ENNReal) ^ 128 := by
-  have h := prob_cutoff_real_le_ideal_add_seed program budget
+  have h := prob_cutoff_real_le_ideal_add_secretKey program budget
     (fun value => ∃ x, value = some x ∧ event x)
   simpa only [probEvent_bind_eq_tsum, prob_cutoff_eq_counted] using h
 

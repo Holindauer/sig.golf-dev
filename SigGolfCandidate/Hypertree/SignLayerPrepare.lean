@@ -6,11 +6,11 @@ namespace SigGolfCandidate.Hypertree.Signing
 open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 Keygen Verifying
 set_option maxRecDepth 4096
 
-structure LoopData (s : MachineState) (seed : Seed) (level index : Nat) (current : Reference.Digest) : Prop where
+structure LoopData (s : MachineState) (secretKey : SecretKey) (level index : Nat) (current : Reference.Digest) : Prop where
   stack : s.getReg .x2 = 0x1000000
   counter : s.getMem 0x80400 = BitVec.ofNat 64 level
   indexWords : StoredIndex s (BitVec.ofNat 192 index)
-  seedWords : ∀ i : Fin 2, s.getMem (wordAddress 0x20 i.val) = seed.extractLsb' (64*i.val) 64
+  secretKeyWords : ∀ i : Fin 2, s.getMem (wordAddress 0x20 i.val) = secretKey.extractLsb' (64*i.val) 64
   mode : s.getMem 0x80440 = 1
   pointer : s.getMem 0x80448 = BitVec.ofNat 64 (0x20060+layerOffset level)
   currentWords : ∀ i : Fin 2, s.getMem (wordAddress 0x80500 i.val) = current.extractLsb' (64*i.val) 64
@@ -26,12 +26,12 @@ theorem shift_word_frame (s : MachineState) (a : Word)
   rw [shiftIndexState_mem,if_neg h1,if_neg h2,if_neg h3,if_neg h4]
 
 /-- One loop's index shift and optional encoding arrive at the actual tree entry. -/
-theorem sign_layer_prepare (hash : Hash) (s : MachineState) (seed : Seed) (level index : Nat)
+theorem sign_layer_prepare (hash : Hash) (s : MachineState) (secretKey : SecretKey) (level index : Nat)
     (current : Reference.Digest) (pc : s.pc = 0x1220) (bound : level < 160) (small : index < 2^192)
-    (data : LoopData s seed level index current) :
+    (data : LoopData s secretKey level index current) :
     ∃ ready, Trace hash sign s (if level = 0 then 34 else 489) (if level = 0 then 34 else 489) 0 0 ready ∧
       ready.pc = 0x13c8 ∧ ready.getReg .x1 = 0x12ac ∧ ready.getReg .x2 = 0x1000000 ∧
-      TreeContext ready seed level (index/2) ∧
+      TreeContext ready secretKey level (index/2) ∧
       ready.getMem 0x80448 = BitVec.ofNat 64 (0x20060+layerOffset level) ∧ ready.getMem 0x80440 = 1 ∧
       ready.getMem 0x80420 = BitVec.ofNat 64 (Reference.sideNumber (index%2==1)) ∧
       (level ≠ 0 → ∀ chain : Reference.Chain,
@@ -76,7 +76,7 @@ theorem sign_layer_prepare (hash : Hash) (s : MachineState) (seed : Seed) (level
         combined _ (by omega) (by have := i.isLt; omega) (by have := i.isLt; omega)
         (by have := i.isLt; omega) (by fin_cases i <;> decide) (by fin_cases i <;> decide)
         (by fin_cases i <;> decide) (by fin_cases i <;> decide)]
-      exact data.seedWords i
+      exact data.secretKeyWords i
   · exact (combined 0x80448 (by decide) (by decide) (by decide) (by decide)
       (by decide) (by decide) (by decide) (by decide)).trans data.pointer
   · exact (combined 0x80440 (by decide) (by decide) (by decide) (by decide)

@@ -25,7 +25,7 @@ import SigGolfCandidate.Hypertree.SecurityUniform
 import SigGolfCandidate.Hypertree.SecurityPacking
 import SigGolfCandidate.Hypertree.SecurityRandomOracle
 import SigGolfCandidate.Hypertree.SecurityCache
-import SigGolfCandidate.Hypertree.SecuritySeed
+import SigGolfCandidate.Hypertree.SecuritySecretKey
 import SigGolfCandidate.Hypertree.SecurityTrace
 import SigGolfCandidate.Hypertree.SecurityReference
 import SigGolfCandidate.Hypertree.SignIndexRefine
@@ -67,7 +67,7 @@ import SigGolfCandidate.Hypertree.SignCapture
 import SigGolfCandidate.Hypertree.ChainLoopControl
 import SigGolfCandidate.Hypertree.KeygenDomain
 import SigGolfCandidate.Hypertree.KeygenSecretHeader
-import SigGolfCandidate.Hypertree.KeygenSeedCopy
+import SigGolfCandidate.Hypertree.KeygenSecretKeyCopy
 import SigGolfCandidate.Hypertree.KeygenSecretExecution
 import SigGolfCandidate.Hypertree.KeygenChainHeader
 import SigGolfCandidate.Hypertree.KeygenChainExecution
@@ -250,7 +250,7 @@ import SigGolfCandidate.Hypertree.SecurityGraphMonitorSign
 import SigGolfCandidate.Hypertree.SecurityGraphMonitorStop
 import SigGolfCandidate.Hypertree.SecurityGraphTraceContact
 import SigGolfCandidate.Hypertree.SecurityGraphVerifyContact
-import SigGolfCandidate.Hypertree.SecuritySeedMonitor
+import SigGolfCandidate.Hypertree.SecuritySecretKeyMonitor
 import SigGolfCandidate.Hypertree.SecurityGraphMonitorMetadata
 import SigGolfCandidate.Hypertree.SecurityIndexQuery
 import SigGolfCandidate.Hypertree.SecurityGraphMonitorCoupling

@@ -1,6 +1,6 @@
-import SigGolfCandidate.Hypertree.SecuritySeedHonest
+import SigGolfCandidate.Hypertree.SecuritySecretKeyHonest
 
-namespace SigGolfCandidate.Hypertree.SecuritySeedHonest
+namespace SigGolfCandidate.Hypertree.SecuritySecretKeyHonest
 open SigGolf OracleComp OracleSpec Reference SecurityDerivation SecurityGameHop SecuritySeparation
 set_option backward.isDefEq.respectTransparency false
 set_option maxRecDepth 4096
@@ -18,7 +18,7 @@ theorem signChain (address : ChainAddress) (message : Digest) :
             (fun last => (fragment, last))))
 
 private theorem nodeChoice (level tree : Nat) (side : Bool) (sibling current : Digest) :
-    Safe (fun query => ¬SeedEligible query)
+    Safe (fun query => ¬SecretKeyEligible query)
       (if side then SecurityReference.node level tree sibling current
         else SecurityReference.node level tree current sibling) := by
   cases side <;> exact node _ _ _ _
@@ -58,9 +58,9 @@ theorem randomizedIndex (pk : PublicKey) (message : Message) :
   unfold SecurityIdealSign.randomizedIndex
   simpa only [map_eq_pure_bind] using
     (randomizer message).bind _ (fun nonce =>
-      (publicCall (Safe.ask (spec := HashSpec) (fun query => ¬SeedEligible query)
+      (publicCall (Safe.ask (spec := HashSpec) (fun query => ¬SecretKeyEligible query)
         (SecurityRandomOracle.indexInput pk message nonce)
-        (SecurityDomains.not_seedEligible_addressedInput 5 0 0 0 0 0 _ (by decide) (by decide)))).map
+        (SecurityDomains.not_secretKeyEligible_addressedInput 5 0 0 0 0 0 _ (by decide) (by decide)))).map
         (fun answer => (nonce, answer.extractLsb' 0 160)))
 
 theorem signCompact (pk : PublicKey) (message : Message) : Safe allowed (SecurityIdealSign.signCompact pk message) := by
@@ -72,11 +72,11 @@ theorem signCompact (pk : PublicKey) (message : Message) : Safe allowed (Securit
 theorem signWire (pk : PublicKey) (message : Message) : Safe allowed (SecurityExperiment.signWire pk message) :=
   (signCompact pk message).map SecurityExperiment.serialize
 
-/-- Honest signing cannot activate the seed monitor, on any oracle history. -/
-theorem stop_signWire_bind {α : Type} (seed : Seed) (pk : PublicKey) (message : Message)
+/-- Honest signing cannot activate the secret key monitor, on any oracle history. -/
+theorem stop_signWire_bind {α : Type} (secretKey : SecretKey) (pk : PublicKey) (message : Message)
     (next : Option (Bytes submission.sizes.signature) → OracleComp GameWorld α) :
-    stop seed ((SecurityExperiment.signWire pk message).liftComp GameWorld >>= next) =
-      ((SecurityExperiment.signWire pk message).liftComp GameWorld >>= fun response => stop seed (next response)) :=
-  ((signWire pk message).lift seed).stop_bind seed next
+    stop secretKey ((SecurityExperiment.signWire pk message).liftComp GameWorld >>= next) =
+      ((SecurityExperiment.signWire pk message).liftComp GameWorld >>= fun response => stop secretKey (next response)) :=
+  ((signWire pk message).lift secretKey).stop_bind secretKey next
 
-end SigGolfCandidate.Hypertree.SecuritySeedHonest
+end SigGolfCandidate.Hypertree.SecuritySecretKeyHonest

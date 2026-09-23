@@ -32,9 +32,9 @@ theorem treeLeft_saved (s : MachineState) (sp : s.getReg .x2 = 0x1000000) :
     (treeLeftState s).getMem 0xfffff0 = s.getReg .x1 := by
   rw [treeLeftState, KeygenTreeControl.mem, if_neg (by decide), enter_mem, sp, if_pos (by decide)]
 
-theorem treeLeft_context (s : MachineState) (seed : Seed) (level tree : Nat)
-    (sp : s.getReg .x2 = 0x1000000) (data : TreeContext s seed level tree) :
-    LeafContext (treeLeftState s) seed level tree false := by
+theorem treeLeft_context (s : MachineState) (secretKey : SecretKey) (level tree : Nat)
+    (sp : s.getReg .x2 = 0x1000000) (data : TreeContext s secretKey level tree) :
+    LeafContext (treeLeftState s) secretKey level tree false := by
   constructor
   · rw [treeLeft_frame s sp _ (by decide) (by decide)]; exact data.levelEq
   · rw [treeLeftState, KeygenTreeControl.mem, if_pos rfl]; rfl
@@ -43,7 +43,7 @@ theorem treeLeft_context (s : MachineState) (seed : Seed) (level tree : Nat)
     exact data.indexEq i
   · intro i
     rw [treeLeft_frame s sp _ (by fin_cases i <;> decide) (by fin_cases i <;> decide)]
-    exact data.seedEq i
+    exact data.secretKeyEq i
 
 theorem treeLeft_settings (s : MachineState) (pointer : Nat) (message : Reference.Digest) (selected : Bool)
     (sp : s.getReg .x2 = 0x1000000) (settings : TreeSettings s pointer message selected) :

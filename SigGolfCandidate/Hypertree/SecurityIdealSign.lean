@@ -7,9 +7,9 @@ open SignatureEncoding
 def randomizer (message : Message) : OracleComp SplitWorld (Bytes 32) :=
   liftM (SecretSpec.query (.randomizer message))
 
-@[simp] theorem simulate_randomizer (seed : Seed) (message : Message) :
-    simulateQ (realImplementation seed) (randomizer message) =
-      (liftM (HashSpec.query (SecurityRandomOracle.randomizerInput seed message)) :
+@[simp] theorem simulate_randomizer (secretKey : SecretKey) (message : Message) :
+    simulateQ (realImplementation secretKey) (randomizer message) =
+      (liftM (HashSpec.query (SecurityRandomOracle.randomizerInput secretKey message)) :
         OracleComp HashSpec (Bytes 32)) := by
   simp only [randomizer, realImplementation, QueryImpl.simulateQ_add_liftM_query_left]
   rfl
@@ -20,9 +20,9 @@ def randomizedIndex (pk : PublicKey) (message : Message) :
   let answer ← publicCall (liftM (HashSpec.query (SecurityRandomOracle.indexInput pk message r)))
   return (r, answer.extractLsb' 0 160)
 
-@[simp] theorem simulate_randomizedIndex (seed : Seed) (pk : PublicKey) (message : Message) :
-    simulateQ (realImplementation seed) (randomizedIndex pk message) =
-      SecurityRandomOracle.randomizedIndex seed pk message := by
+@[simp] theorem simulate_randomizedIndex (secretKey : SecretKey) (pk : PublicKey) (message : Message) :
+    simulateQ (realImplementation secretKey) (randomizedIndex pk message) =
+      SecurityRandomOracle.randomizedIndex secretKey pk message := by
   simp [randomizedIndex, SecurityRandomOracle.randomizedIndex]
 
 def signChain (address : ChainAddress) (message : Digest) :
@@ -36,9 +36,9 @@ def signChain (address : ChainAddress) (message : Digest) :
     (digit message address.chain).val (7 - (digit message address.chain).val) fragment)
   return (fragment, last)
 
-@[simp] theorem simulate_signChain (seed : Seed) (address : ChainAddress) (message : Digest) :
-    simulateQ (realImplementation seed) (signChain address message) =
-      SecurityReference.signChain seed address.level.val address.tree.toNat address.side message address.chain := by
+@[simp] theorem simulate_signChain (secretKey : SecretKey) (address : ChainAddress) (message : Digest) :
+    simulateQ (realImplementation secretKey) (signChain address message) =
+      SecurityReference.signChain secretKey address.level.val address.tree.toNat address.side message address.chain := by
   simp [signChain, SecurityReference.signChain]
 
 def signLayerWithRoot (level : Fin 160) (tree : BitVec 192) (side : Bool) (message : Digest) :
@@ -58,10 +58,10 @@ def signLayerWithRoot (level : Fin 160) (tree : BitVec 192) (side : Bool) (messa
       else SecurityReference.node level.val tree.toNat current sibling)
     return (⟨fun i => (chains i).1, sibling⟩, root)
 
-@[simp] theorem simulate_signLayerWithRoot (seed : Seed) (level : Fin 160) (tree : BitVec 192)
+@[simp] theorem simulate_signLayerWithRoot (secretKey : SecretKey) (level : Fin 160) (tree : BitVec 192)
     (side : Bool) (message : Digest) :
-    simulateQ (realImplementation seed) (signLayerWithRoot level tree side message) =
-      SecurityReference.signLayerWithRoot seed level.val tree.toNat side message := by
+    simulateQ (realImplementation secretKey) (signLayerWithRoot level tree side message) =
+      SecurityReference.signLayerWithRoot secretKey level.val tree.toNat side message := by
   by_cases zero : level.val = 0 <;> cases side <;>
     simp [signLayerWithRoot, SecurityReference.signLayerWithRoot, zero]
 
@@ -77,10 +77,10 @@ def signUpper : (count level index : Nat) → count + level ≤ 160 → index < 
         (lt_of_le_of_lt (Nat.div_le_self ..) hi) layer.2
       return layer.1 :: rest
 
-@[simp] theorem simulate_signUpper (seed : Seed) (count level index : Nat)
+@[simp] theorem simulate_signUpper (secretKey : SecretKey) (count level index : Nat)
     (hl : count + level ≤ 160) (hi : index < 2 ^ 192) (message : Digest) :
-    simulateQ (realImplementation seed) (signUpper count level index hl hi message) =
-      SecurityReference.signUpper seed count level index message := by
+    simulateQ (realImplementation secretKey) (signUpper count level index hl hi message) =
+      SecurityReference.signUpper secretKey count level index message := by
   induction count generalizing level index message with
   | zero => rfl
   | succ count ih =>
@@ -93,7 +93,7 @@ private theorem index_bound (index : BitVec 160) : index.toNat / 2 < 2 ^ 192 := 
   have hpow : (2 : Nat) ^ 160 ≤ 2 ^ 192 := Nat.pow_le_pow_right (by decide) (by decide)
   exact lt_of_le_of_lt (Nat.div_le_self ..) (lt_of_lt_of_le h hpow)
 
-/-- Seedless signing program using independent private derivation slots. -/
+/-- SecretKeyless signing program using independent private derivation slots. -/
 def signCompact (pk : PublicKey) (message : Message) : OracleComp SplitWorld Compact := do
   let ri ← randomizedIndex pk message
   let bottom ← signLayerWithRoot ⟨0, by decide⟩ (BitVec.ofNat 192 (ri.2.toNat / 2))
@@ -103,15 +103,15 @@ def signCompact (pk : PublicKey) (message : Message) : OracleComp SplitWorld Com
 
 /-- Exact equality of oracle computations, including repeated queries and their
 order, connects full signing to the real/ideal cache separation theorem. -/
-theorem simulate_signCompact (seed : Seed) (pk : PublicKey) (message : Message) :
-    simulateQ (realImplementation seed) (signCompact pk message) =
-      SecurityReference.signCompact seed pk message := by
+theorem simulate_signCompact (secretKey : SecretKey) (pk : PublicKey) (message : Message) :
+    simulateQ (realImplementation secretKey) (signCompact pk message) =
+      SecurityReference.signCompact secretKey pk message := by
   simp only [signCompact, SecurityReference.signCompact, simulateQ_bind, simulateQ_pure,
     simulate_randomizedIndex, simulate_signLayerWithRoot, simulate_signUpper,
     BitVec.toNat_ofNat, Nat.mod_eq_of_lt (index_bound _)]
 
 /-- The list length is structural and holds for independent private/public answers,
-not only for answer functions arising from a real seeded oracle. -/
+not only for answer functions arising from a real secretKeyed oracle. -/
 theorem eval_signUpper_length (answers : QueryImpl SplitWorld Id) (count level index : Nat)
     (hl : count + level ≤ 160) (hi : index < 2 ^ 192) (message : Digest) :
     (evalWithAnswerFn answers (signUpper count level index hl hi message)).length = count := by

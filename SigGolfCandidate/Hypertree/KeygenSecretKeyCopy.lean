@@ -1,6 +1,6 @@
 import SigGolfCandidate.Hypertree.KeygenCopyFrame
 
-namespace SigGolfCandidate.Hypertree.KeygenSeed
+namespace SigGolfCandidate.Hypertree.KeygenSecretKey
 open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 OracleComp Keygen
 
 def Code (image : Image) (p : Word) : Prop :=
@@ -54,7 +54,7 @@ theorem setup_stack (s : MachineState) :
     (setup s).getReg .x1 = s.getReg .x1 ∧ (setup s).getReg .x2 = s.getReg .x2 := by
   simp [setup,execInstrBr,MachineState.getReg_setReg_ne]
 
-/-- The exact seed copy makes both 64-bit words available to the secret HASH. -/
+/-- The exact secret key copy makes both 64-bit words available to the secret HASH. -/
 theorem copy (image : Image) (p : Word) (code : Code image p)
     (s : MachineState) (pc : s.pc = p) :
     ∃ final, OrdinarySteps image s 16 final ∧ final.pc = p+40 ∧
@@ -78,4 +78,4 @@ theorem copy (image : Image) (p : Word) (code : Code image p)
 
 theorem keygen_code : Code keygen 0x1204 := by decide
 
-end SigGolfCandidate.Hypertree.KeygenSeed
+end SigGolfCandidate.Hypertree.KeygenSecretKey

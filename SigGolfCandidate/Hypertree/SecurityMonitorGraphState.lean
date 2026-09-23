@@ -45,7 +45,7 @@ attribute [local irreducible] recordParsed
 theorem public_indices (pk : PublicKey) (history : History) (query : Query) (cached : Bool) (answer : BitVec 256) :
     (recordPublic pk history query cached answer).signedIndices = history.signedIndices :=
   parsed_indices history query (SecurityIndexQuery.parse pk query)
-    (decide (SecuritySeparation.SeedEligible query)) cached answer
+    (decide (SecuritySeparation.SecretKeyEligible query)) cached answer
 
 /-- The concrete public step preserves everything required to execute future
 honest signing macros, including the public endpoint disclosures. -/

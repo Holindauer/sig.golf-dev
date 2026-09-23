@@ -29,42 +29,42 @@ def digit (message : Digest) (i : Chain) : Fin 8 :=
   ⟨(if i.val < 43 then message.toNat / 8 ^ i.val
     else checksum message / 8 ^ (i.val - 43)) % 8, Nat.mod_lt _ (by decide)⟩
 
-def secret (hash : Hash) (seed : Seed) (level tree : Nat) (side : Bool) (chain : Chain) : Digest :=
-  truncate (query hash 1 level tree (sideNumber side) chain.val 0 (bytes seed))
+def secret (hash : Hash) (secretKey : SecretKey) (level tree : Nat) (side : Bool) (chain : Chain) : Digest :=
+  truncate (query hash 1 level tree (sideNumber side) chain.val 0 (bytes secretKey))
 
 def chainHash (hash : Hash) (level tree : Nat) (side : Bool) (chain : Chain)
     (step : Nat) (value : Digest) : Digest :=
   truncate (query hash 2 level tree (sideNumber side) chain.val step (bytes value))
 
-def endpoint (hash : Hash) (seed : Seed) (level tree : Nat) (side : Bool) (chain : Chain) : Digest :=
-  walk (chainHash hash level tree side chain) 0 7 (secret hash seed level tree side chain)
+def endpoint (hash : Hash) (secretKey : SecretKey) (level tree : Nat) (side : Bool) (chain : Chain) : Digest :=
+  walk (chainHash hash level tree side chain) 0 7 (secret hash secretKey level tree side chain)
 
 def compressLeaf (hash : Hash) (level tree : Nat) (side : Bool) (values : Chain → Digest) : Digest :=
   truncate (query hash 3 level tree (sideNumber side) 0 0
     ((List.ofFn values).flatMap fun value => bytes value))
 
-def leafRoot (hash : Hash) (seed : Seed) (level tree : Nat) (side : Bool) : Digest :=
+def leafRoot (hash : Hash) (secretKey : SecretKey) (level tree : Nat) (side : Bool) : Digest :=
   if level = 0 then
-    chainHash hash level tree side 0 0 (secret hash seed level tree side 0)
-  else compressLeaf hash level tree side (endpoint hash seed level tree side)
+    chainHash hash level tree side 0 0 (secret hash secretKey level tree side 0)
+  else compressLeaf hash level tree side (endpoint hash secretKey level tree side)
 
 def node (hash : Hash) (level tree : Nat) (left right : Digest) : Digest :=
   truncate (query hash 4 level tree 0 0 0 (bytes left ++ bytes right))
 
-def treeRoot (hash : Hash) (seed : Seed) (level tree : Nat) : Digest :=
-  node hash level tree (leafRoot hash seed level tree false) (leafRoot hash seed level tree true)
+def treeRoot (hash : Hash) (secretKey : SecretKey) (level tree : Nat) : Digest :=
+  node hash level tree (leafRoot hash secretKey level tree false) (leafRoot hash secretKey level tree true)
 
 structure LayerSignature where
   values : Chain → Digest
   sibling : Digest
 
 /-- At level zero only values[0] is serialized. Other levels serialize all 46 values. -/
-def signLayer (hash : Hash) (seed : Seed) (level tree : Nat) (side : Bool)
+def signLayer (hash : Hash) (secretKey : SecretKey) (level tree : Nat) (side : Bool)
     (message : Digest) : LayerSignature where
-  values := fun chain => if level = 0 then secret hash seed level tree side chain
+  values := fun chain => if level = 0 then secret hash secretKey level tree side chain
     else walk (chainHash hash level tree side chain) 0 (digit message chain).val
-      (secret hash seed level tree side chain)
-  sibling := leafRoot hash seed level tree (!side)
+      (secret hash secretKey level tree side chain)
+  sibling := leafRoot hash secretKey level tree (!side)
 
 def recoverLeaf (hash : Hash) (level tree : Nat) (side : Bool) (message : Digest)
     (signature : LayerSignature) : Digest :=
@@ -79,10 +79,10 @@ def recoverLayer (hash : Hash) (level tree : Nat) (side : Bool) (message : Diges
   if side then node hash level tree signature.sibling current
   else node hash level tree current signature.sibling
 
-theorem recover_sign_leaf (hash : Hash) (seed : Seed) (level tree : Nat) (side : Bool)
+theorem recover_sign_leaf (hash : Hash) (secretKey : SecretKey) (level tree : Nat) (side : Bool)
     (message : Digest) :
-    recoverLeaf hash level tree side message (signLayer hash seed level tree side message) =
-      leafRoot hash seed level tree side := by
+    recoverLeaf hash level tree side message (signLayer hash secretKey level tree side message) =
+      leafRoot hash secretKey level tree side := by
   by_cases h : level = 0
   · simp [recoverLeaf, signLayer, leafRoot, h]
   · simp only [recoverLeaf, signLayer, leafRoot, h, ↓reduceIte]
@@ -90,18 +90,18 @@ theorem recover_sign_leaf (hash : Hash) (seed : Seed) (level tree : Nat) (side :
     funext chain
     exact recover_chain _ _ _
 
-theorem recover_sign_layer (hash : Hash) (seed : Seed) (level tree : Nat) (side : Bool)
+theorem recover_sign_layer (hash : Hash) (secretKey : SecretKey) (level tree : Nat) (side : Bool)
     (message : Digest) :
-    recoverLayer hash level tree side message (signLayer hash seed level tree side message) =
-      treeRoot hash seed level tree := by
+    recoverLayer hash level tree side message (signLayer hash secretKey level tree side message) =
+      treeRoot hash secretKey level tree := by
   simp only [recoverLayer, recover_sign_leaf]
   cases side <;> rfl
 
-def signLayers (hash : Hash) (seed : Seed) : Nat → Nat → Nat → Digest → List LayerSignature
+def signLayers (hash : Hash) (secretKey : SecretKey) : Nat → Nat → Nat → Digest → List LayerSignature
   | 0, _, _, _ => []
   | count + 1, level, index, message =>
-      signLayer hash seed level (index / 2) (index % 2 == 1) message ::
-        signLayers hash seed count (level + 1) (index / 2) (treeRoot hash seed level (index / 2))
+      signLayer hash secretKey level (index / 2) (index % 2 == 1) message ::
+        signLayers hash secretKey count (level + 1) (index / 2) (treeRoot hash secretKey level (index / 2))
 
 def recoverLayers (hash : Hash) : Nat → Nat → Digest → List LayerSignature → Digest
   | _, _, message, [] => message
@@ -109,23 +109,23 @@ def recoverLayers (hash : Hash) : Nat → Nat → Digest → List LayerSignature
       recoverLayers hash (level + 1) (index / 2)
         (recoverLayer hash level (index / 2) (index % 2 == 1) message signature) rest
 
-def rootsAfter (hash : Hash) (seed : Seed) : Nat → Nat → Nat → Digest → Digest
+def rootsAfter (hash : Hash) (secretKey : SecretKey) : Nat → Nat → Nat → Digest → Digest
   | 0, _, _, message => message
   | count + 1, level, index, _ =>
-      rootsAfter hash seed count (level + 1) (index / 2) (treeRoot hash seed level (index / 2))
+      rootsAfter hash secretKey count (level + 1) (index / 2) (treeRoot hash secretKey level (index / 2))
 
-theorem recover_sign_layers (hash : Hash) (seed : Seed) (count level index : Nat) (message : Digest) :
-    recoverLayers hash level index message (signLayers hash seed count level index message) =
-      rootsAfter hash seed count level index message := by
+theorem recover_sign_layers (hash : Hash) (secretKey : SecretKey) (count level index : Nat) (message : Digest) :
+    recoverLayers hash level index message (signLayers hash secretKey count level index message) =
+      rootsAfter hash secretKey count level index message := by
   induction count generalizing level index message with
   | zero => rfl
   | succ count ih =>
     simp only [signLayers, recoverLayers, recover_sign_layer, rootsAfter]
     exact ih _ _ _
 
-theorem roots_after_succ (hash : Hash) (seed : Seed) (count level index : Nat) (message : Digest) :
-    rootsAfter hash seed (count + 1) level index message =
-      treeRoot hash seed (level + count) (index / 2 ^ (count + 1)) := by
+theorem roots_after_succ (hash : Hash) (secretKey : SecretKey) (count level index : Nat) (message : Digest) :
+    rootsAfter hash secretKey (count + 1) level index message =
+      treeRoot hash secretKey (level + count) (index / 2 ^ (count + 1)) := by
   induction count generalizing level index message with
   | zero => simp [rootsAfter]
   | succ count ih =>
@@ -133,41 +133,41 @@ theorem roots_after_succ (hash : Hash) (seed : Seed) (count level index : Nat) (
     simp [Nat.div_div_eq_div_mul, pow_succ, Nat.add_comm, Nat.add_left_comm,
       Nat.mul_comm]
 
-def randomizer (hash : Hash) (seed : Seed) (message : Message) : Bytes 32 :=
-  query hash 6 0 0 0 0 0 (bytes seed ++ bytes message)
+def randomizer (hash : Hash) (secretKey : SecretKey) (message : Message) : Bytes 32 :=
+  query hash 6 0 0 0 0 0 (bytes secretKey ++ bytes message)
 
 def indexOf (hash : Hash) (pk : PublicKey) (message : Message) (r : Bytes 32) : BitVec 160 :=
   (query hash 5 0 0 0 0 0 (bytes pk ++ bytes message ++ bytes r)).extractLsb' 0 160
 
-def keygen (hash : Hash) (seed : Seed) : PublicKey := treeRoot hash seed 159 0
+def keygen (hash : Hash) (secretKey : SecretKey) : PublicKey := treeRoot hash secretKey 159 0
 
 structure Signature where
   randomizer : Bytes 32
   layers : List LayerSignature
 
-def sign (hash : Hash) (seed : Seed) (pk : PublicKey) (message : Message) : Signature :=
-  let r := randomizer hash seed message
-  ⟨r, signLayers hash seed 160 0 (indexOf hash pk message r).toNat 0⟩
+def sign (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (message : Message) : Signature :=
+  let r := randomizer hash secretKey message
+  ⟨r, signLayers hash secretKey 160 0 (indexOf hash pk message r).toNat 0⟩
 
 def verify (hash : Hash) (pk : PublicKey) (message : Message) (signature : Signature) : Prop :=
   signature.layers.length = 160 ∧
     recoverLayers hash 0 (indexOf hash pk message signature.randomizer).toNat 0 signature.layers = pk
 
-theorem sign_layers_length (hash : Hash) (seed : Seed) (count level index : Nat) (message : Digest) :
-    (signLayers hash seed count level index message).length = count := by
+theorem sign_layers_length (hash : Hash) (secretKey : SecretKey) (count level index : Nat) (message : Digest) :
+    (signLayers hash secretKey count level index message).length = count := by
   induction count generalizing level index message with
   | zero => rfl
   | succ count ih => simp [signLayers, ih]
 
-/-- Functional correctness for every seed, message, and fixed oracle. No probabilistic or collision-resistance assumption is used. This does not yet establish bytecode refinement. -/
-theorem correct (hash : Hash) (seed : Seed) (message : Message) :
-    verify hash (keygen hash seed) message (sign hash seed (keygen hash seed) message) := by
+/-- Functional correctness for every secret key, message, and fixed oracle. No probabilistic or collision-resistance assumption is used. This does not yet establish bytecode refinement. -/
+theorem correct (hash : Hash) (secretKey : SecretKey) (message : Message) :
+    verify hash (keygen hash secretKey) message (sign hash secretKey (keygen hash secretKey) message) := by
   constructor
   · exact sign_layers_length _ _ _ _ _ _
-  · change recoverLayers hash 0 (indexOf hash (keygen hash seed) message (randomizer hash seed message)).toNat 0
-      (signLayers hash seed 160 0 (indexOf hash (keygen hash seed) message (randomizer hash seed message)).toNat 0) = _
-    rw [recover_sign_layers, roots_after_succ hash seed 159 0]
-    have hidx := (indexOf hash (keygen hash seed) message (randomizer hash seed message)).isLt
+  · change recoverLayers hash 0 (indexOf hash (keygen hash secretKey) message (randomizer hash secretKey message)).toNat 0
+      (signLayers hash secretKey 160 0 (indexOf hash (keygen hash secretKey) message (randomizer hash secretKey message)).toNat 0) = _
+    rw [recover_sign_layers, roots_after_succ hash secretKey 159 0]
+    have hidx := (indexOf hash (keygen hash secretKey) message (randomizer hash secretKey message)).isLt
     simp only [Nat.zero_add, Nat.div_eq_of_lt hidx]
     rfl
 

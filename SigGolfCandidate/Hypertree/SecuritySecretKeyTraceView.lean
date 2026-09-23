@@ -1,9 +1,9 @@
-import SigGolfCandidate.Hypertree.SecuritySeedTraceHistory
+import SigGolfCandidate.Hypertree.SecuritySecretKeyTraceHistory
 
-namespace SigGolfCandidate.Hypertree.SecuritySeedTraceView
+namespace SigGolfCandidate.Hypertree.SecuritySecretKeyTraceView
 open SigGolf OracleComp OracleSpec Reference SecurityDerivation SecuritySeparation SecurityGameHop
   SecurityMonitorView SecurityMonitorIndexState SecurityGraphFactor SecurityGraphPassive
-  SecurityBudget SecuritySeedTraceBlocks SecurityMonitorViewAtomic SecurityGraphState
+  SecurityBudget SecuritySecretKeyTraceBlocks SecurityMonitorViewAtomic SecurityGraphState
 set_option backward.isDefEq.respectTransparency false
 set_option maxRecDepth 4096
 
@@ -37,7 +37,7 @@ private theorem sign_run (factors : Factors) (pk : PublicKey) (message : Message
   rfl
 
 /-- Exact traced cutoff semantics in the true graph world, preserving ordinary
-budget failures and the complete seed log. The log is chronological; the public
+budget failures and the complete secret key log. The log is chronological; the public
 history records those same entries in reverse order. -/
 theorem traced_view {α : Type} (factors : Factors) (pk : PublicKey) (view : View α) (budget : Nat)
     (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) (history : History) :
@@ -71,7 +71,7 @@ theorem traced_view {α : Type} (factors : Factors) (pk : PublicKey) (view : Vie
     intro answer _
     exact ih answer budget exposed cache history
   | sign signPk message next ih =>
-    have safe := lift_clean (SecuritySeedHonest.signWire signPk message)
+    have safe := lift_clean (SecuritySecretKeyHonest.signWire signPk message)
     have fixed := SecurityAtomicCounts.signWire signPk message
     rw [SecurityMonitorGraphCoupling.execute]
     by_cases enough : 117508 ≤ budget
@@ -94,9 +94,9 @@ theorem traced_view {α : Type} (factors : Factors) (pk : PublicKey) (view : Vie
       rw [trace_insufficient safe fixed (handler factors) _ budget cache (by omega)]
       simp [project, extend]
 
-/-- info: 'SigGolfCandidate.Hypertree.SecuritySeedTraceView.traced_view' depends on axioms: [propext,
+/-- info: 'SigGolfCandidate.Hypertree.SecuritySecretKeyTraceView.traced_view' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
 #guard_msgs in
 #print axioms traced_view
-end SigGolfCandidate.Hypertree.SecuritySeedTraceView
+end SigGolfCandidate.Hypertree.SecuritySecretKeyTraceView

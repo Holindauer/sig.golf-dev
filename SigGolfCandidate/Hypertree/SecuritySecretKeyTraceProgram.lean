@@ -1,9 +1,9 @@
-import SigGolfCandidate.Hypertree.SecuritySeedTraceView
+import SigGolfCandidate.Hypertree.SecuritySecretKeyTraceView
 
-namespace SigGolfCandidate.Hypertree.SecuritySeedTraceView
+namespace SigGolfCandidate.Hypertree.SecuritySecretKeyTraceView
 open SigGolf OracleComp OracleSpec Reference SecurityDerivation SecurityGameHop
   SecurityMonitorView SecurityMonitorIndexState SecurityGraphFactor SecurityGraphPassive
-  SecurityBudget SecuritySeedTraceBlocks SecurityMonitorViewAtomic SecurityGraphState
+  SecurityBudget SecuritySecretKeyTraceBlocks SecurityMonitorViewAtomic SecurityGraphState
 set_option backward.isDefEq.respectTransparency false
 set_option maxRecDepth 4096
 
@@ -13,7 +13,7 @@ private theorem keygen_run (factors : Factors) (cache : QueryCache HashSpec) :
   rw [handler, routing, routed_keygen_run, labels_node]
 
 /-- Actual key generation followed by the actual adversary program has exactly
-the true graph interpreter's output and seed-input log at every total-call
+the true graph interpreter's output and secret key-input log at every total-call
 cutoff. Ordinary budget exhaustion remains `none` with its retained trace. -/
 theorem traced_program (factors : Factors) (publicCache : SigGolf.Cache)
     (adversary : Adversary submission.sizes) (rounds budget : Nat) :
@@ -21,7 +21,7 @@ theorem traced_program (factors : Factors) (publicCache : SigGolf.Cache)
       𝒮[project <$> SecurityMonitorGraphCoupling.start factors (truncate (factors.2.2 (.node 159 0)))
         (ofInteract adversary (truncate (factors.2.2 (.node 159 0))) rounds
           (adversary.initial (truncate (factors.2.2 (.node 159 0))) publicCache) {}) budget] := by
-  have safe := lift_clean SecuritySeedHonest.keygen
+  have safe := lift_clean SecuritySecretKeyHonest.keygen
   have fixed := SecurityAtomicCounts.keygen
   rw [traced, SecurityMonitorView.program_eq, SecurityMonitorGraphCoupling.start]
   by_cases enough : 739 ≤ budget
@@ -51,14 +51,14 @@ theorem routed_traced_program (factors : Factors) (publicCache : SigGolf.Cache)
   rw [←routing]
   exact traced_program factors publicCache adversary rounds budget
 
-/-- Trace order cannot affect whether a seed was guessed. -/
-theorem seedHit_reverse (inputs : List Query) (seed : Seed) :
-    SecuritySeed.SeedHitTrace inputs.reverse seed ↔ SecuritySeed.SeedHitTrace inputs seed := by
-  simp only [SecuritySeed.SeedHitTrace, List.mem_reverse]
+/-- Trace order cannot affect whether a secret key was guessed. -/
+theorem secretKeyHit_reverse (inputs : List Query) (secretKey : SecretKey) :
+    SecuritySecretKey.SecretKeyHitTrace inputs.reverse secretKey ↔ SecuritySecretKey.SecretKeyHitTrace inputs secretKey := by
+  simp only [SecuritySecretKey.SecretKeyHitTrace, List.mem_reverse]
 
-/-- info: 'SigGolfCandidate.Hypertree.SecuritySeedTraceView.routed_traced_program' depends on axioms: [propext,
+/-- info: 'SigGolfCandidate.Hypertree.SecuritySecretKeyTraceView.routed_traced_program' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
 #guard_msgs in
 #print axioms routed_traced_program
-end SigGolfCandidate.Hypertree.SecuritySeedTraceView
+end SigGolfCandidate.Hypertree.SecuritySecretKeyTraceView

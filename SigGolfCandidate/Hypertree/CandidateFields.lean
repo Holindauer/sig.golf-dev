@@ -13,8 +13,8 @@ theorem termination : submission.Terminates := by
     dsimp only
     exact ⟨rfl,by decide⟩
   | sign =>
-    rcases input with ⟨seed,pk,cache,message⟩
-    have bound := Signing.sign_run_bound hash seed pk cache message
+    rcases input with ⟨secretKey,pk,cache,message⟩
+    have bound := Signing.sign_run_bound hash secretKey pk cache message
     exact ⟨bound.1,bound.2.2.1⟩
   | expand =>
     have bound := Expansion.run_bound hash input
@@ -29,15 +29,15 @@ theorem termination : submission.Terminates := by
 /-- The actual shared-random-oracle, all-message completeness statement. -/
 theorem completeness : submission.Complete := by
   apply complete_of_honest_success
-  intro hash seed message
-  obtain ⟨cycles,calls,blocks,_,_,_,run⟩ := honest_exact hash seed message
+  intro hash secretKey message
+  obtain ⟨cycles,calls,blocks,_,_,_,run⟩ := honest_exact hash secretKey message
   rw [run]
 
 /-- Uniform costs imply the organizer's exponential moment bound after the all-message maximum. -/
 theorem compressionBounds : submission.CompressionBounds := by
   apply compressionBounds_of_honest_cost
-  intro hash seed message phase budgeted
-  obtain ⟨cycles,calls,blocks,_,_,_,run⟩ := honest_exact hash seed message
+  intro hash secretKey message phase budgeted
+  obtain ⟨cycles,calls,blocks,_,_,_,run⟩ := honest_exact hash secretKey message
   rw [run]
   cases phase with
   | keygen => change 761≤BUDGET_KEYGEN; decide
@@ -47,10 +47,10 @@ theorem compressionBounds : submission.CompressionBounds := by
 
 /-- Honest verification is bounded by the universal exact-bytecode verifier bound. -/
 theorem verificationBound : submission.VerificationBound 5883520 := by
-  intro hash seed message
+  intro hash secretKey message
   dsimp only
   intro _
-  obtain ⟨cycles,calls,blocks,cycleBound,_,_,run⟩ := honest_exact hash seed message
+  obtain ⟨cycles,calls,blocks,cycleBound,_,_,run⟩ := honest_exact hash secretKey message
   rw [run]
   exact cycleBound
 

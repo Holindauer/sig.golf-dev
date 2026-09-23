@@ -100,24 +100,24 @@ theorem sign_chain_capture_loop (hash : Hash) (s : MachineState) (pointer level 
 
 /-- The actual signer computes the endpoint and writes the requested Winternitz digit
 checkpoint into the exact two-word signature slot. -/
-theorem sign_chain_captured_endpoint (hash : Hash) (s : MachineState) (seed : Seed) (pointer level tree : Nat)
+theorem sign_chain_captured_endpoint (hash : Hash) (s : MachineState) (secretKey : SecretKey) (pointer level tree : Nat)
     (side : Bool) (chain : Reference.Chain) (message : Reference.Digest)
     (pc : s.pc = 0x1698) (upper : level ≠ 0)
     (valid : CapturePointerValid pointer)
-    (data : ChainData s level tree side chain 0 (Reference.secret hash seed level tree side chain))
+    (data : ChainData s level tree side chain 0 (Reference.secret hash secretKey level tree side chain))
     (settings : CaptureSettings s pointer chain (Reference.digit message chain)) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 7 7 final ∧
       instructions ≤ 957 ∧ cycles ≤ 1006 ∧ final.pc = 0x1874 ∧
-      ChainData final level tree side chain 7 (Reference.endpoint hash seed level tree side chain) ∧
-      CapturedValue final pointer chain ((Reference.signLayer hash seed level tree side message).values chain) ∧
+      ChainData final level tree side chain 7 (Reference.endpoint hash secretKey level tree side chain) ∧
+      CapturedValue final pointer chain ((Reference.signLayer hash secretKey level tree side message).values chain) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, OutsideChainWork a →
         (∀ i : Fin 2, a ≠ wordAddress (pointer + 16 * chain.val) i.val) → final.getMem a = s.getMem a) := by
   simpa only [Reference.endpoint, Reference.signLayer, upper, if_false] using
     sign_chain_capture_loop hash s pointer level tree 0 7 side chain (Reference.digit message chain)
-      (Reference.secret hash seed level tree side chain)
+      (Reference.secret hash secretKey level tree side chain)
       (walk (Reference.chainHash hash level tree side chain) 0 (Reference.digit message chain).val
-        (Reference.secret hash seed level tree side chain)) pc (by decide) valid settings.pointerEq data settings
+        (Reference.secret hash secretKey level tree side chain)) pc (by decide) valid settings.pointerEq data settings
       (by intro _; rfl) (by intro h; omega)
 
 set_option format.width 200

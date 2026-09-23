@@ -95,7 +95,7 @@ theorem execute_le_stopped {α : Type} (factors : Factors) (pk : PublicKey) (vie
     · simp only [if_neg enough, probEvent_pure, stoppedEvent, le_refl]
 
 /-- The event and the graph flag share the exact final history. In particular,
-`event` can include seed hits, nonce hits, and index collisions together. -/
+`event` can include secret key hits, nonce hits, and index collisions together. -/
 theorem execute_le_union {α : Type} (factors : Factors) (pk : PublicKey) (view : View α)
     (remaining : Nat) (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) (history : History)
     (ready : Ready factors history exposed cache) (event : Result α → Prop) :

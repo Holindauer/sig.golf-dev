@@ -1,7 +1,7 @@
-import SigGolfCandidate.Hypertree.SecuritySeed
+import SigGolfCandidate.Hypertree.SecuritySecretKey
 
 namespace SigGolfCandidate.Hypertree.SecurityTrace
-open SigGolf OracleComp OracleSpec SecurityCache SecuritySeed
+open SigGolf OracleComp OracleSpec SecurityCache SecuritySecretKey
 open scoped Classical
 set_option backward.isDefEq.respectTransparency false
 
@@ -81,23 +81,23 @@ def HashTraceBound {α : Type} (computation : OracleComp World α)
   ∀ result ∈ support ((simulateQ implementation (traceHashes computation)).run' cache),
     result.2.length ≤ limit
 
-/-- Adaptive hash queries in a seed-independent replacement world guess the seed
+/-- Adaptive hash queries in a secret key-independent replacement world guess the secret key
 with probability at most Q/2^128. The computation may use unlimited private coins. -/
-theorem prob_stop_seed_le {α : Type} (computation : OracleComp World α)
+theorem prob_stop_secretKey_le {α : Type} (computation : OracleComp World α)
     (cache : QueryCache HashSpec) (limit : Nat) (bounded : HashTraceBound computation cache limit) :
-    Pr[= none | sampleSeed >>= fun seed =>
-      (simulateQ implementation (stopBefore (SeedAt · seed) computation)).run' cache] ≤
+    Pr[= none | sampleSecretKey >>= fun secretKey =>
+      (simulateQ implementation (stopBefore (SecretKeyAt · secretKey) computation)).run' cache] ≤
         limit / (2 : ENNReal) ^ 128 := by
   classical
   let trace := (simulateQ implementation (traceHashes computation)).run' cache
   calc
-    _ = Pr[= true | sampleSeed >>= fun seed =>
-        (fun result => decide (SeedHitTrace result.2 seed)) <$> trace] := by
+    _ = Pr[= true | sampleSecretKey >>= fun secretKey =>
+        (fun result => decide (SecretKeyHitTrace result.2 secretKey)) <$> trace] := by
       simp only [probOutput_bind_eq_tsum, prob_stop_eq_traceHits, probOutput_map,
         decide_eq_true_eq]
       rfl
     _ = Pr[= true | trace >>= fun result =>
-        (fun seed => decide (SeedHitTrace result.2 seed)) <$> sampleSeed] := by
+        (fun secretKey => decide (SecretKeyHitTrace result.2 secretKey)) <$> sampleSecretKey] := by
       simp only [← bind_pure_comp]
       exact probOutput_bind_bind_swap _ _ _ _
     _ ≤ _ := by
@@ -105,32 +105,32 @@ theorem prob_stop_seed_le {α : Type} (computation : OracleComp World α)
       apply probEvent_bind_le_of_forall_le
       intro result hr
       simp only [probEvent_map, Function.comp_def, decide_eq_true_eq]
-      exact (prob_seedHitTrace_le result.2).trans
+      exact (prob_secretKeyHitTrace_le result.2).trans
         (ENNReal.div_le_div (by exact_mod_cast bounded result hr) le_rfl)
 
-/-- Erasing seed-dependent cache entries from an independent reference world costs
+/-- Erasing secret key-dependent cache entries from an independent reference world costs
 at most Q/2^128. The dependence and query-bound obligations are explicit; this is
 one game-hop lemma, not the full hypertree security certificate. -/
-theorem prob_seed_cache_change_le {α : Type} (computation : OracleComp World α)
-    (initial : Seed → QueryCache HashSpec) (cache : QueryCache HashSpec)
-    (agree : ∀ seed, AgreeOutside (SeedAt · seed) (initial seed) cache)
+theorem prob_secretKey_cache_change_le {α : Type} (computation : OracleComp World α)
+    (initial : SecretKey → QueryCache HashSpec) (cache : QueryCache HashSpec)
+    (agree : ∀ secretKey, AgreeOutside (SecretKeyAt · secretKey) (initial secretKey) cache)
     (limit : Nat) (bounded : HashTraceBound computation cache limit) (event : α → Prop) :
-    Pr[event | sampleSeed >>= fun seed =>
-      (simulateQ implementation computation).run' (initial seed)] ≤
+    Pr[event | sampleSecretKey >>= fun secretKey =>
+      (simulateQ implementation computation).run' (initial secretKey)] ≤
       Pr[event | (simulateQ implementation computation).run' cache] + limit / (2 : ENNReal) ^ 128 := by
   classical
-  let stopped := fun seed =>
-    (simulateQ implementation (stopBefore (SeedAt · seed) computation)).run' cache
+  let stopped := fun secretKey =>
+    (simulateQ implementation (stopBefore (SecretKeyAt · secretKey) computation)).run' cache
   calc
-    _ ≤ Pr[event | sampleSeed >>= fun _ =>
-        (simulateQ implementation computation).run' cache] + Pr[= none | sampleSeed >>= stopped] := by
+    _ ≤ Pr[event | sampleSecretKey >>= fun _ =>
+        (simulateQ implementation computation).run' cache] + Pr[= none | sampleSecretKey >>= stopped] := by
       simp only [probEvent_bind_eq_tsum, probOutput_bind_eq_tsum, ← ENNReal.tsum_add]
-      exact ENNReal.tsum_le_tsum fun seed =>
-        (mul_le_mul' le_rfl (prob_cache_change_le (SeedAt · seed)
-          computation (initial seed) cache (agree seed) event)).trans_eq (mul_add ..)
+      exact ENNReal.tsum_le_tsum fun secretKey =>
+        (mul_le_mul' le_rfl (prob_cache_change_le (SecretKeyAt · secretKey)
+          computation (initial secretKey) cache (agree secretKey) event)).trans_eq (mul_add ..)
     _ ≤ _ := by
       simpa [stopped] using add_le_add
         (le_refl (Pr[event | (simulateQ implementation computation).run' cache]))
-        (prob_stop_seed_le computation cache limit bounded)
+        (prob_stop_secretKey_le computation cache limit bounded)
 
 end SigGolfCandidate.Hypertree.SecurityTrace

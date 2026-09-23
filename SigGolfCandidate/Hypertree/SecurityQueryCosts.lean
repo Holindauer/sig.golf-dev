@@ -7,25 +7,25 @@ open scoped Classical
 set_option backward.isDefEq.respectTransparency false
 
 /-- The two main query classes are disjoint by construction. -/
-noncomputable def seedCost (query : GameWorld.Domain) : Nat := (prependPublic query []).length
-noncomputable def otherCost (query : GameWorld.Domain) : Nat := charge query - seedCost query
+noncomputable def secretKeyCost (query : GameWorld.Domain) : Nat := (prependPublic query []).length
+noncomputable def otherCost (query : GameWorld.Domain) : Nat := charge query - secretKeyCost query
 
-theorem seedCost_le (query : GameWorld.Domain) : seedCost query ≤ charge query := by
-  simpa [seedCost] using prependPublic_length_le query []
+theorem secretKeyCost_le (query : GameWorld.Domain) : secretKeyCost query ≤ charge query := by
+  simpa [secretKeyCost] using prependPublic_length_le query []
 
-theorem seedCost_add_otherCost (query : GameWorld.Domain) :
-    seedCost query + otherCost query = charge query := by
+theorem secretKeyCost_add_otherCost (query : GameWorld.Domain) :
+    secretKeyCost query + otherCost query = charge query := by
   unfold otherCost
-  exact Nat.add_sub_of_le (seedCost_le query)
+  exact Nat.add_sub_of_le (secretKeyCost_le query)
 
 theorem prependPublic_length (query : GameWorld.Domain) (inputs : List Query) :
-    (prependPublic query inputs).length = inputs.length + seedCost query := by
+    (prependPublic query inputs).length = inputs.length + secretKeyCost query := by
   cases query with
-  | inl n => simp [prependPublic, seedCost]
+  | inl n => simp [prependPublic, secretKeyCost]
   | inr query =>
     cases query with
-    | inl slot => simp [prependPublic, seedCost]
-    | inr input => simp only [prependPublic, seedCost]; split <;> simp_all
+    | inl slot => simp [prependPublic, secretKeyCost]
+    | inr input => simp only [prependPublic, secretKeyCost]; split <;> simp_all
 
 def costed {α : Type} (cost : GameWorld.Domain → Nat) (program : OracleComp GameWorld α) :
     OracleComp GameWorld (α × Nat) :=
@@ -48,8 +48,8 @@ theorem costed_query_bind {α : Type} (cost : GameWorld.Domain → Nat) (query :
 @[simp] theorem costed_charge {α : Type} (program : OracleComp GameWorld α) :
     costed charge program = counted program := rfl
 
-theorem costed_seed {α : Type} (program : OracleComp GameWorld α) :
-    costed seedCost program = (fun result => (result.1, result.2.length)) <$> tracePublic program := by
+theorem costed_secretKey {α : Type} (program : OracleComp GameWorld α) :
+    costed secretKeyCost program = (fun result => (result.1, result.2.length)) <$> tracePublic program := by
   induction program using OracleComp.inductionOn with
   | pure value => rfl
   | query_bind query next ih =>
@@ -96,10 +96,10 @@ theorem expectedCost_add {α : Type} (first second : GameWorld.Domain → Nat)
     funext result
     ac_rfl
 
-/-- The seed-erasure penalty's expectation is exactly the cost of the seed query class. -/
-theorem expectedCost_seed {α : Type} (program : OracleComp GameWorld α) (cache : SplitCache) :
-    expectedCost seedCost program cache = expectedSeedQueries program cache := by
-  simp only [expectedCost, costed_seed, simulateQ_map, StateT.run'_eq,
+/-- The secret key-erasure penalty's expectation is exactly the cost of the secret key query class. -/
+theorem expectedCost_secretKey {α : Type} (program : OracleComp GameWorld α) (cache : SplitCache) :
+    expectedCost secretKeyCost program cache = expectedSecretKeyQueries program cache := by
+  simp only [expectedCost, costed_secretKey, simulateQ_map, StateT.run'_eq,
     StateT.run_map, Functor.map_map, expectedValue_map]
   change _ = expectedValue ((simulateQ idealGameOracle (tracePublic program)).run' cache)
     (fun result => (result.2.length : ENNReal))
@@ -107,12 +107,12 @@ theorem expectedCost_seed {α : Type} (program : OracleComp GameWorld α) (cache
 
 /-- The two expectations spend one total H-call budget, with no extra factor two. -/
 theorem expected_main_costs {α : Type} (program : OracleComp GameWorld α) (cache : SplitCache) :
-    expectedSeedQueries program cache + expectedCost otherCost program cache =
+    expectedSecretKeyQueries program cache + expectedCost otherCost program cache =
       expectedCost charge program cache := by
-  rw [← expectedCost_seed, ← expectedCost_add]
+  rw [← expectedCost_secretKey, ← expectedCost_add]
   congr 1
   funext query
-  exact seedCost_add_otherCost query
+  exact secretKeyCost_add_otherCost query
 
 theorem cutoff_counted_bound {α : Type} (program : OracleComp GameWorld α)
     (cache : SplitCache) (budget : Nat) :
@@ -140,10 +140,10 @@ theorem cutoff_counted_bound {α : Type} (program : OracleComp GameWorld α)
     next exhausted => simp
 
 /-- Every adversary, after the organizer-style total-call cutoff, has one shared
-expected budget for the seed and complementary query classes. -/
+expected budget for the secret key and complementary query classes. -/
 theorem expected_main_costs_cutoff_le {α : Type} (program : OracleComp GameWorld α)
     (cache : SplitCache) (budget : Nat) :
-    expectedSeedQueries (cutoff program budget) cache +
+    expectedSecretKeyQueries (cutoff program budget) cache +
       expectedCost otherCost (cutoff program budget) cache ≤ budget := by
   rw [expected_main_costs]
   unfold expectedCost
@@ -154,18 +154,18 @@ theorem expected_main_costs_cutoff_le {α : Type} (program : OracleComp GameWorl
 
 /-- Explicit remaining reduction obligation: once the ideal forgery event is
 bounded by the complementary-query expectation plus its index/nonce remainder,
-the actual seeded game spends Q/2^128 on both main classes together. This theorem
+the actual secretKeyed game spends Q/2^128 on both main classes together. This theorem
 does not assert that the ideal forgery bound has been established. -/
-theorem compose_seed_and_other {α : Type} (program : OracleComp GameWorld α)
+theorem compose_secretKey_and_other {α : Type} (program : OracleComp GameWorld α)
     (budget : Nat) (event : α → Prop) (remainder : ENNReal)
     (idealBound :
       Pr[fun value => ∃ x, value = some x ∧ event x |
         (simulateQ idealGameOracle (cutoff program budget)).run' (∅, ∅)] ≤
       expectedCost otherCost (cutoff program budget) (∅, ∅) / (2 : ENNReal) ^ 128 + remainder) :
-    Pr[fun result => event result.1 ∧ result.2 ≤ budget | sampleSeed >>= fun seed =>
-      (simulateQ (realGameOracle seed) (counted program)).run' ∅] ≤
+    Pr[fun result => event result.1 ∧ result.2 ≤ budget | sampleSecretKey >>= fun secretKey =>
+      (simulateQ (realGameOracle secretKey) (counted program)).run' ∅] ≤
         (budget : ENNReal) / 2 ^ 128 + remainder := by
-  have hop := prob_real_le_ideal_add_expected_seed (cutoff program budget)
+  have hop := prob_real_le_ideal_add_expected_secretKey (cutoff program budget)
     (fun value => ∃ x, value = some x ∧ event x)
   simp only [probEvent_bind_eq_tsum, prob_cutoff_eq_counted] at hop
   have ideal := idealBound
@@ -174,9 +174,9 @@ theorem compose_seed_and_other {α : Type} (program : OracleComp GameWorld α)
   rw [probEvent_bind_eq_tsum]
   calc
     _ ≤ (expectedCost otherCost (cutoff program budget) (∅, ∅) / (2 : ENNReal) ^ 128 + remainder) +
-        expectedSeedQueries (cutoff program budget) (∅, ∅) / (2 : ENNReal) ^ 128 :=
+        expectedSecretKeyQueries (cutoff program budget) (∅, ∅) / (2 : ENNReal) ^ 128 :=
       hop.trans (add_le_add ideal le_rfl)
-    _ = (expectedSeedQueries (cutoff program budget) (∅, ∅) +
+    _ = (expectedSecretKeyQueries (cutoff program budget) (∅, ∅) +
         expectedCost otherCost (cutoff program budget) (∅, ∅)) / (2 : ENNReal) ^ 128 + remainder := by
       rw [ENNReal.add_div]
       ac_rfl

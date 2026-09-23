@@ -25,14 +25,14 @@ def digits(digest):
     checksum = 301 - sum(result)
     return result + [(checksum >> (3 * j)) & 7 for j in range(3)]
 
-def leaf(h, seed, level, tree, side, message):
+def leaf(h, secret_key, level, tree, side, message):
     if level == 0:
-        secret = query(h, 1, level, tree, seed, side)[:16]
+        secret = query(h, 1, level, tree, secret_key, side)[:16]
         return query(h, 2, level, tree, secret, side)[:16], secret
     encoded = digits(message)
     endpoints, signature = [], []
     for chain in range(CHAINS):
-        value = query(h, 1, level, tree, seed, side, chain)[:16]
+        value = query(h, 1, level, tree, secret_key, side, chain)[:16]
         values = [value]
         for step in range(7):
             value = query(h, 2, level, tree, value, side, chain, step)[:16]
@@ -42,22 +42,22 @@ def leaf(h, seed, level, tree, side, message):
     root = query(h, 3, level, tree, b''.join(endpoints), side)[:16]
     return root, b''.join(signature)
 
-def tree(h, seed, level, address, selected, message):
-    pair = [leaf(h, seed, level, address, side, message) for side in range(2)]
+def tree(h, secret_key, level, address, selected, message):
+    pair = [leaf(h, secret_key, level, address, side, message) for side in range(2)]
     root = query(h, 4, level, address, pair[0][0] + pair[1][0])[:16]
     return root, pair[selected][1] + pair[1 - selected][0]
 
-def keygen(h, seed):
-    return tree(h, seed, HEIGHT - 1, 0, 0, bytes(16))[0]
+def keygen(h, secret_key):
+    return tree(h, secret_key, HEIGHT - 1, 0, 0, bytes(16))[0]
 
-def sign(h, seed, public_key, message):
-    randomizer = query(h, 6, 0, 0, seed + message)
+def sign(h, secret_key, public_key, message):
+    randomizer = query(h, 6, 0, 0, secret_key + message)
     index = int.from_bytes(query(h, 5, 0, 0, public_key + message + randomizer)[:20], 'little')
     current, layers = bytes(16), []
     for level in range(HEIGHT):
         selected = index & 1
         index >>= 1
-        current, signature = tree(h, seed, level, index, selected, current)
+        current, signature = tree(h, secret_key, level, index, selected, current)
         layers.append(signature)
     return randomizer + b''.join(layers) if current == public_key else None
 
@@ -174,19 +174,19 @@ class Machine:
                 'hash_calls': self.oracle.calls, 'compressions': self.oracle.compressions}
 
 def main():
-    seed, message = bytes(range(16)), bytes(range(32))
+    secret_key, message = bytes(range(16)), bytes(range(32))
     profile = {}
-    h = Oracle(); pk = keygen(h, seed)
-    machine = Machine('keygen', [(0x20, seed)])
+    h = Oracle(); pk = keygen(h, secret_key)
+    machine = Machine('keygen', [(0x20, secret_key)])
     machine.execute()
     assert machine.accepted and machine.buffer(0x40, 16) == pk
     assert machine.buffer(0x60, 1 << 17) == bytes(1 << 17)
     assert machine.oracle.compressions == h.compressions == 761
     profile['keygen'] = machine.metrics()
     print('keygen matches reference:', profile['keygen'], flush=True)
-    h = Oracle(); signature = sign(h, seed, pk, message)
+    h = Oracle(); signature = sign(h, secret_key, pk, message)
     assert signature is not None and len(signature) == SIGNATURE_BYTES
-    machine = Machine('sign', [(0, message), (0x20, seed), (0x40, pk), (0x60, bytes([0xa5]) * (1 << 17))])
+    machine = Machine('sign', [(0, message), (0x20, secret_key), (0x40, pk), (0x60, bytes([0xa5]) * (1 << 17))])
     machine.execute()
     assert machine.accepted and machine.buffer(0x20060, SIGNATURE_BYTES) == signature
     assert machine.oracle.compressions == h.compressions == 121008
@@ -214,7 +214,7 @@ def main():
     assert not verify(Oracle(), pk, message, changed_randomizer)
     machine = Machine('verify', [(0, message), (0x40, pk), (WITNESS_BASE, changed_randomizer)])
     machine.execute(); assert not machine.accepted
-    assert signature[:RANDOMIZER_BYTES] == query(Oracle(), 6, 0, 0, seed + message)
+    assert signature[:RANDOMIZER_BYTES] == query(Oracle(), 6, 0, 0, secret_key + message)
     print('modified signature, randomizer, and wrong message rejected', flush=True)
     path = Path(__file__).with_name('measured-run.json')
     path.write_text(json.dumps({'test_only': True, 'oracle': 'SHA-256', 'signature_bytes': SIGNATURE_BYTES,

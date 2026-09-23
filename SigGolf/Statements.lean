@@ -13,22 +13,22 @@ def Submission.Terminates (submission : Submission) : Prop :=
     let result := submission.runWith hash phase input
     result.finished = true ∧ result.cycles < CYCLE_LIMIT
 
-/-- The same oracle must make the pipeline succeed for all messages. The secret seed is universally quantified, not averaged. -/
+/-- The same oracle must make the pipeline succeed for all messages. The secret key is universally quantified, not averaged. -/
 def Submission.Complete (submission : Submission) : Prop :=
-  ∀ seed, 1 - FAILURE ≤ Pr[fun summary => summary.allSucceed = true |
-    withRandomOracle (submission.allMessages seed)]
+  ∀ secretKey, 1 - FAILURE ≤ Pr[fun summary => summary.allSucceed = true |
+    withRandomOracle (submission.allMessages secretKey)]
 
 /-- Maximize over messages before taking expectation over the shared random oracle. Failed phases are charged; unreached phases cost zero. -/
 def Submission.CompressionBounds (submission : Submission) : Prop :=
-  ∀ seed phase, phase ∈ Phase.budgeted →
-    OracleComp.EvalDist.expectedValue (withRandomOracle (submission.allMessages seed))
+  ∀ secretKey phase, phase ∈ Phase.budgeted →
+    OracleComp.EvalDist.expectedValue (withRandomOracle (submission.allMessages secretKey))
       (fun summary => ENNReal.ofReal (Real.rpow 2
         ((summary.maxCosts phase : ℝ) / (phase.budget : ℝ)))) ≤ 2
 
 /-- Scored cycles cover successful honest pipelines. Arbitrary inputs remain subject to the universal termination bound. -/
 def Submission.VerificationBound (submission : Submission) (C : Nat) : Prop :=
-  ∀ (hash : Hash) seed message,
-    let result := evalWithAnswerFn hash (submission.honest seed message)
+  ∀ (hash : Hash) secretKey message,
+    let result := evalWithAnswerFn hash (submission.honest secretKey message)
     result.success = true → result.verificationCycles ≤ C
 
 /-- The organizer-owned competition claim, parameterized by the exact four images, fixed sizes, and claimed verification bound. The loader and interpreter enforce fixed-size outputs, memory limits, and fresh stateless executions. -/
