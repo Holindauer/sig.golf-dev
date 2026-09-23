@@ -3,9 +3,10 @@
 const NS = 'http://www.w3.org/2000/svg';
 const $ = selector => document.querySelector(selector);
 const handInImage = {x: 548, y: 148};
-const BOLT_HOLD_MS = 10000;
-const BOLT_FADE_MS = 650;
-const BOLT_GAP_MS = 1000;
+const BOLT_HOLD_MS = 1000;
+const BOLT_FADE_MS = 500;
+const STRIKE_INTERVAL_MIN_MS = 5000;
+const STRIKE_INTERVAL_MAX_MS = 10000;
 const mix = (a, b, t) => a + (b - a) * t;
 const clamp = (value, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, value));
 const randomWord = () => {
@@ -14,9 +15,10 @@ const randomWord = () => {
   return bytes[0];
 };
 const unit = () => randomWord() / 4294967296;
+const nextIntervalMs = () => STRIKE_INTERVAL_MIN_MS + unit() * (STRIKE_INTERVAL_MAX_MS - STRIKE_INTERVAL_MIN_MS);
 
 let lastStrike = -Infinity;
-let nextStrike = performance.now() + 1350;
+let nextStrike = performance.now() + nextIntervalMs();
 let paused = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let layout = [];
 let pageRoute = [];
@@ -215,7 +217,7 @@ function newStrike() {
 function strike(now) {
   if (!newStrike()) { nextStrike = now + 150; return; }
   lastStrike = now;
-  nextStrike = now + BOLT_HOLD_MS + BOLT_FADE_MS + BOLT_GAP_MS;
+  nextStrike = now + nextIntervalMs();
 }
 
 function render(now) {
@@ -241,7 +243,6 @@ if (!paused) requestAnimationFrame(render);
 
 window.zeusStudy = {
   strike: () => strike(performance.now()),
-  get interval() { return BOLT_GAP_MS / 1000; },
   get layout() { return layout; },
   get pageRoute() { return pageRoute; },
   get hand() { return pageHand; },

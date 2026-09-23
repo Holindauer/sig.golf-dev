@@ -26,19 +26,19 @@
 .constants-table td:last-child { white-space: normal; }
 #proofs { counter-reset: claim; }
 .claim-list { display: grid; gap: 8px; padding: 0; margin: 16px 0; list-style: none; }
-.claim-list li { display: grid; grid-template-columns: 210px minmax(0,1fr); gap: 16px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); counter-increment: claim; }
+.claim-list li, #proofs .callout { display: grid; grid-template-columns: 210px minmax(0,1fr); gap: 16px; padding: 13px 15px; border: 1px solid var(--blue); border-radius: 8px; background: #eaf3fc; font-size: 13px; }
+.claim-list li { counter-increment: claim; }
 .claim-list b { font-size: 13px; white-space: nowrap; }
 .claim-list b:before, #proofs .callout b:before { content: counter(claim,decimal-leading-zero) ' / '; margin-right: 4px; color: var(--blue); font-size: 11px; }
 #proofs .callout { counter-increment: claim; }
-.claim-list span { color: var(--secondary); font-size: 13px; }
+.claim-list span, #proofs .callout span { color: #334f6d; font-size: 13px; }
 .fine-print { font-size: 12px; }
 .two-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 20px; }
 .detail-card { padding: 16px 17px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13px; }
 .detail-card b { font-size: 13px; }
 .detail-card b code { color: var(--ink); font-weight: 750; font-size: 14px; }
 .detail-card p { margin: 8px 0 0; }
-.callout { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 15px; margin: 18px 0; padding: 16px 17px; border-left: 3px solid var(--blue); border-radius: 7px; background: #eaf3fc; font-size: 13px; }
-.callout span { color: #334f6d; }
+#proofs .callout { margin: 18px 0; }
 .detail-list { margin: 14px 0 0; }
 .detail-list > div { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 18px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 13px; }
 .detail-list dt { font-weight: 700; }
