@@ -19,6 +19,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word) (code : Code image p)
         (Reference.chainHash hash level tree side chain step value).extractLsb' (64*i.val) 64) ∧
       CachedPrepare.Ready final ∧ final.getReg .x28 = 0x80438 ∧
       final.getReg .x13 = 4294967296 ∧
+      (final.getReg .x11 = 384 ∧ final.getReg .x12 = 0x80020 ∧ final.getReg .x5 = 1) ∧
       final.getMem 0x80438 = s.getMem 0x80438 + 1 ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, (∀ i : Fin 4, a ≠ wordAddress 0x80020 i.val) → a ≠ 0x80438 →
@@ -29,7 +30,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word) (code : Code image p)
   have hashBase : hashed.getReg .x28 = 0x80018 := (hash_registers _ _ _).trans base
   have hashPC : hashed.pc = p+4 := by simp only [hashed,hash_pc,pc]
   have tail := InplaceFinish.block image (p+4) code.2 hashed hashPC hashBase
-  refine ⟨InplaceFinish.state hashed, hashTrace.trans tail.trace, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨InplaceFinish.state hashed, hashTrace.trans tail.trace, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · rw [InplaceFinish.pc,hashPC]
     simp [BitVec.sub_eq_add_neg,BitVec.add_assoc]
   · intro i
@@ -39,6 +40,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word) (code : Code image p)
   · exact InplaceInvariant.finish_ready hashed hashBase (InplaceInvariant.hash_current s _ destination current)
   · exact InplaceFinish.base hashed hashBase
   · exact (InplaceFinish.preserved hashed).2.2.trans ((hash_registers _ _ _).trans constant)
+  · simpa [InplaceFinish.state, execInstrBr, MachineState.getReg_setReg_ne, hashed, hash_registers] using And.intro bits (And.intro destination service)
   · rw [InplaceFinish.mem _ hashBase,if_pos rfl]
     rw [InplaceHash.frame s _ destination _ (by intro i; fin_cases i <;> decide)]
   · exact (InplaceFinish.preserved hashed).1.trans (hash_registers _ _ _)

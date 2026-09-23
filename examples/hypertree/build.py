@@ -84,7 +84,7 @@ class Assembler:
             self.label('cached_chain_check')
             self.ld(6,28);self.li(7,7);self.branch(6,7,'restore_chain_value')
             self.ld(10,28,-1080);self.add(10,10,13);self.store(10,28,-1080)
-            self.i(0x13,0,28,28,-1056);self.i(0x13,0,10,28,-24);self.li(11,384);self.i(0x13,0,12,28,8);self.li(5,1);self.jump(end)
+            self.i(0x13,0,28,28,-1056);self.i(0x13,0,10,28,-24);self.jump(end)
             while len(self.words)-start<59:self.i(0x13,0,0,0,0)
             self.label(end);self.fused_hash_ready=True
             return

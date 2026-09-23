@@ -12,6 +12,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word)
     ∃ final, Trace hash image s 38 45 1 1 final ∧ final.pc = p+128 ∧
       Buffered final level tree side chain (step+1) (Reference.chainHash hash level tree side chain step value) ∧
       CachedPrepare.Ready final ∧ final.getReg .x28 = 0x80438 ∧ final.getReg .x13 = 4294967296 ∧
+      (final.getReg .x11 = 384 ∧ final.getReg .x12 = 0x80020 ∧ final.getReg .x5 = 1) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, OutsideChainWork a → final.getMem a = s.getMem a) := by
   let copied := Copy6.optimized s 0x510 0x20
@@ -64,7 +65,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word)
   have words (i : Fin 6) : prepared.getMem (wordAddress 0x80000 i.val) =
       KeygenDomain.inputWord (KeygenDomain.header 2 level (Reference.sideNumber side) chain.val step) tree value i := by
     simpa only [prepared,MachineState.getMem_setReg] using oldwords i
-  obtain ⟨final,core,finalPC,valueOut,finalReady,finalBase,finalConstant,stepOut,ra,sp,frame⟩ :=
+  obtain ⟨final,core,finalPC,valueOut,finalReady,finalBase,finalConstant,finalArgs,stepOut,ra,sp,frame⟩ :=
     InplaceCore.compute image hash (p+236) coreCode prepared prepPC prepBase prepConstant current
       service source bits destination level tree step side chain value words
   have prepFrame (a : Word) (outside : ∀ i : Fin 8, a ≠ wordAddress 0x80000 i.val) :
@@ -86,7 +87,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word)
   have prepSP : prepared.getReg .x2 = s.getReg .x2 := by
     have h := (KeygenChainHeader.stack copied).2.trans csp
     simpa [prepared,MachineState.getReg_setReg_ne] using h
-  refine ⟨final,prepTrace.trace.trans core,?_,?_,finalReady,finalBase,finalConstant,
+  refine ⟨final,prepTrace.trace.trans core,?_,?_,finalReady,finalBase,finalConstant,finalArgs,
     ra.trans prepRA,sp.trans prepSP,keep⟩
   · simpa [BitVec.sub_eq_add_neg,BitVec.add_assoc] using finalPC
   · constructor

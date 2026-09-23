@@ -8,9 +8,10 @@ theorem inplace_loop_recurrent (image : Image)
     (chainCode : InplaceSteps.RecurrentCode image 0x158c)
     (restoreCode : InplaceRestore.Code image 0x1604) (hash : Hash) (s : MachineState) (level tree start remaining : Nat)
     (side : Bool) (chain : Reference.Chain) (value : Reference.Digest)
-    (pc : s.pc = 0x1580) (base : s.getReg .x28 = 0x80438) (constant : s.getReg .x13 = 4294967296) (ready : CachedPrepare.Ready s) (length : start + remaining = 7)
+    (pc : s.pc = 0x1580) (base : s.getReg .x28 = 0x80438) (constant : s.getReg .x13 = 4294967296) (ready : CachedPrepare.Ready s)
+    (args : s.getReg .x11 = 384 ∧ s.getReg .x12 = 0x80020 ∧ s.getReg .x5 = 1) (length : start + remaining = 7)
     (data : Buffered s level tree side chain start value) :
-    ∃ final, Trace hash image s (18*remaining+8) (25*remaining+8) remaining remaining final ∧
+    ∃ final, Trace hash image s (15*remaining+8) (22*remaining+8) remaining remaining final ∧
       final.pc = 0x163c ∧
       ChainData final level tree side chain 7 (walk (Reference.chainHash hash level tree side chain) start remaining value) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
@@ -34,10 +35,10 @@ theorem inplace_loop_recurrent (image : Image)
       rw [InplaceRestore.mem checked checkedBase,
         if_neg (by simpa [wordAddress] using outside.2.2.1 1),if_neg (by simpa [wordAddress] using outside.2.2.1 0),InplaceCheck.short_mem]
   | succ remaining ih =>
-    obtain ⟨next, pre, nextPC, nextData, nextReady, nextBase, nextConstant, nextRA, nextSP, nextFrame⟩ := InplaceSteps.recurrent image hash checkCode chainCode.1 chainCode.2 s level tree start
-      side chain value pc base constant ready (by omega) data
+    obtain ⟨next, pre, nextPC, nextData, nextReady, nextBase, nextConstant, nextArgs, nextRA, nextSP, nextFrame⟩ := InplaceSteps.recurrent image hash checkCode chainCode.1 chainCode.2 s level tree start
+      side chain value pc base constant ready args (by omega) data
     obtain ⟨final, tail, finalPC, finalData, finalRA, finalSP, finalFrame⟩ := ih next (start+1)
-      (Reference.chainHash hash level tree side chain start value) nextPC nextBase nextConstant nextReady (by omega) nextData
+      (Reference.chainHash hash level tree side chain start value) nextPC nextBase nextConstant nextReady nextArgs (by omega) nextData
     refine ⟨final, ?_, finalPC, ?_, finalRA.trans nextRA, finalSP.trans nextSP, ?_⟩
     · convert pre.trans tail using 1 <;> omega
     · simpa only [walk] using finalData
@@ -45,8 +46,8 @@ theorem inplace_loop_recurrent (image : Image)
       exact (finalFrame a outside).trans (nextFrame a outside)
 
 
-/-- Setup costs five instructions for an empty chain and thirty-three otherwise. -/
-def inplaceOverhead (remaining : Nat) : Nat := if remaining = 0 then 5 else 33
+/-- Setup costs five instructions for an empty chain and thirty-six otherwise. -/
+def inplaceOverhead (remaining : Nat) : Nat := if remaining = 0 then 5 else 36
 
 theorem inplace_loop (image : Image)
     (setupCode : CheckCode image 0x14ec)
@@ -59,8 +60,8 @@ theorem inplace_loop (image : Image)
     (side : Bool) (chain : Reference.Chain) (value : Reference.Digest)
     (pc : s.pc = 0x14ec) (length : start + remaining = 7)
     (data : ChainData s level tree side chain start value) :
-    ∃ final, Trace hash image s (18*remaining+inplaceOverhead remaining)
-      (25*remaining+inplaceOverhead remaining) remaining remaining final ∧
+    ∃ final, Trace hash image s (15*remaining+inplaceOverhead remaining)
+      (22*remaining+inplaceOverhead remaining) remaining remaining final ∧
       final.pc = 0x163c ∧
       ChainData final level tree side chain 7 (walk (Reference.chainHash hash level tree side chain) start remaining value) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
@@ -89,12 +90,12 @@ theorem inplace_loop (image : Image)
     · exact (CheckReuse.short_stack prepared).2.trans (CheckReuse.setup_stack s).2
     · intro a _; rw [CheckReuse.short_mem, CheckReuse.setup_mem]
   | succ remaining =>
-    obtain ⟨next, pre, nextPC, nextData, nextReady, nextBase, nextConstant, nextRA, nextSP, nextFrame⟩ :=
+    obtain ⟨next, pre, nextPC, nextData, nextReady, nextBase, nextConstant, nextArgs, nextRA, nextSP, nextFrame⟩ :=
       InplaceSteps.initial image hash initialCheck initialCode.1 initialCode.2 prepared level tree start side chain value
         preparedPC preparedBase (by omega) preparedData
     obtain ⟨final, tail, finalPC, finalData, finalRA, finalSP, finalFrame⟩ :=
       inplace_loop_recurrent image checkCode chainCode restoreCode hash next level tree (start+1) remaining side chain
-        (Reference.chainHash hash level tree side chain start value) nextPC nextBase nextConstant nextReady (by omega) nextData
+        (Reference.chainHash hash level tree side chain start value) nextPC nextBase nextConstant nextReady nextArgs (by omega) nextData
     refine ⟨final, ?_, finalPC, ?_, ?_, ?_, ?_⟩
     · convert setupTrace.trans (pre.trans tail) using 1 <;> simp [inplaceOverhead] <;> omega
     · simpa only [walk] using finalData
@@ -103,7 +104,7 @@ theorem inplace_loop (image : Image)
     · intro a outside
       rw [finalFrame a outside, nextFrame a outside, CheckReuse.setup_mem]
 
-theorem inplaceOverhead_le (n : Nat) : inplaceOverhead n ≤ 33 := by
+theorem inplaceOverhead_le (n : Nat) : inplaceOverhead n ≤ 36 := by
   unfold inplaceOverhead; split <;> omega
 
 /-- info: 'SigGolfCandidate.Hypertree.Verifying.inplace_loop_recurrent' depends on axioms: [propext, Classical.choice, Quot.sound] -/

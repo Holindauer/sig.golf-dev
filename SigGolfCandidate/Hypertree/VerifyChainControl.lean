@@ -2,6 +2,7 @@ import SigGolfCandidate.Hypertree.ChainLoopControl
 import SigGolfCandidate.Hypertree.FastIncrement
 import SigGolfCandidate.Hypertree.InplaceInitialPrepare
 import SigGolfCandidate.Hypertree.InplaceCore
+import SigGolfCandidate.Hypertree.PersistentHashArgs
 import SigGolfCandidate.Hypertree.CheckReuse
 
 namespace SigGolfCandidate.Hypertree.Verifying
@@ -19,8 +20,8 @@ theorem verify_chain_code : InplaceInitialPrepare.Code verify 0x1500 ∧ Inplace
 
 theorem verify_cached_check : InplaceCheck.Code verify 0x1580 := by unfold InplaceCheck.Code; decide
 
-theorem verify_cached_code : InplacePrepare.Code verify 0x158c ∧ InplaceCore.Code verify 0x15ec := by
-  unfold InplacePrepare.Code InplaceCore.Code InplaceFinish.Code
+theorem verify_cached_code : PersistentHashArgs.Code verify 0x158c ∧ InplaceCore.Code verify 0x15ec := by
+  unfold PersistentHashArgs.Code InplaceCore.Code InplaceFinish.Code
   decide
 theorem verify_restore_code : InplaceRestore.Code verify 0x1604 := by unfold InplaceRestore.Code; decide
 
