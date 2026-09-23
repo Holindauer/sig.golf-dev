@@ -11,7 +11,7 @@ theorem verify_layer_tree (hash : Hash) (s : MachineState) (level index : Nat) (
     (data : LoopData s level index current witness)
     (selector : s.getMem 0x80420 = BitVec.ofNat 64 (Reference.sideNumber side)) :
     ∃ final steps cycles calls blocks, Trace hash verify s steps cycles calls blocks final ∧
-      steps ≤ 34368 ∧ cycles ≤ (if level = 0 then 241 else 30970) ∧ calls ≤ 324 ∧ blocks ≤ 335 ∧
+      steps ≤ 34368 ∧ cycles ≤ (if level = 0 then 241 else 25426) ∧ calls ≤ 324 ∧ blocks ≤ 335 ∧
       final.pc = 0x11d4 ∧
       LoopData final level index (Reference.recoverLayer hash level index side current (wireLayer witness level)) witness ∧
       LowFrame s final := by

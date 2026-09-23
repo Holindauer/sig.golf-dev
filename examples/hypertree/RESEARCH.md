@@ -34,3 +34,19 @@ The resulting certificate claims S = W = 119632, C = 4932151, score = 5900430884
 The local submission bundle is `../research-copy16-submission`. Keep it local until PR #2's exact head `30df6732c6ab44354ff5f22108d9a49b6ae59aa7` passes official validation. Consult `../autoresearch-state.json` for final validation status and the local commit.
 
 Next route: simplify the 42-instruction chain hash header. First try reusing address registers and base-relative loads/stores while preserving the exact final state and instruction footprint. This avoids requiring an invariant about an earlier iteration. Hoisting invariant fields out of the loop offers larger savings, but requires proving that every entry and intervening call preserves those fields. Keep each new experiment separate from the checked candidate.
+
+## Shared-base chain header
+
+Checkout: `research-header`, based on `f4e8014`. The verifier header reuses one base register for its loads and stores, executes 24 instructions instead of 42, and retains its 42-word footprint using a jump over padding. Including HASH argument setup, `FastChainHeader.block` proves 30 ordinary steps reach exactly `KeygenChainHeader.state` for every initial machine state. `FastHeaderChain.chain_compute` uses this to prove a 58-cycle core and 71-cycle complete iteration.
+
+Proposed S = W = 119632, C = 4050655, score = 484587958960. Full cost: `145 + 288 + 159 * 25473 + 15`. The sample uses 2457768 cycles with unchanged outputs/hash counts; tampered signature, randomizer, and message rejection tests pass. A separate local bundle is at `../research-header-submission`. Final validation status is in `../autoresearch-state.json`.
+
+PR #2 officially passed at 2026-09-23T08:23:11Z under contract `7c2d18e4b797e81b312680e18ae119233d325729`; exact head `30df6732c6ab44354ff5f22108d9a49b6ae59aa7` is a published record. It was closed after validation to submit the next beta candidate as PR #3, exact head `24a6554bd4cc77ceea4fc8f27987375443c0a0e1`. Hold new submissions until PR #3 passes official validation.
+
+A follow-on differential probe at `../research/combined_address_probe.py` tests 30 states per fragment: full header plus HASH argument setup 48 → 27 instructions, and each unrolled copy 10 → 9 instructions. Compared with this header candidate, that saves another five cycles per chain hash. The probe is not an integrated program; its corresponding standalone Lean proofs are described below. Next: create an isolated checkout from this completed candidate and prove those three exact-state replacements.
+
+Validation caught an unintended application of the header optimization at the bottom-leaf hash. The generator is now restricted to the `chain_step`/`chain_end` region; the corrected image restores the original bottom path. Its sample costs 2457768 cycles. A decidability elaboration issue was resolved by using the header Code instance rather than unfolding its whole conjunction.
+
+The next-route module `../research/AddressReuseProof.lean` now passes Lean standalone against the copy16 baseline: all three exact-state equivalences and ordinary execution traces (27 header/setup steps, 9 steps per copy) are proved with permitted-axiom guards. It still needs integration into a fresh candidate image and propagation through the full certificate.
+
+The complete header certificate and permitted-axiom guards pass. The exported local `Solution.lean` is checked separately; final broad-build status and exact commit are recorded in the autoresearch state.

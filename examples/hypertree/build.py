@@ -17,6 +17,7 @@ class Assembler:
         self.words, self.labels, self.fixups = [], {}, []
         self.serial = 0
         self.optimize_copy16 = False
+        self.optimize_chain_header = False
         self.optimize_only_chain = False
     def emit(self, w): self.words.append(w & 0xffffffff)
     def label(self, name):
@@ -80,6 +81,20 @@ class Assembler:
         self.i(0x13, 0, 6, 6, 8); self.i(0x13, 0, 7, 7, 8); self.i(0x13, 0, 10, 10, -1)
         self.branch(10, 0, loop, True)
     def header(self, tag, leaf=False, chain=False, step=False, message=False):
+        if (self.optimize_chain_header and tag == 2 and leaf and chain and step and not message
+                and 'chain_step' in self.labels and 'chain_end' not in self.labels):
+            start = len(self.words)
+            self.li(28, HASH); self.li(10, 2)
+            for source, shift in [(LEVEL,8),(LEAF,16),(CHAIN,24),(STEP,32)]:
+                self.ld(11,28,source-HASH); self.shift(11,11,shift); self.add(10,10,11)
+            self.store(10,28)
+            for offset,source in [(8,INDEX0),(16,INDEX1),(24,INDEX2)]:
+                self.ld(11,28,source-HASH); self.store(11,28,offset)
+            self.i(0x13,0,28,28,24)
+            end = self.fresh('fast_header_end'); self.jump(end)
+            while len(self.words)-start < 42: self.i(0x13,0,0,0,0)
+            self.label(end)
+            return
         self.li(10, tag)
         if not message:
             for address, shift in [(LEVEL, 8)] + ([(LEAF, 16)] if leaf else []) + ([(CHAIN, 24)] if chain else []) + ([(STEP, 32)] if step else []):
@@ -213,6 +228,7 @@ def build(phase):
         a.copy(0x20060, WITNESS_BASE, SIGNATURE_BYTES); a.halt(True); return a.finish()
     verifying = phase == 'verify'
     a.optimize_copy16 = verifying
+    a.optimize_chain_header = verifying
     a.optimize_only_chain = True
     if phase == 'keygen':
         a.set(LEVEL, HEIGHT - 1); a.call('tree'); a.copy(CURRENT, 0x40); a.halt(True)
