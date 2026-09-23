@@ -72,7 +72,7 @@
             <tr><td><code>expand</code></td><td>Message, public key, signature</td><td>Witness or failure</td><td>Prover host</td></tr>
             <tr><td><code>verify</code></td><td>Message, public key, witness</td><td>Accept or reject</td><td>zkVM</td></tr>
           </tbody></table></div>
-          <p>The secret key remains private. The cache is public and untrusted. <code>expand</code> converts the compact signature into a verification witness, for example by restoring pruned Merkle paths. It may simply copy the signature when <code>S = W</code>.</p>
+          <p>The cache is public and untrusted. <code>expand</code> converts the compact signature into a verification witness, for example by restoring pruned Merkle paths. It may simply copy the signature when <code>S = W</code>.</p>
         </section>
 
         <section id="model" class="rule-section">
