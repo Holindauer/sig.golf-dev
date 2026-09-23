@@ -26,8 +26,8 @@
 .constants-table td:last-child { white-space: normal; }
 #proofs { counter-reset: claim; }
 .claim-list { display: grid; gap: 8px; padding: 0; margin: 16px 0; list-style: none; }
-.claim-list li { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 16px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); counter-increment: claim; }
-.claim-list b { font-size: 13px; }
+.claim-list li { display: grid; grid-template-columns: 210px minmax(0,1fr); gap: 16px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); counter-increment: claim; }
+.claim-list b { font-size: 13px; white-space: nowrap; }
 .claim-list b:before, #proofs .callout b:before { content: counter(claim,decimal-leading-zero) ' / '; margin-right: 4px; color: var(--blue); font-size: 11px; }
 #proofs .callout { counter-increment: claim; }
 .claim-list span { color: var(--secondary); font-size: 13px; }

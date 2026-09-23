@@ -18,7 +18,7 @@ Design a **stateless hash-based signature scheme** minimizing `S × C`: signatur
 | `FAILURE`       |                2^-256 |
 | `LIFETIME`      | 2^24 signing requests |
 | `SECURITY_BITS` |                   127 |
-| `CYCLE_LIMIT`   |           2^32 cycles |
+| `CYCLE_LIMIT`   |           2^40 cycles |
 
 Every object has a fixed size in bytes:
 

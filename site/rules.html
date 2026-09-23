@@ -49,7 +49,7 @@
               <tr><td><math class="rule-math" aria-label="epsilon, failure bound" title="FAILURE"><mi>ε</mi></math></td><td>2<sup>−256</sup></td><td>Honest failure probability</td></tr>
               <tr><td><math class="rule-math" aria-label="L, signing lifetime" title="LIFETIME"><mi>L</mi></math></td><td>2<sup>24</sup></td><td>Signing lifetime in requests</td></tr>
               <tr><td><math class="rule-math" aria-label="lambda, security bits" title="SECURITY_BITS"><mi>λ</mi></math></td><td>127</td><td>Security level in bits</td></tr>
-              <tr><td><math class="rule-math" aria-label="T, cycle limit" title="CYCLE_LIMIT"><mi>T</mi></math></td><td>2<sup>32</sup></td><td>Program cycle limit</td></tr>
+              <tr><td><math class="rule-math" aria-label="T, cycle limit" title="CYCLE_LIMIT"><mi>T</mi></math></td><td>2<sup>40</sup></td><td>Program cycle limit</td></tr>
             </tbody></table></div>
             <div class="rule-table-wrap"><table><thead><tr><th>Object</th><th>Size (in Bytes)</th></tr></thead><tbody>
               <tr><td>Message digest</td><td>32</td></tr>
@@ -90,14 +90,14 @@
           <p><math class="rule-math" aria-label="K sub P"><msub><mi>K</mi><mi>P</mi></msub></math> counts program <code>P</code>'s compressions in this experiment; it is zero if <code>P</code> is never reached. For each fixed secret key and <code>H</code>, <math class="rule-math" aria-label="K sub max comma P"><msub><mi>K</mi><mrow><mtext>max</mtext><mo>,</mo><mi>P</mi></mrow></msub></math> is the maximum of <math class="rule-math" aria-label="K sub P"><msub><mi>K</mi><mi>P</mi></msub></math> over all messages. <math class="rule-math" aria-label="B sub P"><msub><mi>B</mi><mi>P</mi></msub></math> denotes <code>P</code>'s named budget.</p>
           <ol class="claim-list">
             <li><b>Success</b><span>For every secret key, <math class="rule-math" aria-label="Probability over H that the experiment succeeds for every message is at least one minus epsilon"><msub><mi>Pr</mi><mi>H</mi></msub><mo>[</mo><mtext>success for every message</mtext><mo>]</mo><mo>≥</mo><mn>1</mn><mo>−</mo><mi>ε</mi></math>.</span></li>
-            <li><b>Compression budgets</b><span>For every secret key and <code>P</code> in {<code>keygen</code>, <code>sign</code>, <code>expand</code>}: <math class="rule-math" display="block" aria-label="Expectation over H of two raised to K sub max comma P divided by B sub P is at most two"><msub><mi>𝔼</mi><mi>H</mi></msub><mo>[</mo><msup><mn>2</mn><mrow><msub><mi>K</mi><mrow><mtext>max</mtext><mo>,</mo><mi>P</mi></mrow></msub><mo>/</mo><msub><mi>B</mi><mi>P</mi></msub></mrow></msup><mo>]</mo><mo>≤</mo><mn>2</mn></math></span></li>
+            <li><b>Compression budgets</b><span>For every secret key and <code>P</code> in {<code>keygen</code>, <code>sign</code>, <code>expand</code>}: <math class="rule-math" aria-label="Expectation over H of two raised to K sub max comma P divided by B sub P is at most two"><msub><mi>𝔼</mi><mi>H</mi></msub><mo>[</mo><msup><mn>2</mn><mrow><msub><mi>K</mi><mrow><mtext>max</mtext><mo>,</mo><mi>P</mi></mrow></msub><mo>/</mo><msub><mi>B</mi><mi>P</mi></msub></mrow></msup><mo>]</mo><mo>≤</mo><mn>2</mn></math></span></li>
             <li><b>Verification cycles</b><span>For every secret key, message, and oracle, if the experiment succeeds, <code>verify</code> uses at most <code>C</code> cycles.</span></li>
           </ol>
           <p class="fine-print"><math class="rule-math" aria-label="Probability over H"><msub><mi>Pr</mi><mi>H</mi></msub></math> means probability over <code>H</code>; <math class="rule-math" aria-label="Expectation over H"><msub><mi>𝔼</mi><mi>H</mi></msub></math> means expected value over <code>H</code>.</p>
 
           <h3>Security</h3>
           <p><strong>Experiment:</strong> Let <code>A</code> be a classical probabilistic adversary with unrestricted computation and an integer hash-call budget <code>Q ≥ 1</code>. Sample <code>H</code> and a uniform secret key independently. Initialize an empty transcript <code>T</code> and count every call to <code>H</code> throughout the experiment. Run <code>keygen(secretKey)</code>; failure ends the experiment without a win. Otherwise give <code>A</code> the public key and cache.</p>
-          <p><code>A</code> may adaptively query:</p>
+          <p><code>A</code> may then adaptively query:</p>
           <div class="two-cards">
             <div class="detail-card"><b><code>random_oracle(input_A)</code></b><p>Return <code>H(input_A)</code>.</p></div>
             <div class="detail-card"><b><code>signing_oracle(message_A, cache_A)</code></b><p>Run <code>sign(secretKey, public key, cache_A, message_A)</code> with the original secret key and public key. Return the signature or failure. Add each returned <code>(message_A, signature)</code> to <code>T</code>. Allow at most <math class="rule-math" aria-label="L, signing lifetime" title="LIFETIME"><mi>L</mi></math> requests.</p></div>

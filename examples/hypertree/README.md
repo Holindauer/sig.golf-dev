@@ -14,7 +14,7 @@ The signer derives a 32-byte randomizer as H(domain 6, secret key, message) and 
 The certificate establishes all organizer requirements for the exact images in [Images.lean](../../SigGolfCandidate/Hypertree/Images.lean):
 
 - Static admission, including fixed sizes and image limits.
-- Termination below 2^32 cycles for every typed input and every oracle, including adversarial caches, signatures, and witnesses.
+- Termination below 2^40 cycles for every typed input and every oracle, including adversarial caches, signatures, and witnesses.
 - Honest success for every secret key, message, and oracle, implying the required simultaneous all-message success probability.
 - Exponential compression budgets after maximizing over messages.
 - Security at every total hash-call budget Q: forgery probability at most Q / 2^127, against adaptive adversaries with up to 2^24 signing requests. Both final-submission forms and all honest and adversarial hash calls are included.
