@@ -60,3 +60,15 @@ Proposed C = 3805795, score = 455294867440, with unchanged S = W = 119632. Bound
 Next route: `../research/FastIncrement.lean` proves a six-step counter increment matches the original eight-step increment, including its backward jump and complete state. Integrate the shorter fragment followed by two unreachable padding words in a new isolated checkout; preserve the checked candidate and pending PR until official validation.
 
 The complete address-reuse certificate, permitted-axiom guards, and exported `Solution.lean` all passed. Organizer modules and pinned dependencies are unchanged. Final broad-build status and commit are saved in the autoresearch state.
+
+## Counter-address reuse
+
+Checkout `research-increment`, based on `644dd82`. Reuse x28 for the step-counter store, move the backward jump two instructions earlier, and leave two unreachable padding words. `FastIncrement.block` proves six steps reach exactly the old increment state. Full chain iteration: 57 steps/64 cycles.
+
+Proposed C = 3707851, score = 443577630832; S = W = 119632. Bound: `145 + 288 + 159 * 23317 + 15`. Reference comparisons and rejection cases pass; sample verification costs 2272009 cycles with unchanged hash counts. Final validation and exact commit are in `../autoresearch-state.json`.
+
+Next route: `../research/Copy6.lean` proves six-step copies satisfy the exact memory, stack, return-address, and PC specifications required by the chain core. It intentionally does not claim preservation of unused temporary registers. Prototype script: `../research/copy6_probe.py`. Integrate in another isolated checkout and re-establish the complete certificate before claiming a universal improvement.
+
+The six-step-copy prototype passes full reference and malformed-input rejection tests at 2112787 sample verification cycles, with unchanged hash counts. The smaller copy execution/specification theorems and axiom guards pass standalone; a full integrated certificate remains necessary.
+
+The complete counter-update certificate, permitted-axiom guards, source policy, and exported `Solution.lean` pass. Organizer definitions and pinned dependencies are unchanged. Full-build result and local commit are recorded in the autoresearch state.

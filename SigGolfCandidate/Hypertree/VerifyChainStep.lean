@@ -33,7 +33,7 @@ theorem ChainData.check (s : MachineState) (level tree : Nat) (side : Bool) (cha
 theorem chain_step (hash : Hash) (s : MachineState) (level tree step : Nat)
     (side : Bool) (chain : Reference.Chain) (value : Reference.Digest)
     (pc : s.pc = 0x14ec) (bound : step < 7) (data : ChainData s level tree side chain step value) :
-    ∃ final, Trace hash verify s 59 66 1 1 final ∧ final.pc = 0x14ec ∧
+    ∃ final, Trace hash verify s 57 64 1 1 final ∧ final.pc = 0x14ec ∧
       ChainData final level tree side chain (step+1) (Reference.chainHash hash level tree side chain step value) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, OutsideChainWork a → final.getMem a = s.getMem a) := by
@@ -49,7 +49,7 @@ theorem chain_step (hash : Hash) (s : MachineState) (level tree step : Nat)
     (check s) checkedPC level tree step side chain value checked.levelEq checked.leafEq checked.chainEq
     checked.stepEq checked.indexEq checked.valueEq
   have hashedPC' : hashed.pc = 0x161c := hashedPC
-  have tail := increment_block verify 0x161c (-332) verify_chain_increment hashed hashedPC'
+  have tail := FastIncrement.block verify 0x161c verify_chain_increment hashed hashedPC'
   have keep (a : Word)
       (hi : ∀ i : Fin 6, a ≠ wordAddress 0x80000 i.val)
       (ha : ∀ i : Fin 4, a ≠ wordAddress 0x80300 i.val)

@@ -209,7 +209,12 @@ def leaf_functions(a, verifying):
     if not verifying: capture(a)
     a.load(6, STEP); a.li(7, 7); a.branch(6, 7, 'chain_end')
     a.copy(VALUE, HASH + 32); a.hash(2, 48, leaf=True, chain=True, step=True); a.copy(ANSWER, VALUE)
-    a.load(6, STEP); a.i(0x13, 0, 6, 6, 1); a.save(6, STEP); a.jump('chain_step')
+    a.load(6, STEP); a.i(0x13, 0, 6, 6, 1)
+    if verifying:
+        a.store(6, 28); a.jump('chain_step')
+        a.i(0x13, 0, 0, 0, 0); a.i(0x13, 0, 0, 0, 0)
+    else:
+        a.save(6, STEP); a.jump('chain_step')
     a.label('chain_end')
     a.load(6, CHAIN); a.shift(7, 6, 4); a.li(10, ENDPOINTS); a.add(7, 7, 10)
     a.load(10, VALUE); a.load(11, VALUE + 8); a.store(10, 7); a.store(11, 7, 8)

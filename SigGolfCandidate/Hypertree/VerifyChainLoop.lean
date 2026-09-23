@@ -9,7 +9,7 @@ theorem chain_loop (hash : Hash) (s : MachineState) (level tree start remaining 
     (side : Bool) (chain : Reference.Chain) (value : Reference.Digest)
     (pc : s.pc = 0x14ec) (length : start + remaining = 7)
     (data : ChainData s level tree side chain start value) :
-    ∃ final, Trace hash verify s (59*remaining+5) (66*remaining+5) remaining remaining final ∧
+    ∃ final, Trace hash verify s (57*remaining+5) (64*remaining+5) remaining remaining final ∧
       final.pc = 0x163c ∧
       ChainData final level tree side chain 7 (walk (Reference.chainHash hash level tree side chain) start remaining value) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
@@ -38,7 +38,7 @@ theorem chain_loop (hash : Hash) (s : MachineState) (level tree start remaining 
 theorem chain_from_digit (hash : Hash) (s : MachineState) (level tree : Nat)
     (side : Bool) (chain : Reference.Chain) (digit : Fin 8) (value : Reference.Digest)
     (pc : s.pc = 0x14ec) (data : ChainData s level tree side chain digit.val value) :
-    ∃ final, Trace hash verify s (59*(7-digit.val)+5) (66*(7-digit.val)+5) (7-digit.val) (7-digit.val) final ∧
+    ∃ final, Trace hash verify s (57*(7-digit.val)+5) (64*(7-digit.val)+5) (7-digit.val) (7-digit.val) final ∧
       final.pc = 0x163c ∧
       ChainData final level tree side chain 7
         (walk (Reference.chainHash hash level tree side chain) digit.val (7-digit.val) value) ∧
