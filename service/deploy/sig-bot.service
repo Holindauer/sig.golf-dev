@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 User=sigbot
 Group=sigwork
-UMask=0007
+UMask=0002
 WorkingDirectory=/srv/sig-golf/repo
 Environment=PATH=/srv/sig-golf/verify-home/.elan/bin:/usr/local/bin:/usr/bin:/bin
 Environment=SIG_VERIFIER_USER=sigverify
