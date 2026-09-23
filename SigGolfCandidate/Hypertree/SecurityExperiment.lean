@@ -8,10 +8,10 @@ open SigGolf OracleComp OracleSpec Reference SignatureEncoding SecurityDerivatio
 /-- A compact serialization with a total fallback. The signer validity theorem
 shows that the fallback cannot occur for either real or ideal signing. -/
 def serialize (signature : Compact) : Option (Bytes signatureBytes) :=
-  if valid : signature.upper.length = 159 then some (signature.wire valid) else none
+  if valid : signature.upper.length = 151 then some (signature.wire valid) else none
 
 @[simp] theorem serialize_valid (signature : Compact) (valid : signature.Valid) :
-    serialize signature = some (signature.wire valid) := by simp [serialize, show signature.upper.length = 159 from valid]
+    serialize signature = some (signature.wire valid) := by simp [serialize, show signature.upper.length = 151 from valid]
 
 def signWire (pk : PublicKey) (message : Message) : OracleComp SplitWorld (Option (Bytes signatureBytes)) :=
   serialize <$> SecurityIdealSign.signCompact pk message

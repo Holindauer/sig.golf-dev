@@ -9,7 +9,7 @@ abbrev History := List (Message × Compact)
 def HonestHistory (hash : Hash) (secretKey : SecretKey) (history : History) : Prop :=
   ∀ entry ∈ history, entry.2 = SignatureEncoding.signCompact hash secretKey (Reference.keygen hash secretKey) entry.1
 
-def index (hash : Hash) (secretKey : SecretKey) (message : Message) (signature : Compact) : BitVec 160 :=
+def index (hash : Hash) (secretKey : SecretKey) (message : Message) (signature : Compact) : BitVec 152 :=
   indexOf hash (Reference.keygen hash secretKey) message signature.randomizer
 
 /-- A different message/randomizer pair reuses an index of an actual signing response. -/

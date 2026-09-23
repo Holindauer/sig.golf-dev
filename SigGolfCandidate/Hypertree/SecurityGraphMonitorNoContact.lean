@@ -13,7 +13,7 @@ open scoped Classical
 
 /-- A normally completed monitored call is an actual supported graph-oracle call,
 with exactly the expected cache transition and neither first-contact flag. -/
-theorem read_spec (factors : Factors) (signed : Finset (BitVec 160))
+theorem read_spec (factors : Factors) (signed : Finset (BitVec 152))
     (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) (initial : Safe factors signed exposed cache)
     (query : Query) (result : Answer)
     (member : some result ∈ support (stopped factors.1 exposed
@@ -44,7 +44,7 @@ theorem collision_iff (factors : Factors) (hash : Hash) (query : Query) :
 
 /-- An unauthorized canonical predecessor is still hidden by the exposure
 invariant, so the extraction's hidden-input contact triggers the input flag. -/
-theorem hidden_implies_input (factors : Factors) (signed : Finset (BitVec 160))
+theorem hidden_implies_input (factors : Factors) (signed : Finset (BitVec 152))
     (exposed : QueryCache PointSpec) (safe : ExposedSafe factors.2.2 signed exposed)
     (query : Query) (contact : HiddenContact factors signed query) : inputHit factors exposed query := by
   obtain ⟨address, step, unauthorized, equal⟩ := contact
@@ -59,7 +59,7 @@ theorem hidden_implies_input (factors : Factors) (signed : Finset (BitVec 160))
 
 /-- No contact in the actual verifier query-log sense can occur on a normally
 completed public-monitor call. This is the deterministic extraction boundary. -/
-theorem read_no_contact (factors : Factors) (signed : Finset (BitVec 160))
+theorem read_no_contact (factors : Factors) (signed : Finset (BitVec 152))
     (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) (initial : Safe factors signed exposed cache)
     (query : Query) (result : Answer) (hash : Hash) (answer : hash query = result.1)
     (member : some result ∈ support (stopped factors.1 exposed

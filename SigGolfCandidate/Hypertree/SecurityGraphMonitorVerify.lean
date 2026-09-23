@@ -34,7 +34,7 @@ theorem compile_query {α : Type} (metadata : MetadataTable) (query : Query)
 /-- Every normally completed monitored computation is the genuine verifier run
 under every total residual oracle extending its final cache. Its complete actual
 query log contains no extracted contact, and all invariants persist. -/
-theorem completed {α : Type} (factors : Factors) (signed : Finset (BitVec 160))
+theorem completed {α : Type} (factors : Factors) (signed : Finset (BitVec 152))
     (program : OracleComp HashSpec α) (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec)
     (initial : Safe factors signed exposed cache) (result : Result α)
     (member : some result ∈ support (stopped factors.1 exposed (compile factors.2.2 program exposed cache)))

@@ -15,11 +15,11 @@ def CollisionContact (factors : Factors) (hash : Hash) (query : Query) : Prop :=
     truncate (hash query) = truncate (labels factors position)
 
 /-- A concrete chain call guesses an unauthorized canonical predecessor. -/
-def HiddenContact (factors : Factors) (signed : Finset (BitVec 160)) (query : Query) : Prop :=
+def HiddenContact (factors : Factors) (signed : Finset (BitVec 152)) (query : Query) : Prop :=
   ∃ address step, ¬Authorized factors.2.2 signed (predecessor address step) ∧
     query = chainInput address step (truncate (factors.1 (predecessor address step)))
 
-def Contact (factors : Factors) (signed : Finset (BitVec 160)) (hash : Hash) (query : Query) : Prop :=
+def Contact (factors : Factors) (signed : Finset (BitVec 152)) (hash : Hash) (query : Query) : Prop :=
   CollisionContact factors hash query ∨ HiddenContact factors signed query
 
 theorem payload_collision (factors : Factors) (base : Hash) (position : Position)
@@ -45,7 +45,7 @@ theorem canonical_chain_input (factors : Factors) (address : ChainAddress) (step
 
 /-- Every collision alternative carries an input in the actual layer query log
 and the target equality recognized by the public monitor. -/
-theorem layer_collision_logged (factors : Factors) (base : Hash) (level : Fin 160)
+theorem layer_collision_logged (factors : Factors) (base : Hash) (level : Fin 152)
     (tree : BitVec 192) (side : Bool) (message : Digest) (signature : LayerSignature)
     (collision : LayerCollision (privateTable factors) (labels factors) base level tree side message signature) :
     ∃ query ∈ queries (programmed (privateTable factors) (labels factors) base)
@@ -84,7 +84,7 @@ theorem layer_collision_logged (factors : Factors) (base : Hash) (level : Fin 16
 
 /-- Unauthorized points cannot be endpoints, which ensures their successor call
 is executed by a verifying WOTS suffix. -/
-theorem unauthorized_lt_seven (factors : Factors) (signed : Finset (BitVec 160))
+theorem unauthorized_lt_seven (factors : Factors) (signed : Finset (BitVec 152))
     (address : ChainAddress) (point : Fin 8) (hidden : ¬Authorized factors.2.2 signed (address, point)) :
     point.val < 7 := by
   have limit := point.isLt
@@ -92,8 +92,8 @@ theorem unauthorized_lt_seven (factors : Factors) (signed : Finset (BitVec 160))
   have equal : point = 7 := Fin.ext (by change point.val = 7; omega)
   exact hidden (equal ▸ endpoint_authorized factors.2.2 signed address)
 
-theorem upper_point_logged (factors : Factors) (signed : Finset (BitVec 160)) (base : Hash)
-    (level : Fin 160) (index : Nat) (bound : index < 2 ^ 192) (upper : 0 < level.val)
+theorem upper_point_logged (factors : Factors) (signed : Finset (BitVec 152)) (base : Hash)
+    (level : Fin 152) (index : Nat) (bound : index < 2 ^ 192) (upper : 0 < level.val)
     (message : Digest) (signature : LayerSignature) (chain : Chain)
     (hidden : ¬Authorized factors.2.2 signed (pathAddress level index chain, digit message chain))
     (value : signature.values chain = truncate (factors.1 (pathAddress level index chain, digit message chain))) :

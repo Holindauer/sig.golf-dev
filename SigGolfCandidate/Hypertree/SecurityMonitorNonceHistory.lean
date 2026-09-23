@@ -127,7 +127,7 @@ theorem run_compile {α : Type} (points : PointTable) (nonces : NonceTable)
       exact ih result.1 _ _ _ _ _ (tracked.public pk input _ result.1)
   | sign signPk message next ih =>
     rw [compile, SecurityMonitorGraphView.compile]
-    by_cases allowed : 117508 ≤ remaining
+    by_cases allowed : 111596 ≤ remaining
     · rw [if_pos allowed, if_pos allowed, SecurityNonceProgram.run, run_liftValue, map_bind]
       change ((SecurityGraphMonitorObserve.observe points exposed (indexStep residual _ _) >>= _) ) = _
       rw [SecurityGraphMonitorObserve.observe_indexStep_bind,

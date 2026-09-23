@@ -108,9 +108,9 @@ theorem compile_credit {α : Type} (nonces : NonceTable) (metadata : MetadataTab
       intro answer residual
       apply disclose_credit
       intro opened
-      apply Credit.weaken _ _ _ (ih _ (remaining - 117508) opened residual
+      apply Credit.weaken _ _ _ (ih _ (remaining - 111596) opened residual
         (recordSign history message (cache (SecurityRandomOracle.indexInput signPk message (nonces message))).isSome answer))
-      change 2 * history.counts.graph ≤ 2 * (history.counts.graph + 117507)
+      change 2 * history.counts.graph ≤ 2 * (history.counts.graph + 111595)
       omega
     next short => exact Nat.le_refl _
 
@@ -166,9 +166,9 @@ theorem experiment_bad_le (publicCache : Cache) (adversary : Adversary submissio
   calc
     _ ≤ expectedValue ($ᵗ NonceTable) (fun nonces => expectedValue ($ᵗ MetadataTable) (fun metadata =>
       2 * expectedValue (SecurityGraphMonitorProgram.experiment
-        (start nonces metadata (truncate (metadata (.node 159 0)))
-          (ofInteract adversary (truncate (metadata (.node 159 0))) rounds
-            (adversary.initial (truncate (metadata (.node 159 0))) publicCache) {}) budget) ∅)
+        (start nonces metadata (truncate (metadata (.node 151 0)))
+          (ofInteract adversary (truncate (metadata (.node 151 0))) rounds
+            (adversary.initial (truncate (metadata (.node 151 0))) publicCache) {}) budget) ∅)
         (fun result => (result.value.history.counts.graph : ENNReal)) / 2 ^ 128)) := by
       apply expectedValue_mono
       intro nonces

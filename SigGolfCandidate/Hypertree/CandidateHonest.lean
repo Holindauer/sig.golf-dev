@@ -7,7 +7,7 @@ open SigGolf OracleComp KeygenOrganizer SignatureEncoding
 set_option maxRecDepth 4096
 
 theorem expand_exact (hash : Hash) (message : Message) (pk : PublicKey) (signature : Bytes signatureBytes) :
-    submission.runWith hash .expand (message,pk,signature)=⟨some signature,true,89733,0,0⟩ := by
+    submission.runWith hash .expand (message,pk,signature)=⟨some signature,true,85221,0,0⟩ := by
   have value := Expansion.run_identity hash (message,pk,signature)
   obtain ⟨finished,_,cycles,calls,blocks⟩ := Expansion.run_bound hash (message,pk,signature)
   cases h : submission.runWith hash .expand (message,pk,signature)
@@ -39,9 +39,9 @@ theorem pipeline_success {σ ω : Type} (hash : Hash) (keygen : OracleComp HashS
 
 /-- Every message succeeds against each single fixed oracle, with exact budgeted-phase costs. -/
 theorem honest_exact (hash : Hash) (secretKey : SecretKey) (message : Message) :
-    ∃ cycles calls blocks, cycles≤3218131 ∧ calls≤51841 ∧ blocks≤53602 ∧
+    ∃ cycles calls blocks, cycles≤3056235 ∧ calls≤51841 ∧ blocks≤53602 ∧
       evalWithAnswerFn hash (submission.honest secretKey message)=
-        ⟨true,fun phase => match phase with | .keygen => 761 | .sign => 121008 | .expand => 0 | .verify => blocks,cycles⟩ := by
+        ⟨true,fun phase => match phase with | .keygen => 761 | .sign => 114920 | .expand => 0 | .verify => blocks,cycles⟩ := by
   let pk := Reference.keygen hash secretKey
   let signature := (signCompact hash secretKey pk message).wire (signCompact_valid hash secretKey pk message)
   obtain ⟨signCycles,_,signRun⟩ := Signing.sign_run_honest hash secretKey KeygenFunctional.zeroCache message
@@ -56,7 +56,7 @@ theorem honest_exact (hash : Hash) (secretKey : SecretKey) (message : Message) :
     (fun p c => submission.run .sign (secretKey,p,c,message))
     (fun p sig => submission.run .expand (message,p,sig))
     (fun p wit => submission.run .verify (message,p,wit)) pk KeygenFunctional.zeroCache signature signature
-    82446 739 761 signCycles 117508 121008 89733 0 0 cycles calls blocks
+    82446 739 761 signCycles 111596 114920 85221 0 0 cycles calls blocks
     (KeygenFunctional.run_exact hash secretKey) signRun (expand_exact hash message pk signature) verifyRun
 
 /-- info: 'SigGolfCandidate.Hypertree.Candidate.honest_exact' depends on axioms: [propext, Classical.choice, Quot.sound] -/

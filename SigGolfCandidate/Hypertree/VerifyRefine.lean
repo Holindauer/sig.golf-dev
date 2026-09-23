@@ -11,8 +11,8 @@ def initializeState (s : MachineState) : MachineState :=
   let s := execInstrBr s (.LUI .x28 0x80)
   let s := execInstrBr s (.ADDI .x28 .x28 0x440)
   let s := execInstrBr s (.SD .x28 .x6 0)
-  let s := execInstrBr s (.LUI .x6 0x3d)
-  let s := execInstrBr s (.ADDI .x6 .x6 0x3d0)
+  let s := execInstrBr s (.LUI .x6 0x3c)
+  let s := execInstrBr s (.ADDI .x6 .x6 0xc50)
   let s := execInstrBr s (.LUI .x28 0x80)
   let s := execInstrBr s (.ADDI .x28 .x28 0x448)
   execInstrBr s (.SD .x28 .x6 0)
@@ -23,8 +23,8 @@ theorem initializeState_block (s : MachineState) (pc : s.pc = 0x1000) :
   let s2 := execInstrBr s1 (.LUI .x28 0x80)
   let s3 := execInstrBr s2 (.ADDI .x28 .x28 0x440)
   let s4 := execInstrBr s3 (.SD .x28 .x6 0)
-  let s5 := execInstrBr s4 (.LUI .x6 0x3d)
-  let s6 := execInstrBr s5 (.ADDI .x6 .x6 0x3d0)
+  let s5 := execInstrBr s4 (.LUI .x6 0x3c)
+  let s6 := execInstrBr s5 (.ADDI .x6 .x6 0xc50)
   let s7 := execInstrBr s6 (.LUI .x28 0x80)
   let s8 := execInstrBr s7 (.ADDI .x28 .x28 0x448)
   let s9 := execInstrBr s8 (.SD .x28 .x6 0)
@@ -44,11 +44,11 @@ theorem initializeState_block (s : MachineState) (pc : s.pc = 0x1000) :
   · have hp : s3.pc = 0x100c := by simp [s1, s2, s3, execInstrBr, pc]
     simp only [fetch, hp]; decide
   · simp [s1, s2, s3, s4, ordinaryStep, memoryArgumentsValid, execInstrBr, signExtend12, accessValid, rangeValid, MEMORY_BYTES, MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne]
-  apply OrdinarySteps.step s4 s5 _ (.base (.LUI .x6 0x3d)) 4
+  apply OrdinarySteps.step s4 s5 _ (.base (.LUI .x6 0x3c)) 4
   · have hp : s4.pc = 0x1010 := by simp [s1, s2, s3, s4, execInstrBr, pc]
     simp only [fetch, hp]; decide
   · rfl
-  apply OrdinarySteps.step s5 s6 _ (.base (.ADDI .x6 .x6 0x3d0)) 3
+  apply OrdinarySteps.step s5 s6 _ (.base (.ADDI .x6 .x6 0xc50)) 3
   · have hp : s5.pc = 0x1014 := by simp [s1, s2, s3, s4, s5, execInstrBr, pc]
     simp only [fetch, hp]; decide
   · rfl
@@ -70,7 +70,7 @@ theorem initializeState_pc (s : MachineState) : (initializeState s).pc = s.pc + 
   simp [initializeState, execInstrBr, BitVec.add_assoc]
 
 theorem initializeState_mem (s : MachineState) (a : Word) :
-    (initializeState s).getMem a = if a = 0x80448 then 0x3d3d0 else if a = 0x80440 then 0 else s.getMem a := by
+    (initializeState s).getMem a = if a = 0x80448 then 0x3bc50 else if a = 0x80440 then 0 else s.getMem a := by
   simp [initializeState, execInstrBr, signExtend12, Expansion.mem_setMem,
     MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne]
 
@@ -102,7 +102,7 @@ theorem indexInputByte_spec (s : MachineState) (i : Fin 112) :
       if i.val = 0 then 5 else if i.val < 32 then 0 else
         if i.val < 48 then s.getByte (BitVec.ofNat 64 (0x40 + (i.val - 32)))
         else if i.val < 80 then s.getByte (BitVec.ofNat 64 (i.val - 48))
-        else s.getByte (BitVec.ofNat 64 (0x3d3b0 + (i.val - 80))) := by
+        else s.getByte (BitVec.ofNat 64 (0x3bc30 + (i.val - 80))) := by
   fin_cases i <;> first | rfl | simp [indexInputByte, indexInputWord, extractByte]
 
 theorem prepared_index_bytes (original ready : MachineState)
@@ -116,7 +116,7 @@ theorem prepared_index_bytes (original ready : MachineState)
 theorem index_query (original ready : MachineState) (pk : PublicKey) (message : Message) (r : Bytes 32)
     (hpk : ∀ i, i < 16 → original.getByte (BitVec.ofNat 64 (0x40 + i)) = pk.extractLsb' (8 * i) 8)
     (hmessage : ∀ i, i < 32 → original.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8 * i) 8)
-    (hr : ∀ i, i < 32 → original.getByte (BitVec.ofNat 64 (0x3d3b0 + i)) = r.extractLsb' (8 * i) 8)
+    (hr : ∀ i, i < 32 → original.getByte (BitVec.ofNat 64 (0x3bc30 + i)) = r.extractLsb' (8 * i) 8)
     (words : ∀ i : Fin 14, ready.getMem (wordAddress 0x80000 i.val) = indexInputWord original i) :
     hashInput (indexHashState ready) = Reference.packed (indexPayload pk message r) := by
   apply Serialization.hashInput_of_list (indexHashState ready) 0x80000 (indexPayload pk message r)
@@ -138,9 +138,9 @@ theorem index_refines (hash : Hash) (s : MachineState) (pk : PublicKey) (message
     (pc : s.pc = 0x1024)
     (hpk : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x40 + i)) = pk.extractLsb' (8 * i) 8)
     (hmessage : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8 * i) 8)
-    (hr : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 (0x3d3b0 + i)) = r.extractLsb' (8 * i) 8) :
+    (hr : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 (0x3bc30 + i)) = r.extractLsb' (8 * i) 8) :
     ∃ final, Trace hash verify s 121 136 1 2 final ∧ final.pc = 0x1148 ∧
-      readBuffer final 0x80408 20 = Reference.indexOf hash pk message r := by
+      readBuffer final 0x80408 19 = Reference.indexOf hash pk message r := by
   obtain ⟨ready, prepare, readypc, words, _⟩ := index_prepare s pc
   obtain ⟨final, trace, finalpc, low, high⟩ := index_trace hash ready readypc
   have query := index_query s ready pk message r hpk hmessage hr words
@@ -153,15 +153,15 @@ theorem entry_index_refines (hash : Hash) (s : MachineState) (pk : PublicKey) (m
     (pc : s.pc = 0x1000)
     (hpk : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x40 + i)) = pk.extractLsb' (8 * i) 8)
     (hmessage : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8 * i) 8)
-    (hr : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 (0x3d3b0 + i)) = r.extractLsb' (8 * i) 8) :
+    (hr : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 (0x3bc30 + i)) = r.extractLsb' (8 * i) 8) :
     ∃ final, Trace hash verify s 130 145 1 2 final ∧ final.pc = 0x1148 ∧
-      readBuffer final 0x80408 20 = Reference.indexOf hash pk message r := by
+      readBuffer final 0x80408 19 = Reference.indexOf hash pk message r := by
   have initpc : (initializeState s).pc = 0x1024 := by simp [initializeState_pc, pc]
   obtain ⟨final, trace, finalpc, value⟩ := index_refines hash (initializeState s) pk message r initpc
     (fun i hi => (initializeState_byte s 0x40 i (by decide) (by omega)).trans (hpk i hi))
     (fun i hi => (by simpa only [Nat.zero_add] using initializeState_byte s 0 i (by decide) (by omega) :
       (initializeState s).getByte (BitVec.ofNat 64 i) = s.getByte (BitVec.ofNat 64 i)).trans (hmessage i hi))
-    (fun i hi => (initializeState_byte s 0x3d3b0 i (by decide) (by omega)).trans (hr i hi))
+    (fun i hi => (initializeState_byte s 0x3bc30 i (by decide) (by omega)).trans (hr i hi))
   exact ⟨final, (initializeState_block s pc).trace.trans trace, finalpc, value⟩
 
 /-- info: 'SigGolfCandidate.Hypertree.Verifying.entry_index_refines' depends on axioms: [propext, Classical.choice, Quot.sound] -/

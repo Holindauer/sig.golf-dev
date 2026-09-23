@@ -15,7 +15,7 @@ def OutsideParentWork (side : Bool) (a : Word) : Prop :=
 theorem finish_tree (hash : Hash) (s : MachineState) (level tree base : Nat) (side : Bool)
     (message : Reference.Digest) (signature : Reference.LayerSignature)
     (pc : s.pc = 0x1314) (sp : s.getReg .x2 = 0xfffff0)
-    (small : level < 160) (aligned : base % 8 = 0) (bound : base+752 ≤ 0x80000)
+    (small : level < 152) (aligned : base % 8 = 0) (bound : base+752 ≤ 0x80000)
     (levelEq : s.getMem 0x80400 = BitVec.ofNat 64 level)
     (indexEq : ∀ i : Fin 3, s.getMem (wordAddress 0x80408 i.val) =
       (BitVec.ofNat 192 tree).extractLsb' (64*i.val) 64)

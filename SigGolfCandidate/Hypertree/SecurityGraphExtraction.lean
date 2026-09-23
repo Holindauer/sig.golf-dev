@@ -9,8 +9,8 @@ set_option maxRecDepth 4096
 
 /-- One actual verification layer collides with its canonical graph target or
 supplies an unauthorized canonical WOTS point. All values are from the ideal graph. -/
-def LayerBad (factors : Factors) (signed : Finset (BitVec 160)) (base : Hash)
-    (level : Fin 160) (index : Nat) (message : Digest) (signature : LayerSignature) : Prop :=
+def LayerBad (factors : Factors) (signed : Finset (BitVec 152)) (base : Hash)
+    (level : Fin 152) (index : Nat) (message : Digest) (signature : LayerSignature) : Prop :=
   LayerCollision (privateTable factors) (labels factors) base level
     (BitVec.ofNat 192 (index / 2)) (index % 2 == 1) message signature ∨
   (0 < level.val ∧ ∃ chain, ¬Authorized factors.2.2 signed (pathAddress level index chain, digit message chain) ∧
@@ -18,17 +18,17 @@ def LayerBad (factors : Factors) (signed : Finset (BitVec 160)) (base : Hash)
 
 /-- The bad layer remains attached to the actual verifier's message and index
 recurrence. Thus the witness is not an unrelated collision elsewhere in the oracle. -/
-def PathBad (factors : Factors) (signed : Finset (BitVec 160)) (base : Hash) :
+def PathBad (factors : Factors) (signed : Finset (BitVec 152)) (base : Hash) :
     Nat → Nat → Digest → List LayerSignature → Prop
   | _, _, _, [] => False
   | level, index, message, signature :: rest =>
-      (∃ atLevel : Fin 160, atLevel.val = level ∧ LayerBad factors signed base atLevel index message signature) ∨
+      (∃ atLevel : Fin 152, atLevel.val = level ∧ LayerBad factors signed base atLevel index message signature) ∨
       PathBad factors signed base (level + 1) (index / 2)
         (recoverLayer (programmed (privateTable factors) (labels factors) base)
           level (index / 2) (index % 2 == 1) message signature) rest
 
-theorem completed_earlier (factors : Factors) (signed : Finset (BitVec 160)) (base : Hash)
-    (level : Fin 160) (index : Nat) (bound : index < 2 ^ 192) (upper : 0 < level.val)
+theorem completed_earlier (factors : Factors) (signed : Finset (BitVec 152)) (base : Hash)
+    (level : Fin 152) (index : Nat) (bound : index < 2 ^ 192) (upper : 0 < level.val)
     (message : Digest) (signature : LayerSignature)
     (exposure : EarlierPointExposure (hash (privateTable factors) (labels factors) base) 0
       level.val index message signature) :
@@ -42,9 +42,9 @@ theorem completed_earlier (factors : Factors) (signed : Finset (BitVec 160)) (ba
   rw [same] at outcome
   exact outcome
 
-theorem path_fault (factors : Factors) (signed : Finset (BitVec 160)) (base : Hash)
+theorem path_fault (factors : Factors) (signed : Finset (BitVec 152)) (base : Hash)
     (level index : Nat) (message : Digest) (signatures : List LayerSignature)
-    (levels : level + signatures.length ≤ 160) (bound : index < 2 ^ 192)
+    (levels : level + signatures.length ≤ 152) (bound : index < 2 ^ 192)
     (fault : PathFault (hash (privateTable factors) (labels factors) base) 0 level index message signatures) :
     PathBad factors signed base level index message signatures := by
   induction signatures generalizing level index message with
@@ -52,7 +52,7 @@ theorem path_fault (factors : Factors) (signed : Finset (BitVec 160)) (base : Ha
   | cons signature rest ih =>
     rcases fault with first | later
     · left
-      have atLevel : level < 160 := by simp only [List.length_cons] at levels; omega
+      have atLevel : level < 152 := by simp only [List.length_cons] at levels; omega
       refine ⟨⟨level, atLevel⟩, rfl, ?_⟩
       rcases first with collision | ⟨positive, earlier⟩
       · left
@@ -67,12 +67,12 @@ theorem path_fault (factors : Factors) (signed : Finset (BitVec 160)) (base : Ha
       exact ih (level + 1) (index / 2) _ (by simp only [List.length_cons] at levels; omega)
         (lt_of_le_of_lt (Nat.div_le_self ..) bound) later
 
-def publicKey (factors : Factors) : PublicKey := truncate (factors.2.2 (.node 159 0))
+def publicKey (factors : Factors) : PublicKey := truncate (factors.2.2 (.node 151 0))
 
-noncomputable def index (factors : Factors) (base : Hash) (message : Message) (signature : Compact) : BitVec 160 :=
+noncomputable def index (factors : Factors) (base : Hash) (message : Message) (signature : Compact) : BitVec 152 :=
   indexOf (programmed (privateTable factors) (labels factors) base) (publicKey factors) message signature.randomizer
 
-noncomputable def Signed (factors : Factors) (base : Hash) (history : SecurityForgery.History) : Finset (BitVec 160) :=
+noncomputable def Signed (factors : Factors) (base : Hash) (history : SecurityForgery.History) : Finset (BitVec 152) :=
   (history.map fun entry => index factors base entry.1 entry.2).toFinset
 
 def HonestHistory (factors : Factors) (base : Hash) (history : SecurityForgery.History) : Prop :=
@@ -156,9 +156,9 @@ theorem strong_extraction (factors : Factors) (base : Hash) (history : SecurityF
 theorem index_residual (factors : Factors) (base : Hash) (pk : PublicKey)
     (message : Message) (nonce : Bytes 32) :
     indexOf (programmed (privateTable factors) (labels factors) base) pk message nonce =
-      (base (SecurityRandomOracle.indexInput pk message nonce)).extractLsb' 0 160 := by
+      (base (SecurityRandomOracle.indexInput pk message nonce)).extractLsb' 0 152 := by
   change (programmed (privateTable factors) (labels factors) base
-    (SecurityRandomOracle.indexInput pk message nonce)).extractLsb' 0 160 = _
+    (SecurityRandomOracle.indexInput pk message nonce)).extractLsb' 0 152 = _
   rw [SecurityGraphSigner.programmed_index]
 
 /-- The same extraction with hypotheses directly on the actual ideal signer and

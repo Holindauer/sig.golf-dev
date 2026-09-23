@@ -9,7 +9,7 @@ set_option maxRecDepth 4096
 /-- A layer's concrete collision alternatives, stated solely using public graph
 labels, private source coordinates, and the actual public verification hash. -/
 def LayerCollision (privateAnswers : PrivateTable) (graph : Labels) (base : Hash)
-    (level : Fin 160) (tree : BitVec 192) (side : Bool)
+    (level : Fin 152) (tree : BitVec 192) (side : Bool)
     (message : Digest) (signature : LayerSignature) : Prop :=
   let publicHash := programmed privateAnswers graph base
   CollisionAt publicHash 4 level.val tree.toNat 0 0 0
@@ -57,7 +57,7 @@ theorem completed_endpoint (privateAnswers : PrivateTable) (graph : Labels) (bas
 /-- Deterministic reference extraction transports to the arbitrary-private graph
 without leaving any secret key-realizability premise in the collision statement. -/
 theorem layer_collision (privateAnswers : PrivateTable) (graph : Labels) (base : Hash)
-    (level : Fin 160) (tree : BitVec 192) (side : Bool) (message : Digest) (signature : LayerSignature)
+    (level : Fin 152) (tree : BitVec 192) (side : Bool) (message : Digest) (signature : LayerSignature)
     (collision : LayerTargetCollision (hash privateAnswers graph base) 0 level.val tree.toNat side message signature) :
     LayerCollision privateAnswers graph base level tree side message signature := by
   unfold LayerTargetCollision at collision

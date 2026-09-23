@@ -19,10 +19,10 @@ structure Provenance (nonces : Message → Bytes 32) (pk : PublicKey)
     (cache : QueryCache HashSpec) (history : History) (draws : List Draw) : Prop where
   trace : draws.map Prod.snd = history.indexTrace
   cached : ∀ message nonce answer, cache (indexInput pk message nonce) = some answer →
-    ∃ marked, (indexInput pk message nonce, (marked, answer.extractLsb' 0 160)) ∈ draws
+    ∃ marked, (indexInput pk message nonce, (marked, answer.extractLsb' 0 152)) ∈ draws
   signed : ∀ message ∈ history.signedMessages, NonceHit nonces history ∨
     ∃ answer, cache (indexInput pk message (nonces message)) = some answer ∧
-      (indexInput pk message (nonces message), (true, answer.extractLsb' 0 160)) ∈ draws
+      (indexInput pk message (nonces message), (true, answer.extractLsb' 0 152)) ∈ draws
 
  theorem provenance_empty (nonces : Message → Bytes 32) (pk : PublicKey) :
     Provenance nonces pk ∅ {} [] := by
@@ -58,8 +58,8 @@ theorem conflict_of_draws (draws : List Draw) (first second : Draw)
     (signed : signedMessage ∈ history.signedMessages)
     (present : cache (indexInput pk message nonce) ≠ none)
     (distinct : indexInput pk signedMessage (nonces signedMessage) ≠ indexInput pk message nonce)
-    (same : (hash (indexInput pk signedMessage (nonces signedMessage))).extractLsb' 0 160 =
-      (hash (indexInput pk message nonce)).extractLsb' 0 160) :
+    (same : (hash (indexInput pk signedMessage (nonces signedMessage))).extractLsb' 0 152 =
+      (hash (indexInput pk message nonce)).extractLsb' 0 152) :
     Conflict history.indexTrace ∨ NonceHit nonces history := by
   rcases provenance.signed signedMessage signed with hit | ⟨answer, cached, marked⟩
   · exact Or.inr hit

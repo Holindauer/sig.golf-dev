@@ -33,7 +33,7 @@ theorem compile_wellCounted {α : Type} (nonces : NonceTable) (metadata : Metada
       intro answer residual
       apply disclose_returns
       intro opened
-      exact ih _ (remaining - 117508) opened residual _ (counted.recordSign message _ answer)
+      exact ih _ (remaining - 111596) opened residual _ (counted.recordSign message _ answer)
     · exact counted
 
 /-- At most one new signed message is inserted per actual signing operation. -/
@@ -62,7 +62,7 @@ theorem compile_signed_card {α : Type} (nonces : NonceTable) (metadata : Metada
       intro answer residual
       apply disclose_returns
       intro opened
-      apply returns_mono _ _ _ _ (ih _ (signs - 1) (within.2 _) (remaining - 117508) opened residual
+      apply returns_mono _ _ _ _ (ih _ (signs - 1) (within.2 _) (remaining - 111596) opened residual
         (recordSign history message (cache (SecurityRandomOracle.indexInput signPk message (nonces message))).isSome answer))
       intro result limited
       change result.history.signedMessages.card ≤ (insert message history.signedMessages).card + (signs - 1) at limited
@@ -107,8 +107,8 @@ theorem experiment_history (publicCache : Cache) (adversary : Adversary submissi
   rw [SecurityGraphMonitorProgram.experiment, mem_support_bind_iff] at member
   obtain ⟨table, _, member⟩ := member
   refine ⟨run_returns _ _ (start_wellCounted nonces metadata _ _ budget) _ _ result member, ?_⟩
-  have within := ofInteract_withinSigns adversary (truncate (metadata (.node 159 0))) rounds
-    (adversary.initial (truncate (metadata (.node 159 0))) publicCache) {}
+  have within := ofInteract_withinSigns adversary (truncate (metadata (.node 151 0))) rounds
+    (adversary.initial (truncate (metadata (.node 151 0))) publicCache) {}
   change WithinSigns LIFETIME _ at within
   exact run_returns _ _ (start_signed_card nonces metadata _ _ LIFETIME within budget) _ _ result member
 

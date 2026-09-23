@@ -6,26 +6,26 @@ namespace SigGolfCandidate.Hypertree.Expansion
 open SigGolf SigGolf.Riscv RiscvZkvm.Rv64
 
 private def source (i : Nat) : Word := BitVec.ofNat 64 (0x20060 + 8 * i)
-private def destination (i : Nat) : Word := BitVec.ofNat 64 (0x3d3b0 + 8 * i)
+private def destination (i : Nat) : Word := BitVec.ofNat 64 (0x3bc30 + 8 * i)
 
-private theorem source_value (i : Nat) (hi : i < 14954) :
+private theorem source_value (i : Nat) (hi : i < 14202) :
     (source i).toNat = 0x20060 + 8 * i := by
   have bound : 0x20060 + 8 * i < 2 ^ 64 := by omega
   exact Nat.mod_eq_of_lt bound
 
-private theorem destination_value (i : Nat) (hi : i < 14954) :
-    (destination i).toNat = 0x3d3b0 + 8 * i := by
-  have bound : 0x3d3b0 + 8 * i < 2 ^ 64 := by omega
+private theorem destination_value (i : Nat) (hi : i < 14202) :
+    (destination i).toNat = 0x3bc30 + 8 * i := by
+  have bound : 0x3bc30 + 8 * i < 2 ^ 64 := by omega
   exact Nat.mod_eq_of_lt bound
 
-private theorem disjoint (i j : Nat) (hi : i < 14954) (hj : j < 14954) :
+private theorem disjoint (i j : Nat) (hi : i < 14202) (hj : j < 14202) :
     source i ≠ destination j := by
   intro h
   have eq := congrArg BitVec.toNat h
   rw [source_value i hi, destination_value j hj] at eq
   omega
 
-private theorem destination_injective (i j : Nat) (hi : i < 14954) (hj : j < 14954)
+private theorem destination_injective (i j : Nat) (hi : i < 14202) (hj : j < 14202)
     (ne : i ≠ j) : destination i ≠ destination j := by
   intro h
   have eq := congrArg BitVec.toNat h
@@ -34,23 +34,23 @@ private theorem destination_injective (i j : Nat) (hi : i < 14954) (hj : j < 149
 
 /-- Source words remain intact and the completed destination prefix matches them. -/
 private def Copied (original : MachineState) (n : Nat) (s : MachineState) : Prop :=
-  (∀ i, i < 14954 → s.getMem (source i) = original.getMem (source i)) ∧
-  (∀ i, i < 14954 - n → s.getMem (destination i) = original.getMem (source i))
+  (∀ i, i < 14202 → s.getMem (source i) = original.getMem (source i)) ∧
+  (∀ i, i < 14202 - n → s.getMem (destination i) = original.getMem (source i))
 
 private theorem copy_next (original s : MachineState) (n : Nat)
     (inv : Invariant (n + 1) s) (copied : Copied original (n + 1) s) :
     Copied original n (loopNext s) := by
   obtain ⟨hn, _, src, dst, _⟩ := inv
-  have hindex : 14954 - (n + 1) < 14954 := by omega
-  change s.getReg .x6 = source (14954 - (n + 1)) at src
-  change s.getReg .x7 = destination (14954 - (n + 1)) at dst
+  have hindex : 14202 - (n + 1) < 14202 := by omega
+  change s.getReg .x6 = source (14202 - (n + 1)) at src
+  change s.getReg .x7 = destination (14202 - (n + 1)) at dst
   constructor
   · intro i hi
     rw [loop_next_mem, dst, if_neg (disjoint i _ hi hindex)]
     exact copied.1 i hi
   · intro i hi
-    have hib : i < 14954 := by omega
-    by_cases heq : i = 14954 - (n + 1)
+    have hib : i < 14202 := by omega
+    by_cases heq : i = 14202 - (n + 1)
     · subst i
       rw [loop_next_mem, dst, src, if_pos rfl]
       exact copied.1 _ hindex
@@ -66,7 +66,7 @@ private theorem prefix_mem (s : MachineState) (a : Word) :
 private theorem loop_copies (hash : Hash) (original : MachineState) (n : Nat) (s : MachineState)
     (inv : Invariant n s) (copied : Copied original n s) :
     ∃ final, Executes hash expand s (6 * n + 3) ⟨.success, final, 6 * n + 3, 0, 0⟩ ∧
-      ∀ i, i < 14954 → final.getMem (destination i) = original.getMem (source i) := by
+      ∀ i, i < 14202 → final.getMem (destination i) = original.getMem (source i) := by
   induction n generalizing s with
   | zero =>
     refine ⟨finishState s, finish hash s (by simpa using inv.2.1), ?_⟩
@@ -84,28 +84,28 @@ private theorem loop_copies (hash : Hash) (original : MachineState) (n : Nat) (s
 
 /-- Every one of the 14,954 signature words is copied exactly by the submitted bytecode. -/
 theorem copies_words (hash : Hash) (s : MachineState) (pc : s.pc = 0x1000) :
-    ∃ final, Executes hash expand s 89733 ⟨.success, final, 89733, 0, 0⟩ ∧
-      ∀ i, i < 14954 →
-        final.getMem (BitVec.ofNat 64 (0x3d3b0 + 8 * i)) = s.getMem (BitVec.ofNat 64 (0x20060 + 8 * i)) := by
-  have initial : Copied s 14954 (prefixState s) := by
+    ∃ final, Executes hash expand s 85221 ⟨.success, final, 85221, 0, 0⟩ ∧
+      ∀ i, i < 14202 →
+        final.getMem (BitVec.ofNat 64 (0x3bc30 + 8 * i)) = s.getMem (BitVec.ofNat 64 (0x20060 + 8 * i)) := by
+  have initial : Copied s 14202 (prefixState s) := by
     constructor
     · intro i _
       exact prefix_mem s _
     · intro i hi
       omega
-  obtain ⟨final, trace, output⟩ := loop_copies hash s 14954 (prefixState s) (prefix_invariant s pc) initial
+  obtain ⟨final, trace, output⟩ := loop_copies hash s 14202 (prefixState s) (prefix_invariant s pc) initial
   refine ⟨final, ?_, output⟩
-  have hsteps : (6 * 14954 + 3) + 6 = 89733 := by decide
-  have hcycles : 6 + (6 * 14954 + 3) = 89733 := by decide
+  have hsteps : (6 * 14202 + 3) + 6 = 85221 := by decide
+  have hcycles : 6 + (6 * 14202 + 3) = 85221 := by decide
   simpa only [Execution.charge, hsteps, hcycles, Nat.zero_add] using (prefix_block s pc).then_executes trace
 
 private theorem copied_bytes (original final : MachineState)
-    (words : ∀ i, i < 14954 → final.getMem (destination i) = original.getMem (source i))
-    (i : Nat) (hi : i < 119632) :
-    final.getByte (BitVec.ofNat 64 (0x3d3b0 + i)) = original.getByte (BitVec.ofNat 64 (0x20060 + i)) := by
-  have dstAlign : (BitVec.ofNat 64 0x3d3b0).toNat % 8 = 0 := by decide
+    (words : ∀ i, i < 14202 → final.getMem (destination i) = original.getMem (source i))
+    (i : Nat) (hi : i < 113616) :
+    final.getByte (BitVec.ofNat 64 (0x3bc30 + i)) = original.getByte (BitVec.ofNat 64 (0x20060 + i)) := by
+  have dstAlign : (BitVec.ofNat 64 0x3bc30).toNat % 8 = 0 := by decide
   have srcAlign : (BitVec.ofNat 64 0x20060).toNat % 8 = 0 := by decide
-  have dstBound : (BitVec.ofNat 64 0x3d3b0).toNat + i < 2 ^ 64 := by change 250800 + i < 2 ^ 64; omega
+  have dstBound : (BitVec.ofNat 64 0x3bc30).toNat + i < 2 ^ 64 := by change 244784 + i < 2 ^ 64; omega
   have srcBound : (BitVec.ofNat 64 0x20060).toNat + i < 2 ^ 64 := by change 131168 + i < 2 ^ 64; omega
   simp only [MachineState.getByte, BitVec.ofNat_add,
     alignToDword_add_ofNat_of_aligned dstAlign dstBound,
@@ -127,8 +127,8 @@ private theorem foldl_eq_on {α β : Type} (xs : List α) (f g : β → α → �
 
 /-- The source and destination have the same bytes under the organizer's output decoder. -/
 theorem copies_buffer (hash : Hash) (s : MachineState) (pc : s.pc = 0x1000) :
-    ∃ final, Executes hash expand s 89733 ⟨.success, final, 89733, 0, 0⟩ ∧
-      readBuffer final 0x3d3b0 signatureBytes = readBuffer s 0x20060 signatureBytes := by
+    ∃ final, Executes hash expand s 85221 ⟨.success, final, 85221, 0, 0⟩ ∧
+      readBuffer final 0x3bc30 signatureBytes = readBuffer s 0x20060 signatureBytes := by
   obtain ⟨final, trace, words⟩ := copies_words hash s pc
   refine ⟨final, trace, ?_⟩
   unfold readBuffer
@@ -143,12 +143,12 @@ theorem run_copies_buffer (hash : Hash) (input : Input submission.sizes .expand)
       (submission.runWith hash .expand input).value = some (readBuffer initial 0x20060 signatureBytes) := by
   obtain ⟨initial, loaded, pc⟩ := initialState_exists submission admitted .expand input
   obtain ⟨final, trace, same⟩ := copies_buffer hash initial pc
-  have run := runWith_of_executes submission hash .expand input initial 89733
-    ⟨.success, final, 89733, 0, 0⟩ loaded trace (by decide)
+  have run := runWith_of_executes submission hash .expand input initial 85221
+    ⟨.success, final, 85221, 0, 0⟩ loaded trace (by decide)
   refine ⟨initial, loaded, ?_⟩
   rw [run]
   change some (readBuffer final (witnessBase submission.sizes) signatureBytes) = _
-  rw [show witnessBase submission.sizes = 0x3d3b0 from by decide]
+  rw [show witnessBase submission.sizes = 0x3bc30 from by decide]
   exact congrArg some same
 
 set_option maxRecDepth 4096 in

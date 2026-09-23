@@ -16,7 +16,7 @@ noncomputable def continueWith {α : Type} (table : PointTable)
 
 /-- The stopped handler composes exactly as one monitored read followed by the
 continuation; the returned exposure cache is the actual interpreter cache. -/
-theorem stopped_public_bind {α : Type} (factors : Factors) (signed : Finset (BitVec 160))
+theorem stopped_public_bind {α : Type} (factors : Factors) (signed : Finset (BitVec 152))
     (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) (initial : Safe factors signed exposed cache)
     (query : Query) (next : BitVec 256 → QueryCache PointSpec → QueryCache HashSpec → Program α) :
     stopped factors.1 exposed (SecurityGraphMonitorOracle.publicStep factors.2.2 exposed cache query next) =

@@ -12,7 +12,7 @@ theorem layerOffset_mono (a b : Nat) (le : a ≤ b) : layerOffset a ≤ layerOff
   unfold layerOffset
   split <;> split <;> omega
 
-theorem layer_value_before_next (level : Nat) (_bound : level<160) (chain : Reference.Chain)
+theorem layer_value_before_next (level : Nat) (_bound : level<152) (chain : Reference.Chain)
     (usable : level=0 → chain.val=0) (i : Fin 2) :
     0x20060+layerOffset level+16*chain.val+8*i.val < 0x20060+layerOffset (level+1) := by
   rw [layerOffset_succ]
@@ -20,7 +20,7 @@ theorem layer_value_before_next (level : Nat) (_bound : level<160) (chain : Refe
   split <;> rename_i h <;> simp_all <;> omega
 
 theorem LayerStored.prefix_frame (s final : MachineState) (level : Nat) (signature : Reference.LayerSignature)
-    (bound : level<160) (stored : LayerStored s (0x20060+layerOffset level) level signature)
+    (bound : level<152) (stored : LayerStored s (0x20060+layerOffset level) level signature)
     (frame : ∀ address : Nat, address<0x80000 → address%8=0 → address<0x20060+layerOffset (level+1) →
       final.getMem (BitVec.ofNat 64 address) = s.getMem (BitVec.ofNat 64 address)) :
     LayerStored final (0x20060+layerOffset level) level signature := by

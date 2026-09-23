@@ -67,7 +67,7 @@ theorem query_preserves (factors : Factors) (query : Query) (cache : QueryCache 
     exact random_preserves query cache result member old value present
 
 /-- Every completed raw verifier preserves all earlier residual answers. -/
-theorem completed_preserves {α : Type} (factors : Factors) (signed : Finset (BitVec 160))
+theorem completed_preserves {α : Type} (factors : Factors) (signed : Finset (BitVec 152))
     (program : OracleComp HashSpec α) (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec)
     (initial : Safe factors signed exposed cache) (result : SecurityGraphMonitorVerify.Result α)
     (member : some result ∈ support (stopped factors.1 exposed (compile factors.2.2 program exposed cache)))
@@ -88,7 +88,7 @@ theorem completed_preserves {α : Type} (factors : Factors) (signed : Finset (Bi
         tail (query_preserves factors query cache (answer.1,answer.2.2) spec.2.2.2 old value present)
 
 /-- The first noncanonical query is present after any normally completed run. -/
-theorem first_present {α : Type} (factors : Factors) (signed : Finset (BitVec 160))
+theorem first_present {α : Type} (factors : Factors) (signed : Finset (BitVec 152))
     (query : Query) (next : BitVec 256 → OracleComp HashSpec α)
     (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) (initial : Safe factors signed exposed cache)
     (result : SecurityGraphMonitorVerify.Result α)
@@ -111,7 +111,7 @@ theorem first_present {α : Type} (factors : Factors) (signed : Finset (BitVec 1
     exact Option.some_ne_none _
 
 /-- The actual verifier's H5 input remains cached for the extraction argument. -/
-theorem verifier_index_present (factors : Factors) (signed : Finset (BitVec 160))
+theorem verifier_index_present (factors : Factors) (signed : Finset (BitVec 152))
     (pk : PublicKey) (message : Message) (signature : SignatureEncoding.Compact)
     (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) (initial : Safe factors signed exposed cache)
     (result : SecurityGraphMonitorVerify.Result Bool)

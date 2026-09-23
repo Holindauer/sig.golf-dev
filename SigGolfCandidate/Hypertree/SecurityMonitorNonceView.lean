@@ -40,16 +40,16 @@ noncomputable def compile {α : Type} (points : PointTable) (metadata : Metadata
             (fun result => compile points metadata pk (next result.1) remaining result.2.1 result.2.2
               (recordPublic pk history input (residual input).isSome result.1))
   | .sign signPk message next, remaining, exposed, residual, history =>
-      if 117508 ≤ remaining then .reveal message (fun nonce =>
+      if 111596 ≤ remaining then .reveal message (fun nonce =>
         let input := SecurityRandomOracle.indexInput signPk message nonce
         liftValue points exposed (indexStep residual input (fun answer cache => .done (answer, cache)))
           (fun result =>
-            let index := result.1.extractLsb' 0 160
+            let index := result.1.extractLsb' 0 152
             liftValue points exposed (SecurityGraphMonitorOracle.disclose (needed metadata exposed index) exposed .done)
               (fun opened =>
                 let factors := viewFactors opened metadata
                 let signature := SecurityGraphSigner.signature (privateTable factors) (labels factors) nonce index
-                compile points metadata pk (next (SecurityExperiment.serialize signature)) (remaining - 117508)
+                compile points metadata pk (next (SecurityExperiment.serialize signature)) (remaining - 111596)
                   opened result.2 (recordSign history message (residual input).isSome result.1))))
       else .pure ⟨none, remaining, exposed, residual, history⟩
 
@@ -116,7 +116,7 @@ theorem observe_compile {α : Type} (points : PointTable) (nonces : NonceTable)
       exact ih result.1 _ _ _ _ _
   | sign signPk message next ih =>
     rw [compile, SecurityMonitorGraphView.compile]
-    by_cases allowed : 117508 ≤ remaining
+    by_cases allowed : 111596 ≤ remaining
     · rw [if_pos allowed, if_pos allowed, observe_reveal, observe_liftValue]
       change (SecurityGraphMonitorObserve.observe points exposed (indexStep residual _ _) >>= _) = _
       rw [SecurityGraphMonitorObserve.observe_indexStep_bind,

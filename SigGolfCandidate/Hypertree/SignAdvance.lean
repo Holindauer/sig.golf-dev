@@ -23,7 +23,7 @@ def advanceInstructions : List Instr := [
   .LUI .x28 0x80,
   .ADDI .x28 .x28 0x400,
   .SD .x28 .x6 0,
-  .ADDI .x7 .x0 160,
+  .ADDI .x7 .x0 152,
   .BNE .x6 .x7 (-212)]
 
 def AdvanceCode (image : Image) (base : Word) : Prop :=
@@ -81,7 +81,7 @@ def advanceTailState (s : MachineState) : MachineState :=
   let s := execInstrBr s (.LUI .x28 0x80)
   let s := execInstrBr s (.ADDI .x28 .x28 0x400)
   let s := execInstrBr s (.SD .x28 .x6 0)
-  let s := execInstrBr s (.ADDI .x7 .x0 160)
+  let s := execInstrBr s (.ADDI .x7 .x0 152)
   execInstrBr s (.BNE .x6 .x7 (-212))
 
 theorem advanceTailState_block (image : Image) (base : Word) (code : AdvanceCode image base)
@@ -94,7 +94,7 @@ theorem advanceTailState_block (image : Image) (base : Word) (code : AdvanceCode
   let s5 := execInstrBr s4 (.LUI .x28 0x80)
   let s6 := execInstrBr s5 (.ADDI .x28 .x28 0x400)
   let s7 := execInstrBr s6 (.SD .x28 .x6 0)
-  let s8 := execInstrBr s7 (.ADDI .x7 .x0 160)
+  let s8 := execInstrBr s7 (.ADDI .x7 .x0 152)
   let s9 := execInstrBr s8 (.BNE .x6 .x7 (-212))
   apply OrdinarySteps.step s s1 _ (.base (.LUI .x28 0x80)) 8
   · apply code _ 10
@@ -124,7 +124,7 @@ theorem advanceTailState_block (image : Image) (base : Word) (code : AdvanceCode
   · apply code _ 16
     simp [s1, s2, s3, s4, s5, s6, execInstrBr, pc, BitVec.add_assoc]
   · simp [s1, s2, s3, s4, s5, s6, s7, ordinaryStep, memoryArgumentsValid, execInstrBr, signExtend12, accessValid, rangeValid, MEMORY_BYTES, MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne]
-  apply OrdinarySteps.step s7 s8 _ (.base (.ADDI .x7 .x0 160)) 1
+  apply OrdinarySteps.step s7 s8 _ (.base (.ADDI .x7 .x0 152)) 1
   · apply code _ 17
     simp [s1, s2, s3, s4, s5, s6, s7, execInstrBr, pc, BitVec.add_assoc]
   · rfl
@@ -236,14 +236,14 @@ theorem advanceState_mem (s : MachineState) (a : Word) :
 
 theorem advanceTailState_pc (s : MachineState) :
     (advanceTailState s).pc =
-      if s.getReg .x6 + 1 = 160 then s.pc + 36 else s.pc - 180 := by
+      if s.getReg .x6 + 1 = 152 then s.pc + 36 else s.pc - 180 := by
   simp [advanceTailState, execInstrBr, signExtend12, signExtend13,
     MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne, BitVec.add_assoc]
   split <;> simp_all [BitVec.sub_eq_add_neg, BitVec.add_assoc]
 
 theorem advanceState_pc (s : MachineState) (base : Word) (pc : s.pc = base) :
     (advanceState s).pc =
-      if s.getMem 0x80400 + 1 = 160 then base + 76 else base - 140 := by
+      if s.getMem 0x80400 + 1 = 152 then base + 76 else base - 140 := by
   have readpc : (advanceReadState s).pc = base + 24 := by rw [advanceReadState_pc, pc]
   rw [advanceState, advanceTailState_pc, (advancePointerState_regs _).1,
     (advanceReadState_regs _).1, advancePointerState_pc _ base readpc]
@@ -274,10 +274,10 @@ theorem layerOffset_succ (level : Nat) :
   unfold layerOffset
   split <;> split <;> omega
 
-theorem layerOffset_last : layerOffset 160 = signatureBytes := by rfl
+theorem layerOffset_last : layerOffset 152 = signatureBytes := by rfl
 
 /-- The exact machine updates agree with the compact wire format's layer boundaries. -/
-theorem advanceState_layer (s : MachineState) (input level : Nat) (bound : level < 160)
+theorem advanceState_layer (s : MachineState) (input level : Nat) (bound : level < 152)
     (counter : s.getMem 0x80400 = BitVec.ofNat 64 level)
     (pointer : s.getMem 0x80448 = BitVec.ofNat 64 (input + layerOffset level)) :
     (advanceState s).getMem 0x80400 = BitVec.ofNat 64 (level + 1) ∧
@@ -296,15 +296,15 @@ theorem advanceState_layer (s : MachineState) (input level : Nat) (bound : level
     · exact (BitVec.ofNat_add _ _).symm.trans (by congr 1)
 
 theorem advanceState_layer_pc (s : MachineState) (base : Word) (level : Nat)
-    (pc : s.pc = base) (bound : level < 160)
+    (pc : s.pc = base) (bound : level < 152)
     (counter : s.getMem 0x80400 = BitVec.ofNat 64 level) :
-    (advanceState s).pc = if level + 1 = 160 then base + 76 else base - 140 := by
+    (advanceState s).pc = if level + 1 = 152 then base + 76 else base - 140 := by
   rw [advanceState_pc s base pc, counter]
   have add : BitVec.ofNat 64 level + 1 = BitVec.ofNat 64 (level + 1) := (BitVec.ofNat_add _ _).symm
   rw [add]
-  have eq : (BitVec.ofNat 64 (level + 1) = (160 : Word)) ↔ level + 1 = 160 := by
+  have eq : (BitVec.ofNat 64 (level + 1) = (152 : Word)) ↔ level + 1 = 152 := by
     have small : level + 1 < 2 ^ 64 := by omega
-    change (BitVec.ofNat 64 (level + 1) = BitVec.ofNat 64 160) ↔ _
+    change (BitVec.ofNat 64 (level + 1) = BitVec.ofNat 64 152) ↔ _
     simp only [BitVec.toNat_eq, BitVec.toNat_ofNat, Nat.mod_eq_of_lt small]
   simp only [eq]
 

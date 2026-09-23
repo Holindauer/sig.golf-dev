@@ -71,7 +71,7 @@ theorem actual_bind_insufficient {α β : Type} (privateAnswers : PrivateTable) 
       simp
 
 /-- Atomic shared-view execution. Public probes cost one, an entire honest
-signature costs 117508, and private coins cost zero. Aborted runs expose no
+signature costs 111596, and private coins cost zero. Aborted runs expose no
 cache; every normal return carries the exact residual oracle state. -/
 noncomputable def execute {α : Type} (privateAnswers : PrivateTable) (labels : Labels) :
     View α → Nat → Cache → ProbComp (Option (α × Cache))
@@ -82,13 +82,13 @@ noncomputable def execute {α : Type} (privateAnswers : PrivateTable) (labels : 
         execute privateAnswers labels (next answer.1) (budget - 1) answer.2
       else pure none
   | .sign pk message next, budget, cache =>
-      if 117508 ≤ budget then do
+      if 111596 ≤ budget then do
         let answer ← (randomOracle (spec := HashSpec)
           (SecurityRandomOracle.indexInput pk message (privateAnswers (.randomizer message)))).run cache
         let response := SecurityExperiment.serialize
           (SecurityGraphSigner.signature privateAnswers labels (privateAnswers (.randomizer message))
-            (answer.1.extractLsb' 0 160))
-        execute privateAnswers labels (next response) (budget - 117508) answer.2
+            (answer.1.extractLsb' 0 152))
+        execute privateAnswers labels (next response) (budget - 111596) answer.2
       else pure none
   | .coin n next, budget, cache => do
       let answer ← liftM (unifSpec.query n)
@@ -173,8 +173,8 @@ theorem program_execute (privateAnswers : PrivateTable) (labels : Labels)
     𝒮[actual privateAnswers labels (SecurityExperiment.program publicCache adversary rounds) budget cache] =
       if 739 ≤ budget then
         𝒮[execute privateAnswers labels
-          (ofInteract adversary (truncate (labels (.node 159 0))) rounds
-            (adversary.initial (truncate (labels (.node 159 0))) publicCache) {}) (budget - 739) cache]
+          (ofInteract adversary (truncate (labels (.node 151 0))) rounds
+            (adversary.initial (truncate (labels (.node 151 0))) publicCache) {}) (budget - 739) cache]
       else 𝒮[(pure none : ProbComp (Option (SecurityExperiment.Result × Cache)))] := by
   rw [SecurityMonitorView.program_eq]
   split

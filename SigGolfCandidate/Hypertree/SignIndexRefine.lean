@@ -69,21 +69,21 @@ theorem index_query (original ready : MachineState) (pk : PublicKey) (message : 
     · exact hmessage (i - 48) (by omega)
     · exact hr (i - 80) (by omega)
 
-theorem extractByte_mask_slice (value : BitVec 256) (i : Fin 4) :
-    extractByte ((value.extractLsb' 128 64 <<< 32) >>> 32) i.val =
+theorem extractByte_mask_slice (value : BitVec 256) (i : Fin 3) :
+    extractByte ((value.extractLsb' 128 64 <<< 40) >>> 40) i.val =
       value.extractLsb' (128 + 8 * i.val) 8 := by
   ext j hj
-  have bound : i.val * 8 + j < 32 := by have := i.isLt; omega
-  simp [extractByte, show i.val * 8 + j + 32 < 64 by omega,
-    show 32 ≤ i.val * 8 + j + 32 by omega,
+  have bound : i.val * 8 + j < 24 := by have := i.isLt; omega
+  simp [extractByte, show i.val * 8 + j + 40 < 64 by omega,
+    show 40 ≤ i.val * 8 + j + 40 by omega,
     show i.val * 8 + j < 64 by omega, Nat.add_assoc, Nat.mul_comm]
   omega
 
-/-- The three scratch words decode to exactly the low 160 bits of the oracle answer. -/
+/-- The three scratch words decode to exactly the low 152 bits of the oracle answer. -/
 theorem read_index_words (s : MachineState) (answer : BitVec 256)
     (low : ∀ i : Fin 2, s.getMem (wordAddress 0x80408 i.val) = answer.extractLsb' (64 * i.val) 64)
-    (high : s.getMem 0x80418 = (answer.extractLsb' 128 64 <<< 32) >>> 32) :
-    readBuffer s 0x80408 20 = answer.extractLsb' 0 160 := by
+    (high : s.getMem 0x80418 = (answer.extractLsb' 128 64 <<< 40) >>> 40) :
+    readBuffer s 0x80408 19 = answer.extractLsb' 0 152 := by
   apply Memory.readBuffer_of_bytes
   intro i hi
   rw [BitVec.extractLsb'_extractLsb'_of_le (by omega)]
@@ -94,7 +94,7 @@ theorem read_index_words (s : MachineState) (answer : BitVec 256)
   · rw [show i / 8 = 2 by omega]
     change extractByte (s.getMem 0x80418) (i % 8) = _
     rw [high]
-    have hb : i - 16 < 4 := by omega
+    have hb : i - 16 < 3 := by omega
     have eq := extractByte_mask_slice answer ⟨i - 16, hb⟩
     dsimp only at eq
     rw [show i % 8 = i - 16 by omega, show 8 * i = 128 + 8 * (i - 16) by omega]
@@ -108,7 +108,7 @@ theorem index_refines (hash : Hash) (s : MachineState) (pk : PublicKey) (message
     (hmessage : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8 * i) 8)
     (hr : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 (0x20060 + i)) = r.extractLsb' (8 * i) 8) :
     ∃ final, Trace hash sign s 121 136 1 2 final ∧ final.pc = 0x1220 ∧
-      readBuffer final 0x80408 20 = Reference.indexOf hash pk message r := by
+      readBuffer final 0x80408 19 = Reference.indexOf hash pk message r := by
   obtain ⟨ready, prepare, readypc, words, _⟩ := index_prepare s pc
   obtain ⟨final, trace, finalpc, low, high⟩ := index_trace hash ready readypc
   have query := index_query s ready pk message r hpk hmessage hr words
@@ -121,13 +121,13 @@ theorem index_refines (hash : Hash) (s : MachineState) (pk : PublicKey) (message
 #print axioms index_refines
 
 /-- The organizer's typed sign input executes both reference oracle computations and
-reaches the main hypertree loop with the exact reference 160-bit index. -/
+reaches the main hypertree loop with the exact reference 152-bit index. -/
 theorem loaded_index_refines (hash : Hash) (secretKey : SecretKey) (pk : PublicKey)
     (cache : Cache) (message : Message) :
     ∃ initial final,
       initialState submission .sign (secretKey, pk, cache, message) = some initial ∧
       Trace hash sign initial 238 268 2 4 final ∧ final.pc = 0x1220 ∧
-      readBuffer final 0x80408 20 =
+      readBuffer final 0x80408 19 =
         Reference.indexOf hash pk message (Reference.randomizer hash secretKey message) := by
   obtain ⟨initial, loaded, pc⟩ := initialState_exists submission admitted .sign (secretKey, pk, cache, message)
   obtain ⟨randomized, randomTrace, randomPC, randomWords, frame⟩ := entry_randomizer_refines_frame hash initial secretKey message pc

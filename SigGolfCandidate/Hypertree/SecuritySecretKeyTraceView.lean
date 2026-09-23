@@ -31,7 +31,7 @@ private theorem coin_run (factors : Factors) (n : Nat) (cache : QueryCache HashS
 private theorem sign_run (factors : Factors) (pk : PublicKey) (message : Message) (cache : QueryCache HashSpec) :
     (simulateQ (handler factors) ((SecurityExperiment.signWire pk message).liftComp GameWorld)).run cache =
       (fun result => (SecurityExperiment.serialize (SecurityGraphSigner.signature (privateTable factors)
-        (labels factors) (factors.2.1 message) (result.1.extractLsb' 0 160)), result.2)) <$>
+        (labels factors) (factors.2.1 message) (result.1.extractLsb' 0 152)), result.2)) <$>
         (randomOracle (spec := HashSpec) (SecurityRandomOracle.indexInput pk message (factors.2.1 message))).run cache := by
   rw [handler, routing, routed_signWire_run]
   rfl
@@ -74,7 +74,7 @@ theorem traced_view {α : Type} (factors : Factors) (pk : PublicKey) (view : Vie
     have safe := lift_clean (SecuritySecretKeyHonest.signWire signPk message)
     have fixed := SecurityAtomicCounts.signWire signPk message
     rw [SecurityMonitorGraphCoupling.execute]
-    by_cases enough : 117508 ≤ budget
+    by_cases enough : 111596 ≤ budget
     · rw [if_pos enough]
       simp only [traced, realize]
       rw [trace_enough safe fixed _ budget enough, run_bind]
@@ -84,9 +84,9 @@ theorem traced_view {α : Type} (factors : Factors) (pk : PublicKey) (view : Vie
       intro result _
       simpa only [extend_sign, traced] using ih
         (SecurityExperiment.serialize (SecurityGraphSigner.signature (privateTable factors) (labels factors)
-          (factors.2.1 message) (result.1.extractLsb' 0 160))) (budget - 117508)
+          (factors.2.1 message) (result.1.extractLsb' 0 152))) (budget - 111596)
         (SecurityGraphDisclosure.revealCache factors.1
-          (SecurityGraphMonitorSign.needed factors.2.2 exposed (result.1.extractLsb' 0 160)) exposed)
+          (SecurityGraphMonitorSign.needed factors.2.2 exposed (result.1.extractLsb' 0 152)) exposed)
         result.2 (recordSign history message
           (cache (SecurityRandomOracle.indexInput signPk message (factors.2.1 message))).isSome result.1)
     · rw [if_neg enough]

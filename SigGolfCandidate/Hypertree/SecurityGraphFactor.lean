@@ -8,8 +8,8 @@ set_option maxRecDepth 4096
 
 /-- The labels outside chains: leaf and binary-node outputs. -/
 inductive Metadata where
-  | leaf (level : Fin 160) (tree : BitVec 192) (side : Bool)
-  | node (level : Fin 160) (tree : BitVec 192)
+  | leaf (level : Fin 152) (tree : BitVec 192) (side : Bool)
+  | node (level : Fin 152) (tree : BitVec 192)
   deriving DecidableEq
 
 def Metadata.position : Metadata → Position
@@ -93,10 +93,10 @@ def equivalence : (PrivateTable × Labels) ≃ Factors where
     (factor tables).2.1 message = tables.1 (.randomizer message) := rfl
 
 @[simp] theorem factor_leaf (tables : PrivateTable × Labels)
-    (level : Fin 160) (tree : BitVec 192) (side : Bool) :
+    (level : Fin 152) (tree : BitVec 192) (side : Bool) :
     (factor tables).2.2 (.leaf level tree side) = tables.2 (.leaf level tree side) := rfl
 
-@[simp] theorem factor_node (tables : PrivateTable × Labels) (level : Fin 160) (tree : BitVec 192) :
+@[simp] theorem factor_node (tables : PrivateTable × Labels) (level : Fin 152) (tree : BitVec 192) :
     (factor tables).2.2 (.node level tree) = tables.2 (.node level tree) := rfl
 
 theorem chainPoint_eq (privateAnswers : PrivateTable) (graph : Labels) (address : ChainAddress)
@@ -114,10 +114,10 @@ theorem chainPoint_eq (privateAnswers : PrivateTable) (graph : Labels) (address 
 @[simp] theorem labels_chain (factors : Factors) (address : ChainAddress) (step : Fin 7) :
     labels factors (.chain address step) = factors.1 (address, step.succ) := rfl
 
-@[simp] theorem labels_leaf (factors : Factors) (level : Fin 160) (tree : BitVec 192) (side : Bool) :
+@[simp] theorem labels_leaf (factors : Factors) (level : Fin 152) (tree : BitVec 192) (side : Bool) :
     labels factors (.leaf level tree side) = factors.2.2 (.leaf level tree side) := rfl
 
-@[simp] theorem labels_node (factors : Factors) (level : Fin 160) (tree : BitVec 192) :
+@[simp] theorem labels_node (factors : Factors) (level : Fin 152) (tree : BitVec 192) :
     labels factors (.node level tree) = factors.2.2 (.node level tree) := rfl
 
 @[simp] theorem assembled_chainPoint (factors : Factors) (address : ChainAddress) (point : Fin 8) :

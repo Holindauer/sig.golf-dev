@@ -1,9 +1,9 @@
 {
   "test_only": true,
   "oracle": "SHA-256",
-  "signature_bytes": 119632,
-  "public_key": "05e8852bf68be737d9ba025d70d2793e",
-  "signature_sha256": "2eaceeaa2441c8dfd9bdcacb00e8c89262df1bbf4d590b2426f9b0917e7fbc78",
+  "signature_bytes": 113616,
+  "public_key": "7c8efd047d4f11d6f928c4e5a583a824",
+  "signature_sha256": "ec36bd52796f396d9650083efdd17cfab28515ce825cc3aae9f55ce405af1717",
   "phases": {
     "keygen": {
       "instructions_executed": 77097,
@@ -12,22 +12,22 @@
       "compressions": 761
     },
     "sign": {
-      "instructions_executed": 14050865,
-      "cycles": 14901421,
-      "hash_calls": 117508,
-      "compressions": 121008
+      "instructions_executed": 13343945,
+      "cycles": 14151709,
+      "hash_calls": 111596,
+      "compressions": 114920
     },
     "expand": {
-      "instructions_executed": 89733,
-      "cycles": 89733,
+      "instructions_executed": 85221,
+      "cycles": 85221,
       "hash_calls": 0,
       "compressions": 0
     },
     "verify": {
-      "instructions_executed": 1804633,
-      "cycles": 2006639,
-      "hash_calls": 26858,
-      "compressions": 28608
+      "instructions_executed": 1701926,
+      "cycles": 1891993,
+      "hash_calls": 25253,
+      "compressions": 26915
     }
   }
 }

@@ -66,7 +66,7 @@ theorem public_ready (factors : Factors) (pk : PublicKey) (history : History)
 /-- The selected honest signature coordinates are authorized after inserting
 this signing index; point selection itself depends only on disclosed metadata. -/
 theorem needed_authorized (factors : Factors) (history : History) (exposed : QueryCache PointSpec)
-    (ready : PublicReady factors.1 exposed) (index : BitVec 160) :
+    (ready : PublicReady factors.1 exposed) (index : BitVec 152) :
     ∀ point ∈ needed factors.2.2 exposed index,
       Authorized factors.2.2 (insert index history.signedIndices) point := by
   intro point member
@@ -85,7 +85,7 @@ theorem sign_ready (factors : Factors) (history : History) (exposed : QueryCache
       (SecurityRandomOracle.indexInput pk message (factors.2.1 message))).run cache)) :
     Ready factors (recordSign history message
       (cache (SecurityRandomOracle.indexInput pk message (factors.2.1 message))).isSome answer)
-      (revealCache factors.1 (needed factors.2.2 exposed (answer.extractLsb' 0 160)) exposed) residual := by
+      (revealCache factors.1 (needed factors.2.2 exposed (answer.extractLsb' 0 152)) exposed) residual := by
   have safeResidual : ResidualSafe factors residual := by
     let query := SecurityRandomOracle.indexInput pk message (factors.2.1 message)
     have outside := SecurityIndexQuery.locate_index pk message (factors.2.1 message)

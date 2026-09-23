@@ -43,7 +43,7 @@ theorem recover_leaf_call (hash : Hash) (s : MachineState) (level tree base : Na
     (pc : s.pc = 0x1458) (sp : s.getReg .x2 = 0xfffff0)
     (data : LayerData s level tree base side message signature)
     (leaf : s.getMem 0x80428 = BitVec.ofNat 64 (Reference.sideNumber side))
-    (small : level < 160) (aligned : base % 8 = 0) (bound : base+752 ≤ 0x80000) :
+    (small : level < 152) (aligned : base % 8 = 0) (bound : base+752 ≤ 0x80000) :
     ∃ final steps cycles calls blocks, Trace hash verify s steps cycles calls blocks final ∧
       steps ≤ 33795 ∧ cycles ≤ (if level = 0 then 116 else 19610) ∧ calls ≤ 323 ∧ blocks ≤ 334 ∧
       final.pc = s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2 = s.getReg .x2 ∧

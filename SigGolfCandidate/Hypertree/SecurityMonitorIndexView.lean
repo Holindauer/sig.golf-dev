@@ -65,15 +65,15 @@ noncomputable def compile {α : Type} (table : PointTable) (nonces : NonceTable)
             (fun result => compile table nonces metadata pk (next result.1) remaining result.2.1 result.2.2
               (recordPublic pk history input (residual input).isSome result.1))
   | .sign signPk message next, remaining, exposed, residual, history =>
-      if 117508 ≤ remaining then
+      if 111596 ≤ remaining then
         let nonce := nonces message
         let input := SecurityRandomOracle.indexInput signPk message nonce
         drawCached residual input (decide (message ∉ history.signedMessages)) (fun answer cache =>
-          let index := answer.extractLsb' 0 160
+          let index := answer.extractLsb' 0 152
           let opened := SecurityGraphDisclosure.revealCache table (needed metadata exposed index) exposed
           let factors := viewFactors opened metadata
           let signature := SecurityGraphSigner.signature (privateTable factors) (labels factors) nonce index
-          compile table nonces metadata pk (next (SecurityExperiment.serialize signature)) (remaining-117508)
+          compile table nonces metadata pk (next (SecurityExperiment.serialize signature)) (remaining-111596)
             opened cache (recordSign history message (residual input).isSome answer))
       else .pure ⟨none,remaining,exposed,residual,history⟩
 

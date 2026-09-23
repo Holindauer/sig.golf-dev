@@ -11,7 +11,7 @@ structure Compact where
   sibling : Digest
   upper : List LayerSignature
 
-def Compact.Valid (signature : Compact) : Prop := signature.upper.length = 159
+def Compact.Valid (signature : Compact) : Prop := signature.upper.length = 151
 
 def Compact.toReference (signature : Compact) : Signature :=
   ⟨signature.randomizer, ⟨fun i => if i = 0 then signature.bottom else 0, signature.sibling⟩ :: signature.upper⟩
@@ -146,19 +146,19 @@ theorem Compact.wire_bytes (signature : Compact) (valid : signature.Valid) :
   exact packed_cast_bytes signature.encode (signature.valid_length valid)
 
 /-- Drop the bottom-layer fields that are never serialized or read by verification. -/
-def Compact.ofReference (signature : Signature) (valid : signature.layers.length = 160) : Compact where
+def Compact.ofReference (signature : Signature) (valid : signature.layers.length = 152) : Compact where
   randomizer := signature.randomizer
   bottom := (signature.layers[0]'(by omega)).values 0
   sibling := (signature.layers[0]'(by omega)).sibling
   upper := signature.layers.drop 1
 
-theorem Compact.ofReference_valid (signature : Signature) (valid : signature.layers.length = 160) :
+theorem Compact.ofReference_valid (signature : Signature) (valid : signature.layers.length = 152) :
     (Compact.ofReference signature valid).Valid := by
   simp [Compact.Valid, Compact.ofReference, valid]
 
 /-- Removing the unencoded bottom fields leaves verification unchanged. -/
 theorem Compact.ofReference_verify (hash : Hash) (pk : PublicKey) (message : Message)
-    (signature : Signature) (valid : signature.layers.length = 160) :
+    (signature : Signature) (valid : signature.layers.length = 152) :
     Reference.verify hash pk message (Compact.ofReference signature valid).toReference ↔
       Reference.verify hash pk message signature := by
   rcases signature with ⟨randomizer, layers⟩

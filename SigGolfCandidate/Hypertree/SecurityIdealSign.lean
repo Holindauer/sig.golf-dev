@@ -15,10 +15,10 @@ def randomizer (message : Message) : OracleComp SplitWorld (Bytes 32) :=
   rfl
 
 def randomizedIndex (pk : PublicKey) (message : Message) :
-    OracleComp SplitWorld (Bytes 32 × BitVec 160) := do
+    OracleComp SplitWorld (Bytes 32 × BitVec 152) := do
   let r ← randomizer message
   let answer ← publicCall (liftM (HashSpec.query (SecurityRandomOracle.indexInput pk message r)))
-  return (r, answer.extractLsb' 0 160)
+  return (r, answer.extractLsb' 0 152)
 
 @[simp] theorem simulate_randomizedIndex (secretKey : SecretKey) (pk : PublicKey) (message : Message) :
     simulateQ (realImplementation secretKey) (randomizedIndex pk message) =
@@ -41,7 +41,7 @@ def signChain (address : ChainAddress) (message : Digest) :
       SecurityReference.signChain secretKey address.level.val address.tree.toNat address.side message address.chain := by
   simp [signChain, SecurityReference.signChain]
 
-def signLayerWithRoot (level : Fin 160) (tree : BitVec 192) (side : Bool) (message : Digest) :
+def signLayerWithRoot (level : Fin 152) (tree : BitVec 192) (side : Bool) (message : Digest) :
     OracleComp SplitWorld (LayerSignature × Digest) := do
   if level.val = 0 then
     let fragment ← secret ⟨level, tree, side, 0⟩
@@ -58,7 +58,7 @@ def signLayerWithRoot (level : Fin 160) (tree : BitVec 192) (side : Bool) (messa
       else SecurityReference.node level.val tree.toNat current sibling)
     return (⟨fun i => (chains i).1, sibling⟩, root)
 
-@[simp] theorem simulate_signLayerWithRoot (secretKey : SecretKey) (level : Fin 160) (tree : BitVec 192)
+@[simp] theorem simulate_signLayerWithRoot (secretKey : SecretKey) (level : Fin 152) (tree : BitVec 192)
     (side : Bool) (message : Digest) :
     simulateQ (realImplementation secretKey) (signLayerWithRoot level tree side message) =
       SecurityReference.signLayerWithRoot secretKey level.val tree.toNat side message := by
@@ -67,7 +67,7 @@ def signLayerWithRoot (level : Fin 160) (tree : BitVec 192) (side : Bool) (messa
 
 /-- Only valid private addresses occur. The recursive level bound is explicit,
 while the tree identifier is reduced at every step of the actual signer. -/
-def signUpper : (count level index : Nat) → count + level ≤ 160 → index < 2 ^ 192 →
+def signUpper : (count level index : Nat) → count + level ≤ 152 → index < 2 ^ 192 →
     Digest → OracleComp SplitWorld (List LayerSignature)
   | 0, _, _, _, _, _ => pure []
   | count + 1, level, index, hl, hi, message => do
@@ -78,7 +78,7 @@ def signUpper : (count level index : Nat) → count + level ≤ 160 → index < 
       return layer.1 :: rest
 
 @[simp] theorem simulate_signUpper (secretKey : SecretKey) (count level index : Nat)
-    (hl : count + level ≤ 160) (hi : index < 2 ^ 192) (message : Digest) :
+    (hl : count + level ≤ 152) (hi : index < 2 ^ 192) (message : Digest) :
     simulateQ (realImplementation secretKey) (signUpper count level index hl hi message) =
       SecurityReference.signUpper secretKey count level index message := by
   induction count generalizing level index message with
@@ -88,9 +88,9 @@ def signUpper : (count level index : Nat) → count + level ≤ 160 → index < 
     simp only [signUpper, SecurityReference.signUpper, simulateQ_bind, simulateQ_pure,
       simulate_signLayerWithRoot, BitVec.toNat_ofNat, Nat.mod_eq_of_lt half, ih]
 
-private theorem index_bound (index : BitVec 160) : index.toNat / 2 < 2 ^ 192 := by
+private theorem index_bound (index : BitVec 152) : index.toNat / 2 < 2 ^ 192 := by
   have h := index.isLt
-  have hpow : (2 : Nat) ^ 160 ≤ 2 ^ 192 := Nat.pow_le_pow_right (by decide) (by decide)
+  have hpow : (2 : Nat) ^ 152 ≤ 2 ^ 192 := Nat.pow_le_pow_right (by decide) (by decide)
   exact lt_of_le_of_lt (Nat.div_le_self ..) (lt_of_lt_of_le h hpow)
 
 /-- SecretKeyless signing program using independent private derivation slots. -/
@@ -98,7 +98,7 @@ def signCompact (pk : PublicKey) (message : Message) : OracleComp SplitWorld Com
   let ri ← randomizedIndex pk message
   let bottom ← signLayerWithRoot ⟨0, by decide⟩ (BitVec.ofNat 192 (ri.2.toNat / 2))
     (ri.2.toNat % 2 == 1) 0
-  let upper ← signUpper 159 1 (ri.2.toNat / 2) (by decide) (index_bound ri.2) bottom.2
+  let upper ← signUpper 151 1 (ri.2.toNat / 2) (by decide) (index_bound ri.2) bottom.2
   return ⟨ri.1, bottom.1.values 0, bottom.1.sibling, upper⟩
 
 /-- Exact equality of oracle computations, including repeated queries and their
@@ -113,7 +113,7 @@ theorem simulate_signCompact (secretKey : SecretKey) (pk : PublicKey) (message :
 /-- The list length is structural and holds for independent private/public answers,
 not only for answer functions arising from a real secretKeyed oracle. -/
 theorem eval_signUpper_length (answers : QueryImpl SplitWorld Id) (count level index : Nat)
-    (hl : count + level ≤ 160) (hi : index < 2 ^ 192) (message : Digest) :
+    (hl : count + level ≤ 152) (hi : index < 2 ^ 192) (message : Digest) :
     (evalWithAnswerFn answers (signUpper count level index hl hi message)).length = count := by
   induction count generalizing level index message with
   | zero => rfl

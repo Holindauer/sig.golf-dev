@@ -37,7 +37,7 @@ theorem execute_routing {α : Type} (privateAnswers : PrivateTable) (labels : La
 theorem routed_keygen_run (privateAnswers : PrivateTable) (labels : Labels) (cache : QueryCache HashSpec) :
     (simulateQ (implementation privateAnswers labels)
       (fixPrivate privateAnswers (SecurityIdealKeygen.keygen.liftComp GameWorld))).run cache =
-      pure (truncate (labels (.node 159 0)), cache) := by
+      pure (truncate (labels (.node 151 0)), cache) := by
   rw [execute_routing, keygen_run]
 
 /-- Honest signing through the original game interface has exactly one residual operation. -/
@@ -46,7 +46,7 @@ theorem routed_signCompact_run (privateAnswers : PrivateTable) (labels : Labels)
     (simulateQ (implementation privateAnswers labels)
       (fixPrivate privateAnswers ((SecurityIdealSign.signCompact pk message).liftComp GameWorld))).run cache =
       (fun result => (signature privateAnswers labels (privateAnswers (.randomizer message))
-        (result.1.extractLsb' 0 160), result.2)) <$>
+        (result.1.extractLsb' 0 152), result.2)) <$>
       (randomOracle (spec := HashSpec)
         (SecurityRandomOracle.indexInput pk message (privateAnswers (.randomizer message)))).run cache := by
   rw [execute_routing, signCompact_run]
@@ -58,7 +58,7 @@ theorem routed_signWire_run (privateAnswers : PrivateTable) (labels : Labels)
       (fixPrivate privateAnswers ((SecurityExperiment.signWire pk message).liftComp GameWorld))).run cache =
       (fun result => (SecurityExperiment.serialize
         (signature privateAnswers labels (privateAnswers (.randomizer message))
-          (result.1.extractLsb' 0 160)), result.2)) <$>
+          (result.1.extractLsb' 0 152)), result.2)) <$>
       (randomOracle (spec := HashSpec)
         (SecurityRandomOracle.indexInput pk message (privateAnswers (.randomizer message)))).run cache := by
   rw [execute_routing]

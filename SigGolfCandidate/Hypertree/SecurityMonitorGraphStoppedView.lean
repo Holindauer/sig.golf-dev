@@ -30,14 +30,14 @@ noncomputable def execute {α : Type} (factors : Factors) (pk : PublicKey) :
               execute factors pk (next result.1) remaining (opened factors exposed input) result.2
                 (recordPublic pk history input (cache input).isSome result.1)
   | .sign signPk message next, remaining, exposed, cache, history =>
-      if 117508 ≤ remaining then do
+      if 111596 ≤ remaining then do
         let result ← (randomOracle (spec := HashSpec)
           (SecurityRandomOracle.indexInput signPk message (factors.2.1 message))).run cache
-        let index := result.1.extractLsb' 0 160
+        let index := result.1.extractLsb' 0 152
         let response := SecurityExperiment.serialize
           (SecurityGraphSigner.signature (privateTable factors) (labels factors) (factors.2.1 message) index)
         let opened := revealCache factors.1 (needed factors.2.2 exposed index) exposed
-        execute factors pk (next response) (remaining - 117508) opened result.2
+        execute factors pk (next response) (remaining - 111596) opened result.2
           (recordSign history message
             (cache (SecurityRandomOracle.indexInput signPk message (factors.2.1 message))).isSome result.1)
       else pure (some ⟨none, remaining, exposed, cache, history⟩)
@@ -97,14 +97,14 @@ theorem stopped_compile {α : Type} (factors : Factors) (pk : PublicKey) (view :
             (public_ready factors pk history exposed cache ready query _ queried)
   | sign signPk message next ih =>
     simp only [compile, execute]
-    by_cases enough : 117508 ≤ remaining
+    by_cases enough : 111596 ≤ remaining
     · simp only [if_pos enough]
       rw [stopped_indexStep]
       apply evalSPMF_bind_congr
       intro result member
       rw [stopped_disclose]
       rw [opened_signature factors.1 factors.2.1 factors.2.2 exposed ready.2]
-      exact ih _ (remaining - 117508) _ result.2 _
+      exact ih _ (remaining - 111596) _ result.2 _
         (sign_ready factors history exposed cache ready signPk message result.1 result.2 member)
     · simp only [if_neg enough, stopped]
 

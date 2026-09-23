@@ -11,7 +11,7 @@ open scoped Classical
 
 abbrev Answer := BitVec 256 × QueryCache PointSpec × QueryCache HashSpec
 
-def Safe (factors : Factors) (signed : Finset (BitVec 160))
+def Safe (factors : Factors) (signed : Finset (BitVec 152))
     (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) : Prop :=
   Agree factors.1 exposed ∧ ExposedSafe factors.2.2 signed exposed ∧ ResidualSafe factors cache
 
@@ -28,7 +28,7 @@ theorem residual_insert (factors : Factors) (cache : QueryCache HashSpec) (safe 
 
 /-- A completed noncanonical lookup retains the invariant only if the target
 comparison missed. This includes both fresh draws and previously cached answers. -/
-theorem residual_read_safe (factors : Factors) (signed : Finset (BitVec 160))
+theorem residual_read_safe (factors : Factors) (signed : Finset (BitVec 152))
     (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) (initial : Safe factors signed exposed cache)
     (query : Query) (position : Position) (located : locate query = some position)
     (different : query ≠ position.input (privateTable factors) (labels factors)) (result : Answer)
@@ -57,7 +57,7 @@ theorem residual_read_safe (factors : Factors) (signed : Finset (BitVec 160))
 
 /-- On a completed chain query, canonical input implies an authorized predecessor;
 noncanonical input implies a noncollision with that fixed graph target. -/
-def ChainClean (factors : Factors) (signed : Finset (BitVec 160)) (address : ChainAddress)
+def ChainClean (factors : Factors) (signed : Finset (BitVec 152)) (address : ChainAddress)
     (step : Fin 7) (query : Query) (answer : BitVec 256) : Prop :=
   (query = chainInput address step (truncate (factors.1 (predecessor address step))) →
     Authorized factors.2.2 signed (predecessor address step)) ∧
@@ -66,7 +66,7 @@ def ChainClean (factors : Factors) (signed : Finset (BitVec 160)) (address : Cha
 
 /-- The actual chain-query monitor preserves both cache invariants and rules out
 both contact types whenever it returns normally. -/
-theorem chain_read_safe (factors : Factors) (signed : Finset (BitVec 160))
+theorem chain_read_safe (factors : Factors) (signed : Finset (BitVec 152))
     (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) (initial : Safe factors signed exposed cache)
     (address : ChainAddress) (step : Fin 7) (query : Query)
     (located : locate query = some (.chain address step)) (result : Answer)

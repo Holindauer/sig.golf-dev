@@ -5,13 +5,13 @@ open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 Signing SignatureEncoding
 set_option maxRecDepth 4096
 
 theorem upper_layers_bytes (s : MachineState) (level : Nat) (signatures : List Reference.LayerSignature)
-    (positive : 0 < level) (bound : level+signatures.length ≤ 160)
+    (positive : 0 < level) (bound : level+signatures.length ≤ 152)
     (stored : LayersStored s level signatures) :
     StoredBytes s (0x20060+layerOffset level) (signatures.flatMap layerBytes) := by
   induction signatures generalizing level with
   | nil => intro i hi; simp at hi
   | cons signature rest ih =>
-    have lt : level < 160 := by simp only [List.length_cons] at bound; omega
+    have lt : level < 152 := by simp only [List.length_cons] at bound; omega
     have valid := sign_pointer_valid level lt
     have first : UpperLayerStored s (0x20060+layerOffset level) signature := by
       have h := stored.1
@@ -36,7 +36,7 @@ theorem read_wire (s : MachineState) (signature : Compact) (valid : signature.Va
 
 /-- Captured layer words and the randomizer determine every byte of the canonical signature. -/
 theorem read_reference (s : MachineState) (signature : Reference.Signature)
-    (valid : signature.layers.length=160)
+    (valid : signature.layers.length=152)
     (randomizer : ∀ i : Fin 4, s.getMem (wordAddress 0x20060 i.val) = signature.randomizer.extractLsb' (64*i.val) 64)
     (stored : LayersStored s 0 signature.layers) :
     readBuffer s 0x20060 signatureBytes =
@@ -45,7 +45,7 @@ theorem read_reference (s : MachineState) (signature : Reference.Signature)
   cases layers with
   | nil => simp at valid
   | cons bottom upper =>
-    have upperLen : upper.length=159 := by change upper.length+1=160 at valid; omega
+    have upperLen : upper.length=151 := by change upper.length+1=152 at valid; omega
     let compact : Compact := ⟨r,bottom.values 0,bottom.sibling,upper⟩
     have compactValid : compact.Valid := upperLen
     have randomBytes : StoredBytes s 0x20060 (bytes r) :=

@@ -114,9 +114,9 @@ theorem verify_public (privateAnswers : PrivateTable) (graph : Labels) (base : H
   simp only [Reference.verify, index_public, recoverLayers_public]
 
 theorem keygen_label (privateAnswers : PrivateTable) (graph : Labels) (base : Hash) :
-    Reference.keygen (hash privateAnswers graph base) 0 = truncate (graph (.node 159 0)) := by
+    Reference.keygen (hash privateAnswers graph base) 0 = truncate (graph (.node 151 0)) := by
   rw [hash_as_derived]
-  exact programmed_treeRoot (residual privateAnswers base) 0 graph 159 0
+  exact programmed_treeRoot (residual privateAnswers base) 0 graph 151 0
 
 /-- info: 'SigGolfCandidate.Hypertree.SecurityGraphCompletion.verify_public' depends on axioms: [propext,
  Classical.choice,

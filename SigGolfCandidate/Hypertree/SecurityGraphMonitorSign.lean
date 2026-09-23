@@ -40,11 +40,11 @@ theorem metadata_ready (table : PointTable) (nonces : NonceTable) (metadata : Me
   | leaf level tree side => rfl
   | node level tree => rfl
 
-noncomputable def needed (metadata : MetadataTable) (cache : QueryCache PointSpec) (index : BitVec 160) : List Point :=
+noncomputable def needed (metadata : MetadataTable) (cache : QueryCache PointSpec) (index : BitVec 152) : List Point :=
   (signaturePoints (labels (viewFactors cache metadata)) index).toList
 
 theorem opened_signature (table : PointTable) (nonces : NonceTable) (metadata : MetadataTable)
-    (cache : QueryCache PointSpec) (ready : PublicReady table cache) (r : Bytes 32) (index : BitVec 160) :
+    (cache : QueryCache PointSpec) (ready : PublicReady table cache) (r : Bytes 32) (index : BitVec 152) :
     let opened := revealCache table (needed metadata cache index) cache
     signature (privateTable (viewFactors opened metadata)) (labels (viewFactors opened metadata)) r index =
       signature (privateTable (table,(nonces,metadata))) (labels (table,(nonces,metadata))) r index := by
@@ -89,7 +89,7 @@ noncomputable def sign (nonces : NonceTable) (metadata : MetadataTable) (exposed
     (cache : QueryCache HashSpec) (pk : PublicKey) (message : Message) : Program SignResult :=
   let r := nonces message
   indexStep cache (SecurityRandomOracle.indexInput pk message r) (fun answer residual =>
-    let index := answer.extractLsb' 0 160
+    let index := answer.extractLsb' 0 152
     SecurityGraphMonitorOracle.disclose (needed metadata exposed index) exposed (fun opened =>
       .done (signature (privateTable (viewFactors opened metadata)) (labels (viewFactors opened metadata)) r index,
         opened,residual)))
@@ -99,8 +99,8 @@ theorem run_sign (table : PointTable) (nonces : NonceTable) (metadata : Metadata
     (cache : QueryCache HashSpec) (pk : PublicKey) (message : Message) :
     run table exposed (sign nonces metadata exposed cache pk message) =
       (fun result => (⟨(signature (privateTable (table,(nonces,metadata))) (labels (table,(nonces,metadata)))
-        (nonces message) (result.1.extractLsb' 0 160),
-          revealCache table (needed metadata exposed (result.1.extractLsb' 0 160)) exposed,result.2),false,0⟩ : Outcome SignResult)) <$>
+        (nonces message) (result.1.extractLsb' 0 152),
+          revealCache table (needed metadata exposed (result.1.extractLsb' 0 152)) exposed,result.2),false,0⟩ : Outcome SignResult)) <$>
         (randomOracle (spec := HashSpec) (SecurityRandomOracle.indexInput pk message (nonces message))).run cache := by
   simp only [sign, run_indexStep, run_disclose, run, opened_signature table nonces metadata exposed ready,
     ← map_eq_pure_bind]

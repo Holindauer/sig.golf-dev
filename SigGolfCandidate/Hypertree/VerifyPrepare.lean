@@ -55,24 +55,24 @@ theorem indexMessageCopyState_block (s : MachineState) (pc : s.pc = 0x104c) :
   exact OrdinarySteps.refl _
 
 def inputRandomizerCopyState (s : MachineState) : MachineState :=
-  let s := execInstrBr s (.LUI .x6 0x3d)
-  let s := execInstrBr s (.ADDI .x6 .x6 0x3b0)
+  let s := execInstrBr s (.LUI .x6 0x3c)
+  let s := execInstrBr s (.ADDI .x6 .x6 0xc30)
   let s := execInstrBr s (.LUI .x7 0x80)
   let s := execInstrBr s (.ADDI .x7 .x7 0x50)
   execInstrBr s (.ADDI .x10 .x0 4)
 
 theorem inputRandomizerCopyState_block (s : MachineState) (pc : s.pc = 0x1074) :
     OrdinarySteps verify s 5 (inputRandomizerCopyState s) := by
-  let s1 := execInstrBr s (.LUI .x6 0x3d)
-  let s2 := execInstrBr s1 (.ADDI .x6 .x6 0x3b0)
+  let s1 := execInstrBr s (.LUI .x6 0x3c)
+  let s2 := execInstrBr s1 (.ADDI .x6 .x6 0xc30)
   let s3 := execInstrBr s2 (.LUI .x7 0x80)
   let s4 := execInstrBr s3 (.ADDI .x7 .x7 0x50)
   let s5 := execInstrBr s4 (.ADDI .x10 .x0 4)
-  apply OrdinarySteps.step s s1 _ (.base (.LUI .x6 0x3d)) 4
+  apply OrdinarySteps.step s s1 _ (.base (.LUI .x6 0x3c)) 4
   · have hp : s.pc = 0x1074 := by simp [execInstrBr, pc]
     simp only [fetch, hp]; decide
   · rfl
-  apply OrdinarySteps.step s1 s2 _ (.base (.ADDI .x6 .x6 0x3b0)) 3
+  apply OrdinarySteps.step s1 s2 _ (.base (.ADDI .x6 .x6 0xc30)) 3
   · have hp : s1.pc = 0x1078 := by simp [s1, execInstrBr, pc]
     simp only [fetch, hp]; decide
   · rfl
@@ -188,7 +188,7 @@ theorem inputRandomizerCopyState_mem (s : MachineState) (a : Word) :
     (inputRandomizerCopyState s).getMem a = s.getMem a := by simp [inputRandomizerCopyState, execInstrBr]
 
 theorem inputRandomizerCopyState_invariant (s : MachineState) (pc : s.pc = 0x1074) :
-    CopyInvariant 0x1088 0x3d3b0 0x80050 4 4 (inputRandomizerCopyState s) := by
+    CopyInvariant 0x1088 0x3bc30 0x80050 4 4 (inputRandomizerCopyState s) := by
   simp [CopyInvariant, inputRandomizerCopyState, execInstrBr, signExtend12, pc,
     MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne]
 
@@ -196,7 +196,7 @@ def indexInputWord (s : MachineState) (i : Fin 14) : Word :=
   if i.val = 0 then 5 else if i.val < 4 then 0 else
     if i.val < 6 then s.getMem (wordAddress 0x40 (i.val - 4))
     else if i.val < 10 then s.getMem (wordAddress 0 (i.val - 6))
-    else s.getMem (wordAddress 0x3d3b0 (i.val - 10))
+    else s.getMem (wordAddress 0x3bc30 (i.val - 10))
 
 theorem index_prepare (s : MachineState) (pc : s.pc = 0x1024) :
     ∃ ready, OrdinarySteps verify s 89 ready ∧ ready.pc = 0x10e0 ∧
@@ -211,7 +211,7 @@ theorem index_prepare (s : MachineState) (pc : s.pc = 0x1024) :
     (by decide) (by decide) (by decide) (by decide) (by decide)
   have msgpc : msg.pc = 0x1074 := by simpa [CopyInvariant] using msgInv.2.2.1
   obtain ⟨rand, randLoop, randInv, randOutput, randFrame⟩ := copy_all verify 0x1088 (by decide)
-    0x3d3b0 0x80050 4 (inputRandomizerCopyState msg) (inputRandomizerCopyState_invariant msg msgpc)
+    0x3bc30 0x80050 4 (inputRandomizerCopyState msg) (inputRandomizerCopyState_invariant msg msgpc)
     (by decide) (by decide) (by decide) (by decide) (by decide)
   have randpc : rand.pc = 0x10a0 := by simpa [CopyInvariant] using randInv.2.2.1
   have pkPreserved (i : Fin 2) :
@@ -247,17 +247,17 @@ theorem index_prepare (s : MachineState) (pc : s.pc = 0x1024) :
       · exact hj
       · have := i.isLt; left; omega
   have randomizerCopied (i : Fin 4) :
-      rand.getMem (wordAddress 0x80050 i.val) = s.getMem (wordAddress 0x3d3b0 i.val) := by
+      rand.getMem (wordAddress 0x80050 i.val) = s.getMem (wordAddress 0x3bc30 i.val) := by
     rw [randOutput i.val i.isLt, inputRandomizerCopyState_mem, msgFrame,
       indexMessageCopyState_mem, pkFrame, pkCopyState_mem]
     · intro j hj
-      apply outside_copy_word (0x3d3b0 + 8 * i.val) 0x80020 2 j
+      apply outside_copy_word (0x3bc30 + 8 * i.val) 0x80020 2 j
       · have := i.isLt; omega
       · decide
       · exact hj
       · have := i.isLt; left; omega
     · intro j hj
-      apply outside_copy_word (0x3d3b0 + 8 * i.val) 0x80030 4 j
+      apply outside_copy_word (0x3bc30 + 8 * i.val) 0x80030 4 j
       · have := i.isLt; omega
       · decide
       · exact hj

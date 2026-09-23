@@ -113,11 +113,11 @@ def treeRoot (secretKey : SecretKey) (level tree : Nat) : OracleComp HashSpec Di
 
 /-- This monadic key generator uses actual `HashSpec` inputs, so its random-oracle
 meaning is the organizer's `withRandomOracle`, not an assumed random root. -/
-def keygen (secretKey : SecretKey) : OracleComp HashSpec PublicKey := treeRoot secretKey 159 0
+def keygen (secretKey : SecretKey) : OracleComp HashSpec PublicKey := treeRoot secretKey 151 0
 
 @[simp] theorem eval_keygen (hash : Hash) (secretKey : SecretKey) :
     evalWithAnswerFn hash (keygen secretKey) = Reference.keygen hash secretKey :=
-  eval_treeRoot hash secretKey 159 0
+  eval_treeRoot hash secretKey 151 0
 
 /-- Generate a WOTS fragment and finish the same chain, reusing all prior work. -/
 def signChain (secretKey : SecretKey) (level tree : Nat) (side : Bool) (message : Digest) (chain : Chain) :
@@ -194,7 +194,7 @@ theorem eval_signUpper (hash : Hash) (secretKey : SecretKey) (count level index 
 def signCompact (secretKey : SecretKey) (pk : PublicKey) (message : Message) : OracleComp HashSpec Compact := do
   let ri ← SecurityRandomOracle.randomizedIndex secretKey pk message
   let bottom ← signLayerWithRoot secretKey 0 (ri.2.toNat / 2) (ri.2.toNat % 2 == 1) 0
-  let upper ← signUpper secretKey 159 1 (ri.2.toNat / 2) bottom.2
+  let upper ← signUpper secretKey 151 1 (ri.2.toNat / 2) bottom.2
   return ⟨ri.1, bottom.1.values 0, bottom.1.sibling, upper⟩
 
 @[simp] theorem eval_signCompact (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (message : Message) :
@@ -202,7 +202,7 @@ def signCompact (secretKey : SecretKey) (pk : PublicKey) (message : Message) : O
       SignatureEncoding.signCompact hash secretKey pk message := by
   simp only [signCompact, evalWithAnswerFn_bind, evalWithAnswerFn_pure,
     SecurityRandomOracle.eval_randomizedIndex, eval_signLayerWithRoot,
-    eval_signUpper hash secretKey 159 1 _ _ (by decide), canonicalLayer, ↓reduceIte,
+    eval_signUpper hash secretKey 151 1 _ _ (by decide), canonicalLayer, ↓reduceIte,
     SignatureEncoding.signCompact, Compact.ofReference, Reference.sign, Reference.signLayers,
     List.getElem_cons_zero, List.drop_succ_cons, List.drop_zero]
 

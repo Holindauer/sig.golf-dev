@@ -21,7 +21,7 @@ theorem loaded_recovery_exact (hash : Hash) (pk : PublicKey) (message : Message)
     dsimp [index]
     omega
   obtain ⟨recovered, steps, cycles, calls, blocks, lastIndex, run, hsteps, hcycles, hcalls, hblocks, finalPC, finalData, frame, countEq⟩ :=
-    verify_layers_exact hash witness 160 0 index ready 0 rfl indexSmall (by simpa using pc) data
+    verify_layers_exact hash witness 152 0 index ready 0 rfl indexSmall (by simpa using pc) data
   have allFrame := preFrame.trans initial ready recovered frame
   have pkWords : ∀ i : Fin 2, recovered.getMem (wordAddress 0x40 i.val) = pk.extractLsb' (64*i.val) 64 := by
     intro i
@@ -33,7 +33,7 @@ theorem loaded_recovery_exact (hash : Hash) (pk : PublicKey) (message : Message)
   refine ⟨initial, recovered, 130+steps, 145+cycles, 1+calls, 2+blocks,
     loaded, pre.trans run, by omega, by omega, by omega, by omega, finalPC, ?_, ?_⟩
   · rw [matchRoot, wire_layers_decode]
-    have length : (SignatureEncoding.decode witness).toReference.layers.length = 160 := by
+    have length : (SignatureEncoding.decode witness).toReference.layers.length = 152 := by
       simp [SignatureEncoding.decode, SignatureEncoding.Compact.toReference]
     simp only [Reference.verify, length, true_and]
     rfl

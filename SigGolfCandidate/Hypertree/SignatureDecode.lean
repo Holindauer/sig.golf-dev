@@ -55,12 +55,12 @@ def decode (value : Bytes signatureBytes) : Compact where
   randomizer := slice value 0 32
   bottom := slice value 32 16
   sibling := slice value 48 16
-  upper := (List.range 159).map (decodeLayer value)
+  upper := (List.range 151).map (decodeLayer value)
 
 theorem decode_valid (value : Bytes signatureBytes) : (decode value).Valid := by
   simp [decode, Compact.Valid]
 
-theorem decodeLayer_bytes (value : Bytes signatureBytes) (index : Nat) (hi : index < 159) :
+theorem decodeLayer_bytes (value : Bytes signatureBytes) (index : Nat) (hi : index < 151) :
     layerBytes (decodeLayer value index) = ((bytes value).drop (64 + 752 * index)).take 752 := by
   dsimp only [layerBytes, decodeLayer]
   rw [ofFn_nat 46 (fun i => slice value (64 + 752 * index + 16 * i) 16), List.flatMap_map]
@@ -70,16 +70,16 @@ theorem decodeLayer_bytes (value : Bytes signatureBytes) (index : Nat) (hi : ind
     intro i hi'
     have bound : i < 46 := by simpa using hi'
     apply bytes_slice
-    change 64 + 752 * index + 16 * i + 16 ≤ 119632
+    change 64 + 752 * index + 16 * i + 16 ≤ 113616
     omega
-  rw [first, chunks_reassemble, bytes_slice value (64 + 752 * index + 736) 16 (by change 64 + 752 * index + 736 + 16 ≤ 119632; omega)]
+  rw [first, chunks_reassemble, bytes_slice value (64 + 752 * index + 736) 16 (by change 64 + 752 * index + 736 + 16 ≤ 113616; omega)]
   simpa only [List.drop_drop] using (List.take_add (l := (bytes value).drop (64 + 752 * index)) (i := 736) (j := 16)).symm
 
 theorem decode_encode (value : Bytes signatureBytes) : (decode value).encode = bytes value := by
   dsimp only [Compact.encode, decode]
   rw [List.flatMap_map]
-  have upper : (List.range 159).flatMap (fun i => layerBytes (decodeLayer value i)) =
-      ((bytes value).drop 64).take (752 * 159) := by
+  have upper : (List.range 151).flatMap (fun i => layerBytes (decodeLayer value i)) =
+      ((bytes value).drop 64).take (752 * 151) := by
     rw [← chunks_reassemble]
     apply flatMap_eq_on
     intro i hi
@@ -87,7 +87,7 @@ theorem decode_encode (value : Bytes signatureBytes) : (decode value).encode = b
   rw [upper, bytes_slice value 0 32 (by decide), bytes_slice value 32 16 (by decide),
     bytes_slice value 48 16 (by decide), List.drop_zero]
   rw [← List.take_add (i := 32) (j := 16), ← List.take_add (i := 48) (j := 16),
-    ← List.take_add (i := 64) (j := 752 * 159)]
+    ← List.take_add (i := 64) (j := 752 * 151)]
   apply List.take_of_length_le
   rw [Memory.bytes_length (n := signatureBytes)]
   decide

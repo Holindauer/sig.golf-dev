@@ -17,7 +17,7 @@ private theorem prepare_stack (s : MachineState) (pc : s.pc = 0x1024) :
     (by decide) (by decide) (by decide) (by decide) (by decide)
   have msgpc : msg.pc = 0x1074 := by simpa [CopyInvariant] using msgInv.2.2.1
   obtain ⟨rand, randLoop, randInv, _, _, _, randSP⟩ := copy_all_frame verify 0x1088 (by decide)
-    0x3d3b0 0x80050 4 (inputRandomizerCopyState msg) (inputRandomizerCopyState_invariant msg msgpc)
+    0x3bc30 0x80050 4 (inputRandomizerCopyState msg) (inputRandomizerCopyState_invariant msg msgpc)
     (by decide) (by decide) (by decide) (by decide) (by decide)
   have randpc : rand.pc = 0x10a0 := by simpa [CopyInvariant] using randInv.2.2.1
   refine ⟨indexHeaderState rand, ?_, ?_⟩

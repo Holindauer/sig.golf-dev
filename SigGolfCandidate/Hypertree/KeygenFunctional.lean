@@ -12,7 +12,7 @@ theorem executes (hash : Hash) (secretKey : SecretKey) :
         (Reference.keygen hash secretKey).extractLsb' (64*i.val) 64 := by
   obtain ⟨root,treeTrace,treePC,treeSP,words⟩ :=
     KeygenTree.execute hash (prefixState (secretKeyState secretKey)) (prefix_pc _ (secretKey_pc secretKey))
-      (by rw [prefix_sp,secretKey_sp]) 159 0 secretKey (by decide) (prefix_context secretKey)
+      (by rw [prefix_sp,secretKey_sp]) 151 0 secretKey (by decide) (prefix_context secretKey)
   have returned : root.pc=0x1014 := by rw [treePC,prefix_ra _ (secretKey_pc secretKey)]; decide
   refine ⟨Expansion.finishState (outputCopied root),
     executes_of_tree_trace hash (secretKeyState secretKey) root (secretKey_pc secretKey) 77073 82422 739 761 treeTrace returned,?_⟩

@@ -7,7 +7,7 @@ open SigGolf OracleSpec OracleComp Reference SecurityRandomOracle SecurityPackin
 /-- Explicit bounds ensure that distinct private chain slots cannot alias through
 header overflow or tree truncation. -/
 structure ChainAddress where
-  level : Fin 160
+  level : Fin 152
   tree : BitVec 192
   side : Bool
   chain : Chain

@@ -8,11 +8,11 @@ set_option maxRecDepth 4096
 /-- One complete protected verifier iteration, including index shift, encoding, tree, and advancement. -/
 theorem verify_layer (hash : Hash) (s : MachineState) (level index : Nat)
     (current : Reference.Digest) (witness : Bytes signatureBytes)
-    (pc : s.pc = 0x1148) (small : level < 160) (indexSmall : index < 2^192)
+    (pc : s.pc = 0x1148) (small : level < 152) (indexSmall : index < 2^192)
     (data : LoopData s level index current witness) :
     ∃ final steps cycles calls blocks, Trace hash verify s steps cycles calls blocks final ∧
       steps ≤ 34415 ∧ cycles ≤ (if level = 0 then 288 else 20237) ∧ calls ≤ 324 ∧ blocks ≤ 335 ∧
-      final.pc = (if level+1 = 160 then 0x1220 else 0x1148) ∧
+      final.pc = (if level+1 = 152 then 0x1220 else 0x1148) ∧
       LoopData final (level+1) (index/2)
         (Reference.recoverLayer hash level (index/2) (index%2 == 1) current (wireLayer witness level)) witness ∧
       LowFrame s final := by

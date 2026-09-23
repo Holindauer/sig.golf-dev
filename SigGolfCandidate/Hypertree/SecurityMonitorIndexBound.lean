@@ -14,7 +14,7 @@ theorem aligned_conflict_le {α : Type} (program : SecurityIndexProgram.Program 
     (aligned : Aligned program traceOf []) :
     Pr[fun value => Conflict (traceOf value) ∧ marks (traceOf value) ≤ LIFETIME |
       SecurityMonitorIndexView.observe program] ≤
-      expectedValue (SecurityMonitorIndexView.observe program) (fun value => ((traceOf value).length : ENNReal))/2^136 := by
+      expectedValue (SecurityMonitorIndexView.observe program) (fun value => ((traceOf value).length : ENNReal))/2^128 := by
   have bound := SecurityIndexProgram.prob_lifetime_conflict_le program
   have event : Pr[fun result => Conflict (traceOf result.1) ∧ marks (traceOf result.1) ≤ LIFETIME |
       SecurityIndexProgram.execute program] =
@@ -40,7 +40,7 @@ theorem start_bad_le {α : Type} (table : PointTable) (nonces : NonceTable) (met
     Pr[fun result => Bad result.value.history |
       SecurityGraphMonitorProgram.run table ∅ (SecurityMonitorGraphView.start nonces metadata pk view budget)] ≤
       expectedValue (SecurityGraphMonitorProgram.run table ∅ (SecurityMonitorGraphView.start nonces metadata pk view budget))
-        (fun result => (result.value.history.indexTrace.length : ENNReal))/2^136 := by
+        (fun result => (result.value.history.indexTrace.length : ENNReal))/2^128 := by
   have bound := aligned_conflict_le (SecurityMonitorIndexView.start table nonces metadata pk view budget)
     (fun result => result.history.indexTrace) (start_aligned table nonces metadata pk view budget)
   rw [SecurityMonitorIndexView.observe_start] at bound
@@ -51,14 +51,14 @@ theorem setup_bad_le {α : Type} (nonces : NonceTable) (metadata : MetadataTable
     Pr[fun result => Bad result.value.history |
       SecurityGraphMonitorProgram.experiment (SecurityMonitorGraphView.start nonces metadata pk view budget) ∅] ≤
       expectedValue (SecurityGraphMonitorProgram.experiment (SecurityMonitorGraphView.start nonces metadata pk view budget) ∅)
-        (fun result => (result.value.history.indexTrace.length : ENNReal))/2^136 := by
+        (fun result => (result.value.history.indexTrace.length : ENNReal))/2^128 := by
   unfold SecurityGraphMonitorProgram.experiment
   simp only [probEvent_bind_eq_expectedValue, expectedValue_bind]
   calc
     _ ≤ expectedValue ($ᵗ PointTable) (fun table =>
       expectedValue (SecurityGraphMonitorProgram.run (complete ∅ table) ∅
         (SecurityMonitorGraphView.start nonces metadata pk view budget))
-        (fun result => (result.value.history.indexTrace.length : ENNReal))/2^136) := by
+        (fun result => (result.value.history.indexTrace.length : ENNReal))/2^128) := by
       apply expectedValue_mono
       intro table
       exact start_bad_le _ _ _ _ _ _
@@ -68,16 +68,16 @@ theorem setup_bad_le {α : Type} (nonces : NonceTable) (metadata : MetadataTable
 theorem experiment_bad_le (publicCache : Cache) (adversary : Adversary submission.sizes) (rounds budget : Nat) :
     Pr[fun result => Bad result.value.history | SecurityMonitorGraphView.experiment publicCache adversary rounds budget] ≤
       expectedValue (SecurityMonitorGraphView.experiment publicCache adversary rounds budget)
-        (fun result => (result.value.history.indexTrace.length : ENNReal))/2^136 := by
+        (fun result => (result.value.history.indexTrace.length : ENNReal))/2^128 := by
   unfold SecurityMonitorGraphView.experiment
   simp only [probEvent_bind_eq_expectedValue, expectedValue_bind]
   calc
     _ ≤ expectedValue ($ᵗ NonceTable) (fun nonces => expectedValue ($ᵗ MetadataTable) (fun metadata =>
       expectedValue (SecurityGraphMonitorProgram.experiment
-        (SecurityMonitorGraphView.start nonces metadata (truncate (metadata (.node 159 0)))
-          (ofInteract adversary (truncate (metadata (.node 159 0))) rounds
-            (adversary.initial (truncate (metadata (.node 159 0))) publicCache) {}) budget) ∅)
-        (fun result => (result.value.history.indexTrace.length : ENNReal))/2^136)) := by
+        (SecurityMonitorGraphView.start nonces metadata (truncate (metadata (.node 151 0)))
+          (ofInteract adversary (truncate (metadata (.node 151 0))) rounds
+            (adversary.initial (truncate (metadata (.node 151 0))) publicCache) {}) budget) ∅)
+        (fun result => (result.value.history.indexTrace.length : ENNReal))/2^128)) := by
       apply expectedValue_mono
       intro nonces
       apply expectedValue_mono

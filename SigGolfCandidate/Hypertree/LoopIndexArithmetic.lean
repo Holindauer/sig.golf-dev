@@ -35,7 +35,7 @@ theorem shift_index_nat (s : MachineState) (index : Nat) (small : index < 2^192)
     rw [side, BitVec.toNat_ofNat, Nat.mod_eq_of_lt small, BitVec.toNat_ofNat, selector_nat]
     omega
 
-theorem level_word_zero (level : Nat) (small : level < 160) :
+theorem level_word_zero (level : Nat) (small : level < 152) :
     BitVec.ofNat 64 level = 0 ↔ level = 0 := by
   constructor
   · intro eq
@@ -49,7 +49,7 @@ theorem layer_pointer_aligned (input level : Nat) (aligned : input % 8 = 0) :
   unfold layerOffset
   split <;> omega
 
-theorem layer_pointer_bound (input level : Nat) (inputBound : input ≤ 0x3d3b0) (small : level < 160) :
+theorem layer_pointer_bound (input level : Nat) (inputBound : input ≤ 0x3bc30) (small : level < 152) :
     input+layerOffset level+752 ≤ 0x80000 := by
   unfold layerOffset
   split <;> omega

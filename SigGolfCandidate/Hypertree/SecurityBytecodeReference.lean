@@ -96,7 +96,7 @@ theorem check_equivalent (hash : Hash) (pk : PublicKey) (transcript : Transcript
     simp only [actualInterface,referenceInterface,Submission.checkForgery,referenceCheck,
       evalWithAnswerFn_bind,evalWithAnswerFn_pure,eval_countHash]
     have ex : evalWithAnswerFn hash (submission.run .expand (message,pk,signature)) =
-        ⟨some signature,true,89733,0,0⟩ := Candidate.expand_exact hash message pk signature
+        ⟨some signature,true,85221,0,0⟩ := Candidate.expand_exact hash message pk signature
     simp only [ex,evalWithAnswerFn_bind,evalWithAnswerFn_pure]
     change (⟨(submission.runWith hash .verify (message,pk,signature)).value.isSome && _,
       transcript.hashCalls+0+(submission.runWith hash .verify (message,pk,signature)).hashCalls⟩ : AttackResult)=_

@@ -15,21 +15,21 @@ theorem secret_point (privateAnswers : PrivateTable) (graph : Labels) (base : Ha
     programmed_secret (residual privateAnswers base) 0 graph address
 
 theorem treeRoot_label (privateAnswers : PrivateTable) (graph : Labels) (base : Hash)
-    (level : Fin 160) (tree : BitVec 192) :
+    (level : Fin 152) (tree : BitVec 192) :
     treeRoot (hash privateAnswers graph base) 0 level.val tree.toNat =
       truncate (graph (.node level tree)) := by
   rw [hash_as_derived]
   exact programmed_treeRoot (residual privateAnswers base) 0 graph level tree
 
 theorem leafRoot_label (privateAnswers : PrivateTable) (graph : Labels) (base : Hash)
-    (level : Fin 160) (tree : BitVec 192) (side : Bool) :
+    (level : Fin 152) (tree : BitVec 192) (side : Bool) :
     leafRoot (hash privateAnswers graph base) 0 level.val tree.toNat side =
       leafLabel graph level tree side := by
   rw [hash_as_derived]
   exact programmed_leafRoot (residual privateAnswers base) 0 graph level tree side
 
 theorem upper_layer (privateAnswers : PrivateTable) (graph : Labels) (base : Hash)
-    (level : Fin 160) (tree : BitVec 192) (side : Bool) (message : Digest)
+    (level : Fin 152) (tree : BitVec 192) (side : Bool) (message : Digest)
     (positive : 0 < level.val) :
     signLayer (hash privateAnswers graph base) 0 level.val tree.toNat side message =
       layer privateAnswers graph level tree side message := by
@@ -43,7 +43,7 @@ theorem upper_layer (privateAnswers : PrivateTable) (graph : Labels) (base : Has
   exact congrArg₂ LayerSignature.mk values sibling
 
 theorem upper_layers (privateAnswers : PrivateTable) (graph : Labels) (base : Hash)
-    (count level index : Nat) (levels : count + level ≤ 160) (bound : index < 2 ^ 192)
+    (count level index : Nat) (levels : count + level ≤ 152) (bound : index < 2 ^ 192)
     (positive : 0 < level) (message : Digest) :
     signLayers (hash privateAnswers graph base) 0 count level index message =
       upperLayers privateAnswers graph count level index levels bound message := by
@@ -88,16 +88,16 @@ theorem signCompact_graph (privateAnswers : PrivateTable) (graph : Labels) (base
     leafRoot (hash privateAnswers graph base) 0 0
       ((indexOf (hash privateAnswers graph base) pk message (randomizer (hash privateAnswers graph base) 0 message)).toNat / 2)
       (!((indexOf (hash privateAnswers graph base) pk message (randomizer (hash privateAnswers graph base) 0 message)).toNat % 2 == 1)),
-    signLayers (hash privateAnswers graph base) 0 159 1
+    signLayers (hash privateAnswers graph base) 0 151 1
       ((indexOf (hash privateAnswers graph base) pk message (randomizer (hash privateAnswers graph base) 0 message)).toNat / 2)
       (treeRoot (hash privateAnswers graph base) 0 0
         ((indexOf (hash privateAnswers graph base) pk message (randomizer (hash privateAnswers graph base) 0 message)).toNat / 2))⟩ : Compact) = _
   simp only [nonce_private, index_public]
   change (⟨_, secret (hash privateAnswers graph base) 0 0 (index.toNat / 2) (index.toNat % 2 == 1) 0,
     leafRoot (hash privateAnswers graph base) 0 0 (index.toNat / 2) (!(index.toNat % 2 == 1)),
-    signLayers (hash privateAnswers graph base) 0 159 1 (index.toNat / 2)
+    signLayers (hash privateAnswers graph base) 0 151 1 (index.toNat / 2)
       (treeRoot (hash privateAnswers graph base) 0 0 (index.toNat / 2))⟩ : Compact) = _
-  rw [source, sibling, root, upper_layers _ _ _ 159 1 _ (by decide) bound (by decide)]
+  rw [source, sibling, root, upper_layers _ _ _ 151 1 _ (by decide) bound (by decide)]
   rfl
 
 end SigGolfCandidate.Hypertree.SecurityGraphCompletion

@@ -34,14 +34,14 @@ theorem recover_chain {α : Type} (hash : Nat → α → α) (secret : α) (digi
 
 /-- Compression-count arithmetic for the reference algorithm. CandidateFields assembles the bytecode resource proofs; Certificate supplies the complete competition claim. -/
 def referenceKeygenCompressions : Nat := 2 * (46 * (1 + 7) + 12) + 1
-def referenceSignCompressions : Nat := 2 + 2 + 5 + 159 * referenceKeygenCompressions
-def referenceVerificationCompressions : Nat := 2 + 2 + 159 * (46 * 7 + 12 + 1)
+def referenceSignCompressions : Nat := 2 + 2 + 5 + 151 * referenceKeygenCompressions
+def referenceVerificationCompressions : Nat := 2 + 2 + 151 * (46 * 7 + 12 + 1)
 
 theorem reference_keygen_budget : referenceKeygenCompressions ≤ BUDGET_KEYGEN := by decide
 theorem reference_sign_budget : referenceSignCompressions ≤ BUDGET_SIGN := by decide
-theorem reference_sign_count : referenceSignCompressions = 121008 := by decide
-theorem reference_verify_count : referenceVerificationCompressions = 53269 := by decide
-theorem signature_size : signatureBytes = 119632 := rfl
+theorem reference_sign_count : referenceSignCompressions = 114920 := by decide
+theorem reference_verify_count : referenceVerificationCompressions = 50589 := by decide
+theorem signature_size : signatureBytes = 113616 := rfl
 
 /-- info: 'SigGolfCandidate.Hypertree.admitted' depends on axioms: [propext] -/
 #guard_msgs in

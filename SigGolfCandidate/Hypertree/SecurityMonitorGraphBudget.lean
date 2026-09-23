@@ -55,7 +55,7 @@ theorem compile_conserved {α : Type} (nonces : NonceTable) (metadata : Metadata
       intro answer residual
       apply disclose_returns
       intro opened
-      apply returns_mono _ _ _ _ (ih _ (remaining - 117508) opened residual
+      apply returns_mono _ _ _ _ (ih _ (remaining - 111596) opened residual
         (recordSign history message (cache (SecurityRandomOracle.indexInput signPk message (nonces message))).isSome answer))
       intro result conserved
       rw [sign_total] at conserved

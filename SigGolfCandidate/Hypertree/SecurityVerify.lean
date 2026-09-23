@@ -53,9 +53,9 @@ def recoverLayers : Nat → Nat → Digest → List LayerSignature → OracleCom
 or validate the signer-secret randomizer; any supplied 256-bit randomizer is handled. -/
 def verifyCompact (pk : PublicKey) (message : Message) (signature : Compact) : OracleComp HashSpec Bool := do
   let answer ← ask 5 0 0 0 0 0 (bytes pk ++ bytes message ++ bytes signature.randomizer)
-  let index := answer.extractLsb' 0 160
+  let index := answer.extractLsb' 0 152
   let root ← recoverLayers 0 index.toNat 0 signature.toReference.layers
-  return decide (signature.toReference.layers.length = 160 ∧ root = pk)
+  return decide (signature.toReference.layers.length = 152 ∧ root = pk)
 
 /-- Exact acceptance semantics for arbitrary compact signatures and arbitrary H. -/
 theorem eval_verifyCompact_iff (hash : Hash) (pk : PublicKey) (message : Message) (signature : Compact) :

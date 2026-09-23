@@ -40,7 +40,7 @@ theorem secretKey_sp (secretKey : SecretKey) : (secretKeyState secretKey).getReg
   rfl
 
 theorem prefix_context (secretKey : SecretKey) :
-    Context 159 0 false secretKey (prefixState (secretKeyState secretKey)) := by
+    Context 151 0 false secretKey (prefixState (secretKeyState secretKey)) := by
   constructor
   · rw [prefix_mem,if_pos rfl]; rfl
   · rw [prefix_mem,if_neg (by decide),secretKey_zero _ _ (by decide)]; rfl

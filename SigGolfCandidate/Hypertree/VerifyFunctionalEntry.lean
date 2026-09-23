@@ -33,7 +33,7 @@ theorem loaded_loop_data (hash : Hash) (pk : PublicKey) (message : Message) (wit
     exact frame _ (by change address % 2^64 < 0x80000; omega)
   refine ⟨initial, ready, loaded, run, pc, ?_, lowFrame⟩
   refine ⟨sp, level, ?_, pointer, ?_, ?_⟩
-  · have cast (value : BitVec 160) : value.zeroExtend 192 = BitVec.ofNat 192 value.toNat := by
+  · have cast (value : BitVec 152) : value.zeroExtend 192 = BitVec.ofNat 192 value.toNat := by
       apply BitVec.eq_of_toNat_eq
       simp
     rw [cast] at index

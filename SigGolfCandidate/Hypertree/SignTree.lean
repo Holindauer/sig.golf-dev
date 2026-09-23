@@ -38,7 +38,7 @@ theorem outsideLayer_sibling (pointer level : Nat) (valid : CapturePointerValid 
 /-- Both signer tree paths produce exactly the reference layer's serialized fields. -/
 theorem sign_tree (hash : Hash) (s : MachineState) (secretKey : SecretKey) (pointer level tree : Nat)
     (message : Reference.Digest) (selected : Bool) (pc : s.pc = 0x13c8) (sp : s.getReg .x2 = 0x1000000)
-    (bound : level < 160) (valid : CapturePointerValid pointer) (data : TreeContext s secretKey level tree)
+    (bound : level < 152) (valid : CapturePointerValid pointer) (data : TreeContext s secretKey level tree)
     (ptr : s.getMem 0x80448 = BitVec.ofNat 64 pointer) (enabled : s.getMem 0x80440 ≠ 0)
     (selector : s.getMem 0x80420 = BitVec.ofNat 64 (Reference.sideNumber selected))
     (digits : level ≠ 0 → ∀ chain : Reference.Chain,

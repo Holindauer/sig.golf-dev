@@ -15,7 +15,7 @@ structure LoopData (s : MachineState) (secretKey : SecretKey) (level index : Nat
   pointer : s.getMem 0x80448 = BitVec.ofNat 64 (0x20060+layerOffset level)
   currentWords : ∀ i : Fin 2, s.getMem (wordAddress 0x80500 i.val) = current.extractLsb' (64*i.val) 64
 
-theorem sign_pointer_valid (level : Nat) (bound : level < 160) :
+theorem sign_pointer_valid (level : Nat) (bound : level < 152) :
     CapturePointerValid (0x20060+layerOffset level) := by
   refine ⟨?_,?_,layer_pointer_aligned _ _ (by decide)⟩
   all_goals unfold layerOffset; split <;> omega
@@ -27,7 +27,7 @@ theorem shift_word_frame (s : MachineState) (a : Word)
 
 /-- One loop's index shift and optional encoding arrive at the actual tree entry. -/
 theorem sign_layer_prepare (hash : Hash) (s : MachineState) (secretKey : SecretKey) (level index : Nat)
-    (current : Reference.Digest) (pc : s.pc = 0x1220) (bound : level < 160) (small : index < 2^192)
+    (current : Reference.Digest) (pc : s.pc = 0x1220) (bound : level < 152) (small : index < 2^192)
     (data : LoopData s secretKey level index current) :
     ∃ ready, Trace hash sign s (if level = 0 then 34 else 489) (if level = 0 then 34 else 489) 0 0 ready ∧
       ready.pc = 0x13c8 ∧ ready.getReg .x1 = 0x12ac ∧ ready.getReg .x2 = 0x1000000 ∧

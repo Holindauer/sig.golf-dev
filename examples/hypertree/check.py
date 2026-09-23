@@ -52,7 +52,7 @@ def keygen(h, secret_key):
 
 def sign(h, secret_key, public_key, message):
     randomizer = query(h, 6, 0, 0, secret_key + message)
-    index = int.from_bytes(query(h, 5, 0, 0, public_key + message + randomizer)[:20], 'little')
+    index = int.from_bytes(query(h, 5, 0, 0, public_key + message + randomizer)[:19], 'little')
     current, layers = bytes(16), []
     for level in range(HEIGHT):
         selected = index & 1
@@ -64,7 +64,7 @@ def sign(h, secret_key, public_key, message):
 def verify(h, public_key, message, signature):
     if len(signature) != SIGNATURE_BYTES: return False
     randomizer = signature[:RANDOMIZER_BYTES]
-    index = int.from_bytes(query(h, 5, 0, 0, public_key + message + randomizer)[:20], 'little')
+    index = int.from_bytes(query(h, 5, 0, 0, public_key + message + randomizer)[:19], 'little')
     current, offset = bytes(16), RANDOMIZER_BYTES
     for level in range(HEIGHT):
         selected = index & 1
@@ -195,7 +195,7 @@ def main():
     machine = Machine('sign', [(0, message), (0x20, secret_key), (0x40, pk), (0x60, bytes([0xa5]) * (1 << 17))])
     machine.execute()
     assert machine.accepted and machine.buffer(0x20060, SIGNATURE_BYTES) == signature
-    assert machine.oracle.compressions == h.compressions == 121008
+    assert machine.oracle.compressions == h.compressions == (HEIGHT - 1) * 761 + 9
     assert h.compressions < (1 << 17)
     profile['sign'] = machine.metrics()
     print('sign matches reference:', profile['sign'], flush=True)

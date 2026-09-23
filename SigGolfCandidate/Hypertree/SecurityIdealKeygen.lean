@@ -47,7 +47,7 @@ def endpoint (address : ChainAddress) : OracleComp SplitWorld Digest := do
       SecurityReference.endpoint secretKey address.level.val address.tree.toNat address.side address.chain := by
   simp [endpoint, SecurityReference.endpoint]
 
-def leafRoot (level : Fin 160) (tree : BitVec 192) (side : Bool) : OracleComp SplitWorld Digest := do
+def leafRoot (level : Fin 152) (tree : BitVec 192) (side : Bool) : OracleComp SplitWorld Digest := do
   if level.val = 0 then
     let value ← secret ⟨level, tree, side, 0⟩
     publicCall (SecurityReference.chainHash level.val tree.toNat side 0 0 value)
@@ -55,30 +55,30 @@ def leafRoot (level : Fin 160) (tree : BitVec 192) (side : Bool) : OracleComp Sp
     let values ← sequenceFin 46 (fun chain => endpoint ⟨level, tree, side, chain⟩)
     publicCall (SecurityReference.compressLeaf level.val tree.toNat side values)
 
-@[simp] theorem simulate_leafRoot (secretKey : SecretKey) (level : Fin 160) (tree : BitVec 192) (side : Bool) :
+@[simp] theorem simulate_leafRoot (secretKey : SecretKey) (level : Fin 152) (tree : BitVec 192) (side : Bool) :
     simulateQ (realImplementation secretKey) (leafRoot level tree side) =
       SecurityReference.leafRoot secretKey level.val tree.toNat side := by
   by_cases zero : level.val = 0 <;>
     simp [leafRoot, SecurityReference.leafRoot, zero]
 
-def treeRoot (level : Fin 160) (tree : BitVec 192) : OracleComp SplitWorld Digest := do
+def treeRoot (level : Fin 152) (tree : BitVec 192) : OracleComp SplitWorld Digest := do
   let left ← leafRoot level tree false
   let right ← leafRoot level tree true
   publicCall (SecurityReference.node level.val tree.toNat left right)
 
-@[simp] theorem simulate_treeRoot (secretKey : SecretKey) (level : Fin 160) (tree : BitVec 192) :
+@[simp] theorem simulate_treeRoot (secretKey : SecretKey) (level : Fin 152) (tree : BitVec 192) :
     simulateQ (realImplementation secretKey) (treeRoot level tree) =
       SecurityReference.treeRoot secretKey level.val tree.toNat := by
   simp [treeRoot, SecurityReference.treeRoot]
 
 /-- The ideal key generator contains no secret key. Only the interpretation of private
 slots distinguishes the real secretKeyed implementation from the independent ideal one. -/
-def keygen : OracleComp SplitWorld PublicKey := treeRoot ⟨159, by decide⟩ 0
+def keygen : OracleComp SplitWorld PublicKey := treeRoot ⟨151, by decide⟩ 0
 
 /-- Syntactic oracle-computation equality, stronger than fixed-H output equality:
 this factors the actual monadic reference key generator through private slots. -/
 theorem simulate_keygen (secretKey : SecretKey) :
     simulateQ (realImplementation secretKey) keygen = SecurityReference.keygen secretKey := by
-  exact simulate_treeRoot secretKey ⟨159, by decide⟩ 0
+  exact simulate_treeRoot secretKey ⟨151, by decide⟩ 0
 
 end SigGolfCandidate.Hypertree.SecurityIdealKeygen

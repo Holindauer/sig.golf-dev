@@ -27,7 +27,7 @@ set_option maxRecDepth 4096
 /-- All honest layer-signing operations are canonical graph reads, so their
 entire state computation is pure, including the sibling tree computation. -/
 @[simp] theorem execute_signLayer (privateAnswers : PrivateTable) (labels : Labels)
-    (level : Fin 160) (tree : BitVec 192) (side : Bool) (message : Digest) :
+    (level : Fin 152) (tree : BitVec 192) (side : Bool) (message : Digest) :
     execute privateAnswers labels (SecurityIdealSign.signLayerWithRoot level tree side message) =
       pure (layer privateAnswers labels level tree side message, truncate (labels (.node level tree))) := by
   by_cases bottom : level.val = 0
@@ -58,7 +58,7 @@ entire state computation is pure, including the sibling tree computation. -/
         node_label, pure_bind, execute_pure, layer, if_neg bottom]
 
 @[simp] theorem execute_signUpper (privateAnswers : PrivateTable) (labels : Labels)
-    (count level index : Nat) (hl : count + level ≤ 160) (hi : index < 2 ^ 192) (message : Digest) :
+    (count level index : Nat) (hl : count + level ≤ 152) (hi : index < 2 ^ 192) (message : Digest) :
     execute privateAnswers labels (SecurityIdealSign.signUpper count level index hl hi message) =
       pure (upperLayers privateAnswers labels count level index hl hi message) := by
   induction count generalizing level index message with
@@ -101,7 +101,7 @@ theorem execute_randomizedIndex (privateAnswers : PrivateTable) (labels : Labels
     (pk : PublicKey) (message : Message) :
     execute privateAnswers labels (SecurityIdealSign.randomizedIndex pk message) = (do
       let answer ← randomOracle (SecurityRandomOracle.indexInput pk message (privateAnswers (.randomizer message)))
-      pure (privateAnswers (.randomizer message), answer.extractLsb' 0 160)) := by
+      pure (privateAnswers (.randomizer message), answer.extractLsb' 0 152)) := by
   simp only [SecurityIdealSign.randomizedIndex, execute_bind, execute_randomizer, pure_bind,
     execute_public, publicExecute_index, execute_pure]
 
@@ -110,7 +110,7 @@ theorem execute_signCompact (privateAnswers : PrivateTable) (labels : Labels)
     (pk : PublicKey) (message : Message) :
     execute privateAnswers labels (SecurityIdealSign.signCompact pk message) = (do
       let answer ← randomOracle (SecurityRandomOracle.indexInput pk message (privateAnswers (.randomizer message)))
-      pure (signature privateAnswers labels (privateAnswers (.randomizer message)) (answer.extractLsb' 0 160))) := by
+      pure (signature privateAnswers labels (privateAnswers (.randomizer message)) (answer.extractLsb' 0 152))) := by
   simp only [SecurityIdealSign.signCompact, execute_bind, execute_randomizedIndex, bind_assoc,
     pure_bind, execute_signLayer, execute_signUpper, execute_pure]
   rfl
@@ -120,7 +120,7 @@ theorem signCompact_run (privateAnswers : PrivateTable) (labels : Labels)
     (pk : PublicKey) (message : Message) (cache : QueryCache HashSpec) :
     (execute privateAnswers labels (SecurityIdealSign.signCompact pk message)).run cache =
       (fun result => (signature privateAnswers labels (privateAnswers (.randomizer message))
-        (result.1.extractLsb' 0 160), result.2)) <$>
+        (result.1.extractLsb' 0 152), result.2)) <$>
       (randomOracle (spec := HashSpec)
         (SecurityRandomOracle.indexInput pk message (privateAnswers (.randomizer message)))).run cache := by
   rw [execute_signCompact]
