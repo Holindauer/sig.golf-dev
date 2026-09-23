@@ -21,7 +21,7 @@ theorem chain_compute (image : Image) (hash : Hash) (p : Word) (code : ChainCode
       (BitVec.ofNat 192 tree).extractLsb' (64*i.val) 64)
     (hvalue : ∀ i : Fin 2, s.getMem (Signing.wordAddress 0x80510 i.val) =
       value.extractLsb' (64*i.val) 64) :
-    ∃ final, Trace hash image s 42 49 1 1 (ChainLoopControl.increment final (-332)) ∧ final.pc = p+284 ∧
+    ∃ final, Trace hash image s 42 49 1 1 (ChainLoopControl.increment final (-324)) ∧ final.pc = p+284 ∧
       (∀ i : Fin 2, final.getMem (Signing.wordAddress 0x80510 i.val) =
         (Reference.chainHash hash level tree side chain step value).extractLsb' (64*i.val) 64) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧

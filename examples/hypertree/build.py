@@ -66,7 +66,7 @@ class Assembler:
             start=len(self.words); self.emit((128<<12)|(28<<7)|0x37)
             self.ld(11,28,768);self.store(11,28,1296);self.ld(11,28,776);self.store(11,28,1304)
             self.i(0x13,0,28,28,1080);self.ld(6,28);self.i(0x13,0,6,6,1);self.store(6,28)
-            self.jump('chain_step')
+            self.jump('chain_step_reuse')
             while len(self.words)-start<19:self.i(0x13,0,0,0,0)
             return
         if (self.optimize_address_reuse and count==16 and source==VALUE and destination==HASH+32 and 'chain_step' in self.labels and 'chain_end' not in self.labels):
@@ -242,7 +242,10 @@ def leaf_functions(a, verifying):
         a.set(STEP, 0)
     a.label('chain_step')
     if not verifying: capture(a)
-    a.load(6, STEP); a.li(7, 7); a.branch(6, 7, 'chain_end')
+    if verifying:
+        a.li(28, STEP); a.label('chain_step_reuse'); a.ld(6,28)
+    else: a.load(6, STEP)
+    a.li(7, 7); a.branch(6, 7, 'chain_end')
     a.copy(VALUE, HASH + 32); a.hash(2, 48, leaf=True, chain=True, step=True); a.copy(ANSWER, VALUE)
     if not verifying:
         a.load(6, STEP); a.i(0x13, 0, 6, 6, 1); a.save(6, STEP); a.jump('chain_step')

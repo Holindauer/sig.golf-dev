@@ -15,9 +15,9 @@ def state (s : MachineState) : MachineState :=
   let s := execInstrBr s (.LD .x6 .x28 0)
   let s := execInstrBr s (.ADDI .x6 .x6 1)
   let s := execInstrBr s (.SD .x28 .x6 0)
-  execInstrBr s (.JAL .x0 (-296))
+  execInstrBr s (.JAL .x0 (-288))
 theorem state_equiv (s : MachineState) :
-    state s = ChainLoopControl.increment (Copy6.optimized s 0x300 0x510) (-332) := by
+    state s = ChainLoopControl.increment (Copy6.optimized s 0x300 0x510) (-324) := by
   cases s
   simp [state, Copy6.optimized, ChainLoopControl.increment, execInstrBr, MachineState.getReg, MachineState.setReg,
     MachineState.getMem, MachineState.setMem, MachineState.setPC, signExtend12, signExtend21, BitVec.add_assoc]
@@ -33,10 +33,10 @@ def Code (image : Image) (p : Word) : Prop :=
   instructionAt image (p + 24) = some (.base (.LD .x6 .x28 0)) ∧
   instructionAt image (p + 28) = some (.base (.ADDI .x6 .x6 1)) ∧
   instructionAt image (p + 32) = some (.base (.SD .x28 .x6 0)) ∧
-  instructionAt image (p + 36) = some (.base (.JAL .x0 (-296)))
+  instructionAt image (p + 36) = some (.base (.JAL .x0 (-288)))
 theorem block (image : Image) (p : Word) (code : Code image p)
     (s : MachineState) (pc : s.pc = p) :
-    OrdinarySteps image s 10 (ChainLoopControl.increment (Copy6.optimized s 0x300 0x510) (-332)) := by
+    OrdinarySteps image s 10 (ChainLoopControl.increment (Copy6.optimized s 0x300 0x510) (-324)) := by
   rw [← state_equiv]
   obtain ⟨c0,c1,c2,c3,c4,c5,c6,c7,c8,c9⟩ := code
   let s1 := execInstrBr s (.LUI .x28 128)
@@ -48,7 +48,7 @@ theorem block (image : Image) (p : Word) (code : Code image p)
   let s7 := execInstrBr s6 (.LD .x6 .x28 0)
   let s8 := execInstrBr s7 (.ADDI .x6 .x6 1)
   let s9 := execInstrBr s8 (.SD .x28 .x6 0)
-  let s10 := execInstrBr s9 (.JAL .x0 (-296))
+  let s10 := execInstrBr s9 (.JAL .x0 (-288))
   change OrdinarySteps image s 10 s10
   apply OrdinarySteps.step s s1 _ (.base (.LUI .x28 128)) 9
   · have hp : s.pc = p + 0 := by simp [execInstrBr, MachineState.setPC, pc, BitVec.add_assoc]
@@ -86,7 +86,7 @@ theorem block (image : Image) (p : Word) (code : Code image p)
   · have hp : s8.pc = p + 32 := by simp [s1, s2, s3, s4, s5, s6, s7, s8, execInstrBr, MachineState.setPC, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c8
   · simp [s1, s2, s3, s4, s5, s6, s7, s8, s9, ordinaryStep, memoryArgumentsValid, execInstrBr, signExtend12, accessValid, rangeValid, MEMORY_BYTES, MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne]
-  apply OrdinarySteps.step s9 s10 _ (.base (.JAL .x0 (-296))) 0
+  apply OrdinarySteps.step s9 s10 _ (.base (.JAL .x0 (-288))) 0
   · have hp : s9.pc = p + 36 := by simp [s1, s2, s3, s4, s5, s6, s7, s8, s9, execInstrBr, MachineState.setPC, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c9
   · rfl

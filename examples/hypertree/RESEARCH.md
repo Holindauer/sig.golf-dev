@@ -118,3 +118,21 @@ Next executable step: inspect Signature.lean and SecurityPath.lean to adapt the 
 The complete certificate and permitted-axiom guards pass at S=W=113616, C=3056235, score 347237195760. The bound is 145+288+151*20237+15. Full build passed 3053 jobs, exported Solution.lean compiled, source policy passed, bundle sources match, and independent reference/rejection tests passed. Sample verification uses 1891993 cycles; this is distinct from the universal bound. Organizer definitions and pinned dependencies remain unchanged.
 
 The prior full-build attempt found stale memory-end and expansion-cycle literals; those were repaired and the final full build passed. PR6 at f95c734241fd45a4b640a45338dceb618f3222e9 is still pending. Preserve this ready local candidate and do not submit until that exact head is officially recorded. Next local route: reuse the STEP address on the chain backedge; see research/chain-check-reuse-notes.md outside this checkout.
+
+
+## Active route: STEP address reuse
+
+This isolated checkout starts at f0e93079e0c0acbfe5ed99a0411bda980e6cb435, the fully validated 152-level candidate. Keep that candidate and its export unchanged. PR6 remains pending at f95c734241fd45a4b640a45338dceb618f3222e9.
+
+Standalone research/CheckReuse.lean proves exact shortened-check equivalence when x28=STEP, and proves FusedFinish supplies that register value. The prototype in research/check-reuse-probe passes all reference/rejection checks at 1842097 sample verification cycles (previously 1891993). No universal bound has been certified for this new route.
+
+Next executable step: copy the prototype build.py here and regenerate Images.lean. Adapt FusedFinish's backedge from -296 to -288 and its increment-equivalence offset from -332 to -324. Prove the three-instruction check starting at0x14f4, retaining the first-entry two-instruction setup at0x14ec. Strengthen the repeated-loop invariant with x28=STEP and update VerifyChainLoop accounting, followed by all affected resource bounds and the complete certificate. Source prototype/proof paths and exact validation logs are saved in autoresearch-state.json outside this checkout.
+
+
+## STEP-address reuse validation complete
+
+The complete certificate passes at S=W=113616, C=2963219, score 336669089904. Full build passed 3054 jobs; permitted-axiom guards, source policy, exported Solution.lean, exact bundle equality, and reference/rejection tests passed. The sample uses 1842097 verification cycles. Only the verifier image changes. The recurrent step is 45 ordinary instructions and 52 cycles; each full chain pays its two setup instructions once, giving 52*remaining+5 cycles. The universal bound is 145+288+151*19621+15.
+
+A shared ChainData.check lemma initially affected the signer proof. The original lemma is restored, and the verifier uses ChainData.shortCheck separately. The final full build passed after that repair. PR7 remains the only pending submission; preserve its exact head c16dcb4a90b16585bdc3c72e9da1d95fae87530c.
+
+Next route: remove the redundant initial LUI from FusedPrepare and FusedFinish using their established x28 values. The separate prototype passes reference/rejection tests at 1792201 sample cycles. ReuseChainBases.finish_equiv passes; its first monolithic prepare_equiv proof hit kernel recursion depth, so a component-wise equality proof is being tried. Read autoresearch-state.json for its exact session/log and avoid repeating the failed proof.

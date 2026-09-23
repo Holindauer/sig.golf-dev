@@ -11,7 +11,7 @@ theorem recover_tree_call (hash : Hash) (s : MachineState) (level tree base : Na
     (data : LayerData s level tree base side message signature)
     (small : level < 152) (aligned : base % 8 = 0) (bound : base+752 ≤ 0x80000) :
     ∃ final steps cycles calls blocks, Trace hash verify s steps cycles calls blocks final ∧
-      steps ≤ 33908 ∧ cycles ≤ (if level = 0 then 236 else 19730) ∧ calls ≤ 324 ∧ blocks ≤ 335 ∧
+      steps ≤ 33908 ∧ cycles ≤ (if level = 0 then 236 else 19114) ∧ calls ≤ 324 ∧ blocks ≤ 335 ∧
       final.pc = s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (wordAddress 0x80500 i.val) =
         (Reference.recoverLayer hash level tree side message signature).extractLsb' (64*i.val) 64) ∧
