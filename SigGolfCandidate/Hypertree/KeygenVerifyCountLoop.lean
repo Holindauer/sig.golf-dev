@@ -53,8 +53,8 @@ theorem leaf_loop_exact (hash : Hash) (s : MachineState) (level tree : Nat) (sid
       finalData, finalPrefix, finalRA, finalSP, finalFrame, exactCalls⟩ :=
       ih next (start+1) (by omega) nextPC nextData nextCounter nextPrefix
     have overheadBound := counterOverhead_le (7-(Reference.digit message chain).val)
-    refine ⟨final, (13*(7-(Reference.digit message chain).val)+counterOverhead (7-(Reference.digit message chain).val)+44)+steps,
-      (20*(7-(Reference.digit message chain).val)+counterOverhead (7-(Reference.digit message chain).val)+44)+cycles,
+    refine ⟨final, (12*(7-(Reference.digit message chain).val)+counterOverhead (7-(Reference.digit message chain).val)+44)+steps,
+      (19*(7-(Reference.digit message chain).val)+counterOverhead (7-(Reference.digit message chain).val)+44)+cycles,
       (7-(Reference.digit message chain).val)+calls, pre.trans run, ?_, ?_, ?_,
       finalPC, finalCounter, finalData, finalPrefix, finalRA.trans nextRA, finalSP.trans nextSP, ?_, ?_⟩
     · omega

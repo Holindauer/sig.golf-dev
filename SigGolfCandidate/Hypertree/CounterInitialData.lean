@@ -14,6 +14,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word)
       CachedPrepare.Ready final ∧ final.getReg .x28 = 0x80438 ∧ final.getReg .x13 = 4294967296 ∧
       (final.getReg .x11 = 384 ∧ final.getReg .x12 = 0x80020 ∧ final.getReg .x5 = 1) ∧
       final.getReg .x6 = final.getMem 0x80438 ∧
+      final.getReg .x7 = s.getReg .x7 ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, OutsideChainWork a → final.getMem a = s.getMem a) := by
   let copied := Copy6.optimized s 0x510 0x20
@@ -70,7 +71,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word)
     have h := RegisterCounter.initial_counter s base counter
     rw [InplaceInitialPrepare.state_equiv s base] at h
     exact h
-  obtain ⟨final,core,finalPC,valueOut,finalReady,finalBase,finalConstant,finalArgs,stepOut,finalCounter,ra,sp,frame⟩ :=
+  obtain ⟨final,core,finalPC,valueOut,finalReady,finalBase,finalConstant,finalArgs,stepOut,finalCounter,finalLimit,ra,sp,frame⟩ :=
     CounterCore.compute image hash (p+236) coreCode prepared prepPC prepBase prepConstant current
       service source bits destination prepCounter level tree step side chain value words
   have prepFrame (a : Word) (outside : ∀ i : Fin 8, a ≠ wordAddress 0x80000 i.val) :
@@ -92,7 +93,11 @@ theorem compute (image : Image) (hash : Hash) (p : Word)
   have prepSP : prepared.getReg .x2 = s.getReg .x2 := by
     have h := (KeygenChainHeader.stack copied).2.trans csp
     simpa [prepared,MachineState.getReg_setReg_ne] using h
-  refine ⟨final,prepTrace.trace.trans core,?_,?_,finalReady,finalBase,finalConstant,finalArgs,finalCounter,
+  have prepLimit : prepared.getReg .x7 = s.getReg .x7 := by
+    have h := PersistentLimit.initial_preserves s base
+    rw [InplaceInitialPrepare.state_equiv s base] at h
+    exact h
+  refine ⟨final,prepTrace.trace.trans core,?_,?_,finalReady,finalBase,finalConstant,finalArgs,finalCounter,finalLimit.trans prepLimit,
     ra.trans prepRA,sp.trans prepSP,keep⟩
   · simpa [BitVec.sub_eq_add_neg,BitVec.add_assoc] using finalPC
   · constructor

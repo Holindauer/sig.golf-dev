@@ -1,22 +1,22 @@
-import SigGolfCandidate.Hypertree.RegisterCounter
+import SigGolfCandidate.Hypertree.PersistentLimit
 namespace SigGolfCandidate.Hypertree.CounterCheck
 open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 Keygen
-abbrev state := RegisterCounter.check
-abbrev Code := RegisterCounter.CheckCode
-abbrev block := RegisterCounter.check_block
+abbrev state := PersistentLimit.check
+def Code (image : Image) (p : Word) : Prop := instructionAt image p = some (.base (.BEQ .x6 .x7 132))
+abbrev block := PersistentLimit.check_block
 
 theorem mem (s : MachineState) (a : Word) : (state s).getMem a = s.getMem a := by
-  simp [state,RegisterCounter.check,execInstrBr,MachineState.setReg,MachineState.setPC,MachineState.getMem]
+  simp [state,PersistentLimit.check,execInstrBr,MachineState.setReg,MachineState.setPC,MachineState.getMem]
   split_ifs <;> rfl
 
 theorem reg (s : MachineState) (r : Reg) (ne : r ≠ .x7) : (state s).getReg r = s.getReg r := by
-  simp [state,RegisterCounter.check,execInstrBr,MachineState.setReg,MachineState.setPC,MachineState.getReg]
+  simp [state,PersistentLimit.check,execInstrBr,MachineState.setReg,MachineState.setPC,MachineState.getReg]
   split_ifs <;> simp_all
 
-theorem pc (s : MachineState) (counter : s.getReg .x6 = s.getMem 0x80438) :
-    (state s).pc = if s.getMem 0x80438 = 7 then s.pc+132 else s.pc+8 := by
-  simp [state,RegisterCounter.check,execInstrBr,MachineState.getReg_setReg_ne,
-    MachineState.getReg_setReg_eq,signExtend12,signExtend13,counter,BitVec.add_assoc]
+theorem pc (s : MachineState) (counter : s.getReg .x6 = s.getMem 0x80438) (limit : s.getReg .x7 = 7) :
+    (state s).pc = if s.getMem 0x80438 = 7 then s.pc+132 else s.pc+4 := by
+  simp [state,PersistentLimit.check,execInstrBr,MachineState.getReg_setReg_ne,
+    MachineState.getReg_setReg_eq,signExtend12,signExtend13,counter,limit,BitVec.add_assoc]
 
 theorem counter (s : MachineState) (h : s.getReg .x6 = s.getMem 0x80438) :
     (state s).getReg .x6 = (state s).getMem 0x80438 := by

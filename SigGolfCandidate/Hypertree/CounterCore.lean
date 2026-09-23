@@ -1,3 +1,4 @@
+import SigGolfCandidate.Hypertree.PersistentLimit
 import SigGolfCandidate.Hypertree.RegisterCounter
 namespace SigGolfCandidate.Hypertree.CounterCore
 open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 Keygen Signing
@@ -23,6 +24,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word) (code : Code image p)
       (final.getReg .x11 = 384 ∧ final.getReg .x12 = 0x80020 ∧ final.getReg .x5 = 1) ∧
       final.getMem 0x80438 = s.getMem 0x80438 + 1 ∧
       final.getReg .x6 = final.getMem 0x80438 ∧
+      final.getReg .x7 = s.getReg .x7 ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, (∀ i : Fin 4, a ≠ wordAddress 0x80020 i.val) → a ≠ 0x80438 →
         final.getMem a = s.getMem a) := by
@@ -34,7 +36,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word) (code : Code image p)
   have hashCounter := RegisterCounter.hash_counter s (hash (hashInput s)) destination counter
   have tail := RegisterCounter.finish_block image (p+4) code.2 hashed hashPC hashBase
   rw [RegisterCounter.finish_equiv hashed hashBase hashCounter] at tail
-  refine ⟨InplaceFinish.state hashed, hashTrace.trans tail.trace, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨InplaceFinish.state hashed, hashTrace.trans tail.trace, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · rw [InplaceFinish.pc,hashPC]
     simp [BitVec.sub_eq_add_neg,BitVec.add_assoc]
   · intro i
@@ -49,6 +51,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word) (code : Code image p)
     rw [InplaceHash.frame s _ destination _ (by intro i; fin_cases i <;> decide)]
   · rw [← RegisterCounter.finish_equiv hashed hashBase hashCounter]
     exact RegisterCounter.finish_counter hashed hashBase
+  · exact (PersistentLimit.finish_preserves hashed).trans (hash_registers _ _ _)
   · exact (InplaceFinish.preserved hashed).1.trans (hash_registers _ _ _)
   · exact (InplaceFinish.preserved hashed).2.1.trans (hash_registers _ _ _)
   · intro a outside notStep

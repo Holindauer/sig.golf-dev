@@ -225,3 +225,11 @@ The initial check loads x6 from STEP. Initial/recurrent preparation and HASH pre
 Proof development: implicit definitional comparison across setPC exhausted200000heartbeats; increasing the limit caused slow elaboration and was stopped. Explicit getReg_setPC/getMem_setPC framing reduced the recurrent-data proof to1.8seconds and both entry proofs pass. Do not repeat the implicit comparison approach.
 
 PR11 remains pending at exact5bbb78dd6ad273039482af1a255643a06bdd7aec. Preserve its head; do not submit until its exact official record is published. Next route: persist x7=7 from the initial check, reducing recurrence to one branch. Separate reference tests pass at1208502samplecycles, with branch, initialization, and preservation lemmas checked in research/PersistentLimit.lean. Follow research/persistent-limit-notes.md for integration and prospective (uncertified) C1643781.
+
+### Persist the chain limit in x7
+
+The initial check installs7 in x7; all chain preparation/HASH/finish blocks preserve it. The recurrent check is one BEQ, with preparation at0x1584 and HASH still0x15ec. Proved recurrent12instructions19cycles, nonempty19*n+36 and empty5. The complete certificate and exported Solution.lean compile atS=W113616,C1643781,score186759822096; the full3081-job build passed, including the final keygen resource checkpoint. Source policy389files2628644bytes, exact385Leanfiles and unchanged organizer/dependency checks pass. Integrated reference/rejection checks pass at1208502samplecycles1018435instructions25253hashcalls26915compressions.
+
+PR11 officially landed at2026-09-23T13:26:23Z under contract7c2d18e4b797e81b312680e18ae119233d325729 with exact5bbb78dd6ad273039482af1a255643a06bdd7aec. Submitted the already validated counter route as PR12, exacte04ef8d0a63b67de9c356ae90865413ff1f32d84, S=W113616,C1690289,score192043875024. Its head must stay fixed until exact official publication.
+
+Next independent route keeps x28 at STEP throughout chain hashing. Prototype/reference/rejection tests pass at1158606samplecycles, and research/PersistentStepBase.lean proves exact initial/recurrent/finish state equivalences with permitted-axiom guards. Initial proof uses a shared24-instruction prefix and shorter tail. See research/persistent-step-base-notes.md for exact executable proof steps, fixed addresses and prospective (uncertified) C1550765.

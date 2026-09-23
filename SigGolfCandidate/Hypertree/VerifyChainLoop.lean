@@ -7,7 +7,7 @@ set_option maxRecDepth 4096
 theorem chain_from_digit (hash : Hash) (s : MachineState) (level tree : Nat)
     (side : Bool) (chain : Reference.Chain) (digit : Fin 8) (value : Reference.Digest)
     (pc : s.pc = 0x14ec) (data : ChainData s level tree side chain digit.val value) :
-    ∃ final, Trace hash verify s (13*(7-digit.val)+counterOverhead (7-digit.val)) (20*(7-digit.val)+counterOverhead (7-digit.val)) (7-digit.val) (7-digit.val) final ∧
+    ∃ final, Trace hash verify s (12*(7-digit.val)+counterOverhead (7-digit.val)) (19*(7-digit.val)+counterOverhead (7-digit.val)) (7-digit.val) (7-digit.val) final ∧
       final.pc = 0x163c ∧
       ChainData final level tree side chain 7
         (walk (Reference.chainHash hash level tree side chain) digit.val (7-digit.val) value) ∧

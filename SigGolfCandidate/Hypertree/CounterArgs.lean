@@ -9,7 +9,7 @@ def state (s : MachineState) : MachineState :=
   let s := execInstrBr s (.SD .x28 .x10 (-1080))
   let s := execInstrBr s (.ADDI .x28 .x28 (-1056))
   let s := execInstrBr s (.ADDI .x10 .x28 (-24))
-  execInstrBr s (.JAL .x0 80)
+  execInstrBr s (.JAL .x0 84)
 
 def Code (image : Image) (p : Word) : Prop :=
   instructionAt image (p + 0) = some (.base (.LD .x10 .x28 (-1080))) ∧
@@ -17,7 +17,7 @@ def Code (image : Image) (p : Word) : Prop :=
   instructionAt image (p + 8) = some (.base (.SD .x28 .x10 (-1080))) ∧
   instructionAt image (p + 12) = some (.base (.ADDI .x28 .x28 (-1056))) ∧
   instructionAt image (p + 16) = some (.base (.ADDI .x10 .x28 (-24))) ∧
-  instructionAt image (p + 20) = some (.base (.JAL .x0 80))
+  instructionAt image (p + 20) = some (.base (.JAL .x0 84))
 
 theorem block (image : Image) (p : Word) (code : Code image p)
     (s : MachineState) (pc : s.pc = p) (base : s.getReg .x28 = 0x80438) :
@@ -28,7 +28,7 @@ theorem block (image : Image) (p : Word) (code : Code image p)
   let s3 := execInstrBr s2 (.SD .x28 .x10 (-1080))
   let s4 := execInstrBr s3 (.ADDI .x28 .x28 (-1056))
   let s5 := execInstrBr s4 (.ADDI .x10 .x28 (-24))
-  let s6 := execInstrBr s5 (.JAL .x0 80)
+  let s6 := execInstrBr s5 (.JAL .x0 84)
   change OrdinarySteps image s 6 s6
   apply OrdinarySteps.step s s1 _ (.base (.LD .x10 .x28 (-1080))) 5
   · have hp : s.pc = p + 0 := by simp [execInstrBr, pc, BitVec.add_assoc]
@@ -54,7 +54,7 @@ theorem block (image : Image) (p : Word) (code : Code image p)
   · have hp : s4.pc = p + 16 := by simp [s1, s2, s3, s4, execInstrBr, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c4
   · rfl
-  apply OrdinarySteps.step s5 s6 _ (.base (.JAL .x0 80)) 0
+  apply OrdinarySteps.step s5 s6 _ (.base (.JAL .x0 84)) 0
   · have hp : s5.pc = p + 20 := by simp [s1, s2, s3, s4, s5, execInstrBr, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c5
   · rfl
@@ -66,7 +66,7 @@ theorem block (image : Image) (p : Word) (code : Code image p)
 
 theorem equiv (s : MachineState) (base : s.getReg .x28 = 0x80438)
     (bits : s.getReg .x11 = 384) (dst : s.getReg .x12 = 0x80020)
-    (service : s.getReg .x5 = 1) : state s = (InplacePrepare.state s).setPC (s.pc+100) := by
+    (service : s.getReg .x5 = 1) : state s = (InplacePrepare.state s).setPC (s.pc+104) := by
   cases s with
   | mk regs mem code pc committed publicValues privateInput inputBufBase =>
     simp [MachineState.getReg] at base bits dst service
