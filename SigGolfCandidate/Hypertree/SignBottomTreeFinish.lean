@@ -38,7 +38,7 @@ theorem sign_bottom_tree (hash : Hash) (s : MachineState) (secretKey : SecretKey
     (valid : CapturePointerValid pointer)
     (data : TreeContext s secretKey 0 tree) (settings : BottomTreeSettings s pointer selected) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 5 5 final ∧
-      instructions ≤ 513 ∧ cycles ≤ 548 ∧
+      instructions ≤ 537 ∧ cycles ≤ 572 ∧
       final.pc = s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (wordAddress 0x80500 i.val) =
         (Reference.treeRoot hash secretKey 0 tree).extractLsb' (64*i.val) 64) ∧

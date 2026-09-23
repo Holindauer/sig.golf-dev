@@ -59,7 +59,7 @@ theorem chain_core_step (hash : Hash) (s : MachineState) (level tree step : Nat)
   · exact (increment_stack hashed (-472)).1.trans (ra.trans (check_stack s).1)
   · exact (increment_stack hashed (-472)).2.trans (sp.trans (check_stack s).2)
   · intro a outside
-    rw [increment_mem, if_neg outside.2.2.2, keep a outside.1 outside.2.1 outside.2.2.1]
+    rw [increment_mem, if_neg outside.2.2.2, keep a (fun i => outside.1 ⟨i.val, by omega⟩) outside.2.1 outside.2.2.1]
 
 
 end SigGolfCandidate.Hypertree.Signing

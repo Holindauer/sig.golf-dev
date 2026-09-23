@@ -11,13 +11,13 @@ structure LeafData (s : MachineState) (secretKey : SecretKey) (level tree : Nat)
   leafEq : s.getMem 0x80428 = BitVec.ofNat 64 (Reference.sideNumber side)
   chainEq : s.getMem 0x80430 = BitVec.ofNat 64 chain
   indexEq : ∀ i : Fin 3, s.getMem (wordAddress 0x80408 i.val) = (BitVec.ofNat 192 tree).extractLsb' (64*i.val) 64
-  secretKeyEq : ∀ i : Fin 2, s.getMem (wordAddress 0x20 i.val) = secretKey.extractLsb' (64*i.val) 64
+  secretKeyEq : ∀ i : Fin 4, s.getMem (wordAddress 0x20 i.val) = secretKey.extractLsb' (64*i.val) 64
 
 /-- Secret derivation and actual STEP reset initialize the complete signer chain loop. -/
 theorem sign_secret_prepare (hash : Hash) (s : MachineState) (secretKey : SecretKey) (level tree : Nat)
     (side : Bool) (chain : Reference.Chain) (pc : s.pc = 0x1584)
     (data : LeafData s secretKey level tree side chain.val) :
-    ∃ final, Trace hash sign s 81 88 1 1 final ∧ final.pc = 0x1698 ∧
+    ∃ final, Trace hash sign s 93 100 1 1 final ∧ final.pc = 0x1698 ∧
       ChainData final level tree side chain 0 (Reference.secret hash secretKey level tree side chain) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, OutsideChainWork a → final.getMem a = s.getMem a) := by
@@ -49,7 +49,7 @@ theorem sign_selected_chain (hash : Hash) (s : MachineState) (secretKey : Secret
     (data : LeafData s secretKey level tree side chain.val)
     (settings : CaptureSettings s pointer chain (Reference.digit message chain)) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 8 8 final ∧
-      instructions ≤ 1038 ∧ cycles ≤ 1094 ∧ final.pc = 0x1874 ∧
+      instructions ≤ 1050 ∧ cycles ≤ 1106 ∧ final.pc = 0x1874 ∧
       ChainData final level tree side chain 7 (Reference.endpoint hash secretKey level tree side chain) ∧
       CapturedValue final pointer chain ((Reference.signLayer hash secretKey level tree side message).values chain) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
@@ -61,7 +61,7 @@ theorem sign_selected_chain (hash : Hash) (s : MachineState) (secretKey : Secret
   obtain ⟨final, steps, cycles, tail, stepsBound, cyclesBound, finalPC, finalData, captured,
     finalRA, finalSP, finalFrame⟩ := sign_chain_captured_endpoint hash ready secretKey pointer level tree side chain message
       readyPC upper valid readyData readySettings
-  refine ⟨final, 81 + steps, 88 + cycles, pre.trans tail, by omega, by omega,
+  refine ⟨final, 93 + steps, 100 + cycles, pre.trans tail, by omega, by omega,
     finalPC, finalData, captured, finalRA.trans readyRA, finalSP.trans readySP, ?_⟩
   intro a outside captureOutside
   rw [finalFrame a outside captureOutside, readyFrame a outside]
@@ -73,7 +73,7 @@ theorem sign_unselected_chain (hash : Hash) (s : MachineState) (secretKey : Secr
     (data : LeafData s secretKey level tree side chain.val)
     (unselected : s.getMem 0x80428 ≠ s.getMem 0x80420) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 8 8 final ∧
-      instructions ≤ 1038 ∧ cycles ≤ 1094 ∧ final.pc = 0x1874 ∧
+      instructions ≤ 1050 ∧ cycles ≤ 1106 ∧ final.pc = 0x1874 ∧
       ChainData final level tree side chain 7 (Reference.endpoint hash secretKey level tree side chain) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, OutsideChainWork a → final.getMem a = s.getMem a) := by
@@ -87,7 +87,7 @@ theorem sign_unselected_chain (hash : Hash) (s : MachineState) (secretKey : Secr
   obtain ⟨final, steps, cycles, tail, stepsBound, cyclesBound, finalPC, finalData,
     finalRA, finalSP, finalFrame⟩ := sign_chain_unselected_endpoint hash ready secretKey pointer level tree side chain
       readyPC valid readyPtr readyData readyUnselected
-  refine ⟨final, 81 + steps, 88 + cycles, pre.trans tail, by omega, by omega,
+  refine ⟨final, 93 + steps, 100 + cycles, pre.trans tail, by omega, by omega,
     finalPC, finalData, finalRA.trans readyRA, finalSP.trans readySP, ?_⟩
   intro a outside
   rw [finalFrame a outside, readyFrame a outside]

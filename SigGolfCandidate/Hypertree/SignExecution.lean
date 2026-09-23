@@ -12,7 +12,7 @@ theorem sign_execution (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (c
       initialState submission .sign (secretKey,pk,cache,message)=some initial ∧
       Executes hash sign initial instructions
         ⟨if Reference.keygen hash secretKey=pk then .success else .failure,final,cycles,117508,121008⟩ ∧
-      instructions≤16000241 ∧ cycles≤16800271 ∧
+      instructions≤16066973 ∧ cycles≤16922843 ∧
       LayersStored final 0 (Reference.sign hash secretKey pk message).layers ∧
       (∀ i : Fin 4, final.getMem (wordAddress 0x20060 i.val)=
         (Reference.sign hash secretKey pk message).randomizer.extractLsb' (64*i.val) 64) := by
@@ -47,11 +47,11 @@ theorem sign_execution (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (c
       · exact (finalRoot 1).trans (eq ▸ (finalPk 1).symm)
   obtain ⟨steps,final,stepsBound,footer,footerFrame⟩ := sign_footer_executes hash done donePC
   have all := (pre.trans body).then_executes footer
-  have execution : Executes hash sign initial (226+n+steps)
-      ⟨if Reference.keygen hash secretKey=pk then .success else .failure,final,256+c+steps,117508,121008⟩ := by
+  have execution : Executes hash sign initial (238+n+steps)
+      ⟨if Reference.keygen hash secretKey=pk then .success else .failure,final,268+c+steps,117508,121008⟩ := by
     simpa only [Execution.charge,rootMatch,show loopCalls 160 0=117506 by rfl,show loopBlocks 160 0=121004 by rfl,
       Nat.reduceAdd,Nat.zero_add,Nat.add_zero,Nat.add_assoc,Nat.add_comm,Nat.add_left_comm] using all
-  refine ⟨initial,final,226+n+steps,256+c+steps,loaded,execution,by omega,by omega,?_,?_⟩
+  refine ⟨initial,final,238+n+steps,268+c+steps,loaded,execution,by omega,by omega,?_,?_⟩
   · have transport : ∀ (level : Nat) (signatures : List Reference.LayerSignature),
         LayersStored done level signatures → LayersStored final level signatures := by
       intro level signatures

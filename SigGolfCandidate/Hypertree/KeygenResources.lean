@@ -8,7 +8,7 @@ set_option maxRecDepth 4096
 /-- Every concrete state satisfying the entry abstraction follows the complete exact image.
 All secret key and oracle-dependent words are universally quantified. -/
 theorem executes (hash : Hash) (s : MachineState) (model : initialAbstract.Models s) :
-    ∃ final, Executes hash keygen s 75993 ⟨.success, final, 81342, 739, 761⟩ := by
+    ∃ final, Executes hash keygen s 77097 ⟨.success, final, 82446, 739, 761⟩ := by
   have initial : state0.Models s := model
   obtain ⟨final, trace, hf⟩ := certifiedPrefix hash s initial
   have pc : final.pc = 0x1044 := hf.pc
@@ -24,11 +24,11 @@ theorem executes (hash : Hash) (s : MachineState) (model : initialAbstract.Model
 through the organizer's loader, protected interpreter, and output decoder. -/
 theorem run_bound (hash : Hash) (secretKey : SecretKey) :
     let result := submission.runWith hash .keygen secretKey
-    result.finished = true ∧ result.value.isSome = true ∧ result.cycles = 81342 ∧
+    result.finished = true ∧ result.value.isSome = true ∧ result.cycles = 82446 ∧
       result.hashCalls = 739 ∧ result.hashCompressions = 761 := by
   obtain ⟨final, trace⟩ := executes hash (secretKeyState secretKey) (secretKey_models secretKey)
-  have run := runWith_of_executes submission hash .keygen secretKey (secretKeyState secretKey) 75993
-    ⟨.success, final, 81342, 739, 761⟩ (secretKey_loaded secretKey) trace (by decide)
+  have run := runWith_of_executes submission hash .keygen secretKey (secretKeyState secretKey) 77097
+    ⟨.success, final, 82446, 739, 761⟩ (secretKey_loaded secretKey) trace (by decide)
   simp [run]
 
 /-- The exact keygen image satisfies the competition's universal strict termination limit. -/

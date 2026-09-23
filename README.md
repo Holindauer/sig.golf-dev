@@ -18,14 +18,14 @@ Design a **stateless hash-based signature scheme** minimizing `S × C`: signatur
 | `FAILURE`       |                2^-256 |
 | `LIFETIME`      | 2^24 signing requests |
 | `SECURITY_BITS` |                   127 |
-| `CYCLE_LIMIT`   |           2^40 cycles |
+| `CYCLE_LIMIT`   |           2^32 cycles |
 
 Every object has a fixed size in bytes:
 
 | Object            |                Bytes |
 | ----------------- | -------------------: |
 | Message digest    |                   32 |
-| Secret key        |                   16 |
+| Secret key        |                   32 |
 | Public key        |                   16 |
 | Cache             |       2^17 (128 KiB) |
 | Compact signature |              `S` ≥ 1 |
@@ -69,13 +69,13 @@ For any `secretKey`, `message` and oracle H, consider the following experiment:
 
 Stop at the first failure. We say the `experiment succeeds` when all stages succeed and verification accepts.
 
-`K_P` counts program P's compressions in this experiment; it is zero if P is never reached. For each fixed secret key and H, `Kmax_P` is the maximum of `K_P` over all messages. `BUDGET_P` denotes P's named budget.
+`K_P` counts program P's compressions; it is zero if P is never reached. `BUDGET_P` denotes P's named budget.
 
 1. **Success:** for every secret key, `Pr_H[experiment succeeds for every message] >= 1 - FAILURE`.
-2. **Compression budgets:** for every secret key, `E_H[2^(Kmax_P / BUDGET_P)] <= 2` for each P in {`keygen`, `sign`, `expand`}.
+2. **Compression budgets:** for every secret key and P in {`keygen`, `sign`, `expand`}, `E_{H,M}[2^(K_P / BUDGET_P)] <= 2`.
 3. **Verification cycles:** for every secret key, message and oracle, if the experiment succeeds, `verify` uses at most `C` cycles.
 
-`Pr_H` means the probability over H. `E_H` means the expected value over H.
+`Pr_H` is over H; `E_{H,M}` is over an independently sampled random oracle H and uniform 32-byte message digest M. Attacker-chosen messages or altered caches/signatures may cost more; every program execution remains below `CYCLE_LIMIT` cycles.
 
 ### Security
 

@@ -45,7 +45,7 @@ theorem sign_tree (hash : Hash) (s : MachineState) (secretKey : SecretKey) (poin
       s.getByte (BitVec.ofNat 64 (0x80600+chain.val)) = BitVec.ofNat 8 (Reference.digit message chain).val) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles
       (if level = 0 then 5 else 739) (if level = 0 then 5 else 761) final ∧
-      instructions ≤ (if level = 0 then 513 else 98806) ∧ cycles ≤ (if level = 0 then 548 else 104155) ∧
+      instructions ≤ (if level = 0 then 537 else 99910) ∧ cycles ≤ (if level = 0 then 572 else 105259) ∧
       final.pc = s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (wordAddress 0x80500 i.val) =
         (Reference.treeRoot hash secretKey level tree).extractLsb' (64*i.val) 64) ∧

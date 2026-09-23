@@ -11,7 +11,7 @@ theorem sign_selected_leaf_call (hash : Hash) (s : MachineState) (secretKey : Se
     (nonzero : BitVec.ofNat 64 level ≠ 0) (valid : CapturePointerValid pointer)
     (data : LeafContext s secretKey level tree side) (settings : LeafSignatureSettings s pointer message) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 369 380 final ∧
-      instructions ≤ 49343 ∧ cycles ≤ 52014 ∧
+      instructions ≤ 49895 ∧ cycles ≤ 52566 ∧
       final.pc = s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =
         (Reference.leafRoot hash secretKey level tree side).extractLsb' (64*i.val) 64) ∧
@@ -38,7 +38,7 @@ theorem sign_unselected_leaf_call (hash : Hash) (s : MachineState) (secretKey : 
     (data : LeafContext s secretKey level tree side) (ptr : s.getMem 0x80448 = BitVec.ofNat 64 pointer)
     (unselected : s.getMem 0x80428 ≠ s.getMem 0x80420) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 369 380 final ∧
-      instructions ≤ 49343 ∧ cycles ≤ 52014 ∧
+      instructions ≤ 49895 ∧ cycles ≤ 52566 ∧
       final.pc = s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =
         (Reference.leafRoot hash secretKey level tree side).extractLsb' (64*i.val) 64) ∧
@@ -68,7 +68,7 @@ theorem sign_bottom_leaf_call (hash : Hash) (s : MachineState) (secretKey : Secr
     (valid : CapturePointerValid pointer) (ptr : s.getMem 0x80448 = BitVec.ofNat 64 pointer)
     (data : LeafContext s secretKey 0 tree side) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 2 2 final ∧
-      instructions ≤ 197 ∧ cycles ≤ 211 ∧
+      instructions ≤ 209 ∧ cycles ≤ 223 ∧
       final.pc = s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =
         (Reference.leafRoot hash secretKey 0 tree side).extractLsb' (64*i.val) 64) ∧

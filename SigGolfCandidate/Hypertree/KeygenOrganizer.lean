@@ -16,7 +16,7 @@ theorem fixed_hash_of_support {α : Type} (program : OracleComp HashSpec α) (va
 
 theorem eval_keygen (hash : Hash) (secretKey : SecretKey) :
     evalWithAnswerFn hash (submission.run .keygen secretKey) =
-      ⟨some (Reference.keygen hash secretKey,KeygenFunctional.zeroCache),true,81342,739,761⟩ :=
+      ⟨some (Reference.keygen hash secretKey,KeygenFunctional.zeroCache),true,82446,739,761⟩ :=
   KeygenFunctional.run_exact hash secretKey
 
 /-- An abstract version of the organizer pipeline keeps proof reduction independent of bytecode. -/

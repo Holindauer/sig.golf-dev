@@ -2,18 +2,18 @@
   "test_only": true,
   "oracle": "SHA-256",
   "signature_bytes": 119632,
-  "public_key": "ecdb0a5de0e8a6a5f04df4590cc8a33a",
-  "signature_sha256": "493070c960136d9d7a2fdc5282669ddbd6427b6016bada15cd189fb6a80f49a7",
+  "public_key": "05e8852bf68be737d9ba025d70d2793e",
+  "signature_sha256": "2eaceeaa2441c8dfd9bdcacb00e8c89262df1bbf4d590b2426f9b0917e7fbc78",
   "phases": {
     "keygen": {
-      "instructions_executed": 75993,
-      "cycles": 81342,
+      "instructions_executed": 77097,
+      "cycles": 82446,
       "hash_calls": 739,
       "compressions": 761
     },
     "sign": {
-      "instructions_executed": 13875293,
-      "cycles": 14725849,
+      "instructions_executed": 14050865,
+      "cycles": 14901421,
       "hash_calls": 117508,
       "compressions": 121008
     },
@@ -24,10 +24,10 @@
       "compressions": 0
     },
     "verify": {
-      "instructions_executed": 3068658,
-      "cycles": 3268018,
-      "hash_calls": 26480,
-      "compressions": 28230
+      "instructions_executed": 3104946,
+      "cycles": 3306952,
+      "hash_calls": 26858,
+      "compressions": 28608
     }
   }
 }

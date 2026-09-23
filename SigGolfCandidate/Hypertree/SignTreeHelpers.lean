@@ -8,7 +8,7 @@ set_option linter.unusedSimpArgs false
 structure TreeContext (s : MachineState) (secretKey : SecretKey) (level tree : Nat) : Prop where
   levelEq : s.getMem 0x80400 = BitVec.ofNat 64 level
   indexEq : ∀ i : Fin 3, s.getMem (wordAddress 0x80408 i.val) = (BitVec.ofNat 192 tree).extractLsb' (64*i.val) 64
-  secretKeyEq : ∀ i : Fin 2, s.getMem (wordAddress 0x20 i.val) = secretKey.extractLsb' (64*i.val) 64
+  secretKeyEq : ∀ i : Fin 4, s.getMem (wordAddress 0x20 i.val) = secretKey.extractLsb' (64*i.val) 64
 
 def SignatureWordsOutside (pointer : Nat) (a : Word) : Prop :=
   ∀ chain : Reference.Chain, ∀ i : Fin 2, a ≠ wordAddress (pointer + 16 * chain.val) i.val

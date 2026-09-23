@@ -10,7 +10,7 @@ structure LoopData (s : MachineState) (secretKey : SecretKey) (level index : Nat
   stack : s.getReg .x2 = 0x1000000
   counter : s.getMem 0x80400 = BitVec.ofNat 64 level
   indexWords : StoredIndex s (BitVec.ofNat 192 index)
-  secretKeyWords : ∀ i : Fin 2, s.getMem (wordAddress 0x20 i.val) = secretKey.extractLsb' (64*i.val) 64
+  secretKeyWords : ∀ i : Fin 4, s.getMem (wordAddress 0x20 i.val) = secretKey.extractLsb' (64*i.val) 64
   mode : s.getMem 0x80440 = 1
   pointer : s.getMem 0x80448 = BitVec.ofNat 64 (0x20060+layerOffset level)
   currentWords : ∀ i : Fin 2, s.getMem (wordAddress 0x80500 i.val) = current.extractLsb' (64*i.val) 64

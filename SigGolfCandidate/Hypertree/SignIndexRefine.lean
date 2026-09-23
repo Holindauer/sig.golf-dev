@@ -126,7 +126,7 @@ theorem loaded_index_refines (hash : Hash) (secretKey : SecretKey) (pk : PublicK
     (cache : Cache) (message : Message) :
     ∃ initial final,
       initialState submission .sign (secretKey, pk, cache, message) = some initial ∧
-      Trace hash sign initial 226 256 2 4 final ∧ final.pc = 0x1220 ∧
+      Trace hash sign initial 238 268 2 4 final ∧ final.pc = 0x1220 ∧
       readBuffer final 0x80408 20 =
         Reference.indexOf hash pk message (Reference.randomizer hash secretKey message) := by
   obtain ⟨initial, loaded, pc⟩ := initialState_exists submission admitted .sign (secretKey, pk, cache, message)

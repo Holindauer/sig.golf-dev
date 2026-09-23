@@ -10,7 +10,7 @@ theorem sign_layer (hash : Hash) (s : MachineState) (secretKey : SecretKey) (lev
     (data : LoopData s secretKey level index current) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles
       (if level = 0 then 5 else 739) (if level = 0 then 5 else 761) final ∧
-      instructions ≤ (if level = 0 then 564 else 99313) ∧ cycles ≤ (if level = 0 then 599 else 104662) ∧
+      instructions ≤ (if level = 0 then 588 else 100417) ∧ cycles ≤ (if level = 0 then 623 else 105766) ∧
       final.pc = (if level+1=160 then 0x12f8 else 0x1220) ∧
       LoopData final secretKey (level+1) (index/2) (Reference.treeRoot hash secretKey level (index/2)) ∧
       LayerStored final (0x20060+layerOffset level) level

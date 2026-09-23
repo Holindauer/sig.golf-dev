@@ -12,7 +12,7 @@ theorem sign_bottom_tree_leaves (hash : Hash) (s : MachineState) (secretKey : Se
     (valid : CapturePointerValid pointer)
     (data : TreeContext s secretKey 0 tree) (settings : BottomTreeSettings s pointer selected) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 4 4 final ∧
-      instructions ≤ 406 ∧ cycles ≤ 434 ∧ final.pc = 0x13f8 ∧ final.getReg .x2 = 0xfffff0 ∧
+      instructions ≤ 430 ∧ cycles ≤ 458 ∧ final.pc = 0x13f8 ∧ final.getReg .x2 = 0xfffff0 ∧
       final.getMem 0xfffff0 = s.getReg .x1 ∧ TreeContext final secretKey 0 tree ∧
       BottomTreeSettings final pointer selected ∧
       (∀ side : Bool, ∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =

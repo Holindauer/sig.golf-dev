@@ -71,7 +71,7 @@ theorem iteration (hash : Hash) (s : MachineState) (pc : s.pc=0x1204)
     (context : Context level tree side secretKey s)
     (counter : s.getMem 0x80430=BitVec.ofNat 64 chain.val)
     (before : Endpoints hash secretKey level tree side chain.val s) :
-    ∃ final, Trace hash keygen s 811 867 8 8 final ∧
+    ∃ final, Trace hash keygen s 823 879 8 8 final ∧
       final.pc=(if chain.val+1=46 then 0x1548 else 0x1204) ∧
       Context level tree side secretKey final ∧ final.getMem 0x80430=BitVec.ofNat 64 (chain.val+1) ∧
       Endpoints hash secretKey level tree side (chain.val+1) final ∧
@@ -112,7 +112,7 @@ theorem loop (hash : Hash) (count : Nat) (s : MachineState) (n level tree : Nat)
     (context : Context level tree side secretKey s)
     (counter : s.getMem 0x80430=BitVec.ofNat 64 n)
     (before : Endpoints hash secretKey level tree side n s) :
-    ∃ final, Trace hash keygen s (811*count) (867*count) (8*count) (8*count) final ∧
+    ∃ final, Trace hash keygen s (823*count) (879*count) (8*count) (8*count) final ∧
       final.pc=0x1548 ∧ Context level tree side secretKey final ∧
       final.getMem 0x80430=46 ∧ Endpoints hash secretKey level tree side 46 final ∧
       final.getReg .x1=s.getReg .x1 ∧ final.getReg .x2=s.getReg .x2 ∧

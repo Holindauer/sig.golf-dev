@@ -80,7 +80,7 @@ theorem sign_selected_iteration (hash : Hash) (s : MachineState) (secretKey : Se
     (data : LeafData s secretKey level tree side chain.val)
     (settings : CaptureSettings s pointer chain (Reference.digit message chain)) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 8 8 final ∧
-      instructions ≤ 1059 ∧ cycles ≤ 1115 ∧
+      instructions ≤ 1071 ∧ cycles ≤ 1127 ∧
       final.pc = (if chain.val + 1 = 46 then 0x18c8 else 0x1584) ∧
       LeafData final secretKey level tree side (chain.val+1) ∧
       (∀ i : Fin 2, final.getMem (KeygenEndpoint.endpointAddress chain.val i.val) =
@@ -114,7 +114,7 @@ theorem sign_unselected_iteration (hash : Hash) (s : MachineState) (secretKey : 
     (data : LeafData s secretKey level tree side chain.val)
     (unselected : s.getMem 0x80428 ≠ s.getMem 0x80420) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 8 8 final ∧
-      instructions ≤ 1059 ∧ cycles ≤ 1115 ∧
+      instructions ≤ 1071 ∧ cycles ≤ 1127 ∧
       final.pc = (if chain.val + 1 = 46 then 0x18c8 else 0x1584) ∧
       LeafData final secretKey level tree side (chain.val+1) ∧
       (∀ i : Fin 2, final.getMem (KeygenEndpoint.endpointAddress chain.val i.val) =

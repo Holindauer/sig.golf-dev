@@ -64,7 +64,7 @@ def lean_state(name,state):
  def fields(field):return ', '.join(('(.x%d, 0x%x)'%(k,v)) if field=='regs' else ('(0x%x, 0x%x)'%(k,v)) for k,v in state[field])
  return f'def {name} : AbstractState :=\n  ⟨0x{state["pc"]:x}, [{fields("regs")}],\n    [{fields("mem")}]⟩\n'
 
-def generate(chunk=1000,limit=75992):
+def generate(chunk=1000,limit=77096):
  states=[copy.deepcopy(s)];summaries=[]
  for start in range(0,limit,chunk):
   count=min(chunk,limit-start);sums=[0,0,0]
@@ -75,7 +75,7 @@ def generate(chunk=1000,limit=75992):
 if __name__=='__main__':
  import sys
  chunk=int(sys.argv[1]) if len(sys.argv)>1 else 1000
- limit=75992
+ limit=77096
  states,summaries=generate(chunk,limit)
  out=['import SigGolfCandidate.Hypertree.ResourceRun','namespace SigGolfCandidate.Hypertree.KeygenResource','open SigGolfCandidate.Resources SigGolf RiscvZkvm.Rv64','set_option maxRecDepth 10000','set_option maxHeartbeats 0','set_option Elab.async false']
  for i,state in enumerate(states):out.append(lean_state(f'state{i}',state))

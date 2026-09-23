@@ -8,7 +8,7 @@ set_option maxRecDepth 4096
 theorem execute_framed (hash : Hash) (s : MachineState) (pc : s.pc=0x1048)
     (sp : s.getReg .x2=0x1000000) (level tree : Nat) (secretKey : SecretKey)
     (nonzero : BitVec.ofNat 64 level ≠ 0) (context : Context level tree false secretKey s) :
-    ∃ final, Trace hash keygen s 75969 81318 739 761 final ∧
+    ∃ final, Trace hash keygen s 77073 82422 739 761 final ∧
       final.pc=s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2=s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (Signing.wordAddress 0x80500 i.val) =
         (Reference.treeRoot hash secretKey level tree).extractLsb' (64*i.val) 64) ∧
@@ -76,7 +76,7 @@ theorem execute_framed (hash : Hash) (s : MachineState) (pc : s.pc=0x1048)
 theorem execute (hash : Hash) (s : MachineState) (pc : s.pc=0x1048)
     (sp : s.getReg .x2=0x1000000) (level tree : Nat) (secretKey : SecretKey)
     (nonzero : BitVec.ofNat 64 level ≠ 0) (context : Context level tree false secretKey s) :
-    ∃ final, Trace hash keygen s 75969 81318 739 761 final ∧
+    ∃ final, Trace hash keygen s 77073 82422 739 761 final ∧
       final.pc=s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2=s.getReg .x2 ∧
       ∀ i : Fin 2, final.getMem (Signing.wordAddress 0x80500 i.val) =
         (Reference.treeRoot hash secretKey level tree).extractLsb' (64*i.val) 64 := by

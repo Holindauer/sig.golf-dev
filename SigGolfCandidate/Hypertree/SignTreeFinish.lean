@@ -52,7 +52,7 @@ theorem sign_upper_tree (hash : Hash) (s : MachineState) (secretKey : SecretKey)
     (nonzero : BitVec.ofNat 64 level ≠ 0) (valid : CapturePointerValid pointer)
     (data : TreeContext s secretKey level tree) (settings : TreeSettings s pointer message selected) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 739 761 final ∧
-      instructions ≤ 98806 ∧ cycles ≤ 104155 ∧
+      instructions ≤ 99910 ∧ cycles ≤ 105259 ∧
       final.pc = s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (wordAddress 0x80500 i.val) =
         (Reference.treeRoot hash secretKey level tree).extractLsb' (64*i.val) 64) ∧

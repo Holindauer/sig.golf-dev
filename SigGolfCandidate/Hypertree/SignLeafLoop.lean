@@ -53,7 +53,7 @@ theorem sign_selected_leaf_loop (hash : Hash) (s : MachineState) (secretKey : Se
     (endpoints : EndpointsBefore s hash secretKey level tree side start)
     (signature : SignatureBefore s hash secretKey pointer level tree side message start) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles (8*remaining) (8*remaining) final ∧
-      instructions ≤ 1059 * remaining ∧ cycles ≤ 1115 * remaining ∧ final.pc = 0x18c8 ∧
+      instructions ≤ 1071 * remaining ∧ cycles ≤ 1127 * remaining ∧ final.pc = 0x18c8 ∧
       LeafData final secretKey level tree side 46 ∧
       EndpointsBefore final hash secretKey level tree side 46 ∧
       SignatureBefore final hash secretKey pointer level tree side message 46 ∧
@@ -92,7 +92,7 @@ theorem sign_selected_leaf_chains (hash : Hash) (s : MachineState) (secretKey : 
     (valid : CapturePointerValid pointer) (data : LeafData s secretKey level tree side 0)
     (settings : LeafSignatureSettings s pointer message) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 368 368 final ∧
-      instructions ≤ 48714 ∧ cycles ≤ 51290 ∧ final.pc = 0x18c8 ∧
+      instructions ≤ 49266 ∧ cycles ≤ 51842 ∧ final.pc = 0x18c8 ∧
       LeafData final secretKey level tree side 46 ∧
       EndpointsBefore final hash secretKey level tree side 46 ∧
       SignatureBefore final hash secretKey pointer level tree side message 46 ∧

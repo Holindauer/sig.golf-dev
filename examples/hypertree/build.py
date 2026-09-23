@@ -92,8 +92,8 @@ class Assembler:
 def message_index(a, verifying):
     randomizer = WITNESS_BASE if verifying else 0x20060
     if not verifying:
-        a.copy(0x20, HASH + 32); a.copy(0, HASH + 48, 32)
-        a.hash(6, 80, message=True)
+        a.copy(0x20, HASH + 32, 32); a.copy(0, HASH + 64, 32)
+        a.hash(6, 96, message=True)
         a.copy(ANSWER, randomizer, RANDOMIZER_BYTES)
     a.copy(0x40, HASH + 32); a.copy(0, HASH + 48, 32)
     a.copy(randomizer, HASH + 80, RANDOMIZER_BYTES)
@@ -147,7 +147,7 @@ def leaf_functions(a, verifying):
         a.ld(10, 7); a.ld(11, 7, 8); a.save(10, VALUE); a.save(11, VALUE + 8)
         a.li(7, DIGITS); a.add(7, 7, 6); a.lbu(10, 7); a.save(10, STEP)
     else:
-        a.copy(0x20, HASH + 32); a.hash(1, 48, leaf=True, chain=True); a.copy(ANSWER, VALUE)
+        a.copy(0x20, HASH + 32, 32); a.hash(1, 64, leaf=True, chain=True); a.copy(ANSWER, VALUE)
         a.set(STEP, 0)
     a.label('chain_step')
     if not verifying: capture(a)
@@ -164,7 +164,7 @@ def leaf_functions(a, verifying):
     if verifying:
         a.load(7, POINTER); a.ld(10, 7); a.ld(11, 7, 8); a.save(10, VALUE); a.save(11, VALUE + 8)
     else:
-        a.copy(0x20, HASH + 32); a.hash(1, 48, leaf=True, chain=True); a.copy(ANSWER, VALUE)
+        a.copy(0x20, HASH + 32, 32); a.hash(1, 64, leaf=True, chain=True); a.copy(ANSWER, VALUE)
         capture(a, bottom=True)
     a.copy(VALUE, HASH + 32); a.hash(2, 48, leaf=True, chain=True, step=True)
     save_public(a); a.ret()

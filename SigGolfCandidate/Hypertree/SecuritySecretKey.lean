@@ -5,7 +5,7 @@ namespace SigGolfCandidate.Hypertree.SecuritySecretKey
 open SigGolf OracleComp OracleSpec Reference SecurityRandomOracle SecurityPacking
 set_option maxRecDepth 4096
 
-/-- A complete 128-bit secret key occurs at the reference derivation input's fixed byte
+/-- A complete 256-bit secret key occurs at the reference derivation input's fixed byte
 position. This overapproximates the tag-1 and tag-6 secret-input domains. -/
 def SecretKeyAt (input : Query) (secretKey : SecretKey) : Prop :=
   ∃ header suffix : List Byte, header.length = 32 ∧
@@ -38,12 +38,12 @@ theorem secretKeyAt_unique {input : Query} {first second : SecretKey}
   rw [List.append_assoc, List.append_assoc] at heq
   have tails := List.append_inj_right heq (plen.trans plen'.symm)
   have secretKeys := List.append_inj_left tails (by simp [bytes])
-  exact bytes_injective 16 secretKeys
+  exact bytes_injective 32 secretKeys
 
-/-- A fixed query independent of the uniform secret key guesses it with probability at
-most 2^-128. This uses the organizer's actual `sampleSecretKey`. -/
-theorem prob_secretKeyAt_le (input : Query) :
-    Pr[SecretKeyAt input | sampleSecretKey] ≤ 1 / (2 : ENNReal) ^ 128 := by
+/-- A fixed query independent of the uniform 256-bit secret key guesses it with
+probability at most 2^-256. This uses the organizer's actual `sampleSecretKey`. -/
+theorem prob_secretKeyAt_le_256 (input : Query) :
+    Pr[SecretKeyAt input | sampleSecretKey] ≤ 1 / (2 : ENNReal) ^ 256 := by
   classical
   by_cases existsSecretKey : ∃ secretKey, SecretKeyAt input secretKey
   · obtain ⟨secretKey, hsecretKey⟩ := existsSecretKey
@@ -60,6 +60,12 @@ theorem prob_secretKeyAt_le (input : Query) :
       funext secretKey
       exact propext ⟨fun h => existsSecretKey ⟨secretKey, h⟩, False.elim⟩
     simp [event]
+
+/-- The security reduction uses the weaker 128-bit allocation shared with its
+independent 128-bit hash-target collision event. -/
+theorem prob_secretKeyAt_le (input : Query) :
+    Pr[SecretKeyAt input | sampleSecretKey] ≤ 1 / (2 : ENNReal) ^ 128 :=
+  (prob_secretKeyAt_le_256 input).trans (ENNReal.div_le_div le_rfl (by norm_num))
 
 def SecretKeyHitTrace (inputs : List Query) (secretKey : SecretKey) : Prop :=
   ∃ input ∈ inputs, SecretKeyAt input secretKey

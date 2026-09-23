@@ -73,7 +73,7 @@ theorem sign_selected_leaf_body (hash : Hash) (s : MachineState) (secretKey : Se
     (upper : level ≠ 0) (valid : CapturePointerValid pointer)
     (data : LeafData s secretKey level tree side 0) (settings : LeafSignatureSettings s pointer message) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 369 380 final ∧
-      instructions ≤ 49329 ∧ cycles ≤ 52000 ∧
+      instructions ≤ 49881 ∧ cycles ≤ 52552 ∧
       final.pc = s.getMem 0xffffe0 &&& ~~~1#64 ∧ final.getReg .x2 = 0xfffff0 ∧
       (∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =
         (Reference.leafRoot hash secretKey level tree side).extractLsb' (64*i.val) 64) ∧
@@ -107,7 +107,7 @@ theorem sign_unselected_leaf_body (hash : Hash) (s : MachineState) (secretKey : 
     (data : LeafData s secretKey level tree side 0) (ptr : s.getMem 0x80448 = BitVec.ofNat 64 pointer)
     (unselected : s.getMem 0x80428 ≠ s.getMem 0x80420) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 369 380 final ∧
-      instructions ≤ 49329 ∧ cycles ≤ 52000 ∧
+      instructions ≤ 49881 ∧ cycles ≤ 52552 ∧
       final.pc = s.getMem 0xffffe0 &&& ~~~1#64 ∧ final.getReg .x2 = 0xfffff0 ∧
       (∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =
         (Reference.leafRoot hash secretKey level tree side).extractLsb' (64*i.val) 64) ∧

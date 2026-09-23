@@ -56,7 +56,7 @@ theorem honest_exact (hash : Hash) (secretKey : SecretKey) (message : Message) :
     (fun p c => submission.run .sign (secretKey,p,c,message))
     (fun p sig => submission.run .expand (message,p,sig))
     (fun p wit => submission.run .verify (message,p,wit)) pk KeygenFunctional.zeroCache signature signature
-    81342 739 761 signCycles 117508 121008 89733 0 0 cycles calls blocks
+    82446 739 761 signCycles 117508 121008 89733 0 0 cycles calls blocks
     (KeygenFunctional.run_exact hash secretKey) signRun (expand_exact hash message pk signature) verifyRun
 
 /-- info: 'SigGolfCandidate.Hypertree.Candidate.honest_exact' depends on axioms: [propext, Classical.choice, Quot.sound] -/

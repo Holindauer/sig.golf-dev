@@ -9,7 +9,7 @@ structure LeafContext (s : MachineState) (secretKey : SecretKey) (level tree : N
   levelEq : s.getMem 0x80400 = BitVec.ofNat 64 level
   leafEq : s.getMem 0x80428 = BitVec.ofNat 64 (Reference.sideNumber side)
   indexEq : ∀ i : Fin 3, s.getMem (wordAddress 0x80408 i.val) = (BitVec.ofNat 192 tree).extractLsb' (64*i.val) 64
-  secretKeyEq : ∀ i : Fin 2, s.getMem (wordAddress 0x20 i.val) = secretKey.extractLsb' (64*i.val) 64
+  secretKeyEq : ∀ i : Fin 4, s.getMem (wordAddress 0x20 i.val) = secretKey.extractLsb' (64*i.val) 64
 
 theorem sign_leaf_entry_code : KeygenLeafEntry.Code sign 0x1554 1116 := by decide
 

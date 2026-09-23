@@ -36,9 +36,9 @@ theorem index_refines_full (hash : Hash) (s : MachineState) (pk : PublicKey) (me
 
 theorem randomizer_refines_full (hash : Hash) (s : MachineState) (secretKey : SecretKey) (message : Message)
     (pc : s.pc = 0x1000)
-    (hsecretKey : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x20+i)) = secretKey.extractLsb' (8*i) 8)
+    (hsecretKey : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 (0x20+i)) = secretKey.extractLsb' (8*i) 8)
     (hmessage : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8*i) 8) :
-    ∃ final, Trace hash sign s 105 120 1 2 final ∧ final.pc = 0x10fc ∧
+    ∃ final, Trace hash sign s 117 132 1 2 final ∧ final.pc = 0x10fc ∧
       (∀ i : Fin 4, final.getMem (wordAddress 0x20060 i.val) =
         (Reference.randomizer hash secretKey message).extractLsb' (64*i.val) 64) ∧
       final.getMem 0x80440 = 1 ∧ final.getMem 0x80448 = 0x20080 ∧ final.getReg .x2 = s.getReg .x2 ∧
@@ -73,10 +73,10 @@ theorem outside_prefix_low (a : Word) (low : a.toNat < 0x20060) : OutsidePrefix 
 /-- Full arbitrary-state signer prefix refinement, including persistent memory and stack. -/
 theorem entry_full (hash : Hash) (s : MachineState) (secretKey : SecretKey) (pk : PublicKey) (message : Message)
     (pc : s.pc = 0x1000)
-    (hsecretKey : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x20+i)) = secretKey.extractLsb' (8*i) 8)
+    (hsecretKey : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 (0x20+i)) = secretKey.extractLsb' (8*i) 8)
     (hpk : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x40+i)) = pk.extractLsb' (8*i) 8)
     (hmessage : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8*i) 8) :
-    ∃ final, Trace hash sign s 226 256 2 4 final ∧ final.pc = 0x1220 ∧
+    ∃ final, Trace hash sign s 238 268 2 4 final ∧ final.pc = 0x1220 ∧
       StoredIndex final ((Reference.indexOf hash pk message (Reference.randomizer hash secretKey message)).zeroExtend 192) ∧
       (∀ i : Fin 4, final.getMem (wordAddress 0x20060 i.val) =
         (Reference.randomizer hash secretKey message).extractLsb' (64*i.val) 64) ∧

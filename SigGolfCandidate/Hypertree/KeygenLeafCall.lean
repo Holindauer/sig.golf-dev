@@ -17,7 +17,7 @@ instance (side : Bool) (a : Word) : Decidable (Outside side a) :=
 theorem execute (hash : Hash) (s : MachineState) (pc : s.pc=0x11cc)
     (sp : s.getReg .x2=0xfffff0) (level tree : Nat) (side : Bool) (secretKey : SecretKey)
     (nonzero : BitVec.ofNat 64 level ≠ 0) (context : Context level tree side secretKey s) :
-    ∃ final, Trace hash keygen s 37935 40606 369 380 final ∧
+    ∃ final, Trace hash keygen s 38487 41158 369 380 final ∧
       final.pc=s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2=s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =
         (Reference.leafRoot hash secretKey level tree side).extractLsb' (64*i.val) 64) ∧

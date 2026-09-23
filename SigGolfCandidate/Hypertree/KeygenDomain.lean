@@ -104,4 +104,91 @@ theorem words_of_layout (s : MachineState) (head : Word) (tree : Nat) (value : R
   · exact v0
   · exact v1
 
+
+/-- The private derivation uses the full 32-byte secret key, unlike 16-byte chain values. -/
+def secretInputWord (head : Word) (tree : Nat) (secretKey : SecretKey) (i : Fin 8) : Word :=
+  if i.val = 0 then head
+  else if i.val < 4 then (BitVec.ofNat 192 tree).extractLsb' (64 * (i.val-1)) 64
+  else secretKey.extractLsb' (64 * (i.val-4)) 64
+
+def secretPayload (head : Word) (tree : Nat) (secretKey : SecretKey) : List Byte :=
+  bytes (n := 8) head ++ bytes (n := 24) (BitVec.ofNat 192 tree) ++ bytes secretKey
+
+@[simp] theorem secretPayload_length (head : Word) (tree : Nat) (secretKey : SecretKey) :
+    (secretPayload head tree secretKey).length = 64 := by simp [secretPayload,bytes]
+
+theorem secretPayload_byte (head : Word) (tree : Nat) (secretKey : SecretKey) (i : Fin 64) :
+    extractByte (secretInputWord head tree secretKey ⟨i.val/8,by have := i.isLt; omega⟩) (i.val%8) =
+      (secretPayload head tree secretKey)[i.val]'(by simp) := by
+  fin_cases i <;> simp [secretInputWord,secretPayload,bytes,List.getElem_append]
+  all_goals
+    ext j hj
+    interval_cases j <;> simp [extractByte,← BitVec.getLsbD_eq_getElem,BitVec.getLsbD_ofNat]
+
+theorem secret_query_eq (s : MachineState) (head : Word) (tree : Nat) (secretKey : SecretKey)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 512)
+    (words : ∀ i : Fin 8, s.getMem (Signing.wordAddress 0x80000 i.val) = secretInputWord head tree secretKey i) :
+    hashInput s = Reference.packed (secretPayload head tree secretKey) := by
+  apply Serialization.hashInput_of_list s 0x80000 (secretPayload head tree secretKey)
+  · exact source
+  · rw [bits, secretPayload_length]; rfl
+  · intro i hi
+    have bound : i < 64 := by simpa using hi
+    rw [Signing.getByte_word s 0x80000 i (by decide) (by omega),words ⟨i/8,by omega⟩]
+    exact secretPayload_byte head tree secretKey ⟨i,bound⟩
+
+theorem secret_answer_words (hash : Hash) (s : MachineState)
+    (level tree leaf chain : Nat) (secretKey : SecretKey)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 512)
+    (destination : s.getReg .x12 = 0x80300)
+    (words : ∀ i : Fin 8, s.getMem (Signing.wordAddress 0x80000 i.val) =
+      secretInputWord (header 1 level leaf chain 0) tree secretKey i) :
+    ∀ i : Fin 2, (writeHash s (hash (hashInput s))).getMem (Signing.wordAddress 0x80300 i.val) =
+      (Reference.truncate (Reference.query hash 1 level tree leaf chain 0 (bytes secretKey))).extractLsb' (64*i.val) 64 := by
+  intro i
+  rw [Signing.hash_answer_word s (hash (hashInput s)) destination ⟨i.val,by have := i.isLt; omega⟩]
+  have eq : hash (hashInput s) = Reference.query hash 1 level tree leaf chain 0 (bytes secretKey) := by
+    rw [secret_query_eq s _ tree secretKey source bits words]
+    rfl
+  rw [eq]
+  let result := Reference.query hash 1 level tree leaf chain 0 (bytes secretKey)
+  change result.extractLsb' (64*i.val) 64 = (result.extractLsb' 0 128).extractLsb' (64*i.val) 64
+  fin_cases i <;> ext j hj <;> simp (disch := omega)
+
+theorem secret_hash_trace (image : Image) (hash : Hash) (s : MachineState)
+    (code : fetch image s = some (.base .ECALL)) (service : s.getReg .x5 = 1)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 512)
+    (destination : s.getReg .x12 = 0x80300) :
+    Trace hash image s 1 8 1 1 (writeHash s (hash (hashInput s))) := by
+  have valid := Keygen.hash_arguments s 512 source bits destination (by decide)
+  have len : (hashInput s).1 = 512 := by simp [hashInput,bits]
+  simpa [len,compressions] using
+    Trace.hash s _ 0 0 0 0 code service valid (Trace.refl _)
+
+theorem secret_words_of_layout (s : MachineState) (head : Word) (tree : Nat) (secretKey : SecretKey)
+    (hhead : s.getMem 0x80000 = head)
+    (hindex : ∀ i : Fin 3, s.getMem (Signing.wordAddress 0x80008 i.val) =
+      (BitVec.ofNat 192 tree).extractLsb' (64*i.val) 64)
+    (hvalue : ∀ i : Fin 4, s.getMem (Signing.wordAddress 0x80020 i.val) =
+      secretKey.extractLsb' (64*i.val) 64) :
+    ∀ i : Fin 8, s.getMem (Signing.wordAddress 0x80000 i.val) = secretInputWord head tree secretKey i := by
+  have h0 := hindex 0
+  have h1 := hindex 1
+  have h2 := hindex 2
+  have v0 := hvalue 0
+  have v1 := hvalue 1
+  have v2 := hvalue 2
+  have v3 := hvalue 3
+  norm_num [Signing.wordAddress] at h0 h1 h2 v0 v1 v2 v3
+  intro i
+  fin_cases i <;> simp only [Signing.wordAddress,secretInputWord,Fin.reduceFinMk] <;> norm_num
+  · exact hhead
+  · exact h0
+  · exact h1
+  · exact h2
+  · exact v0
+  · exact v1
+  · exact v2
+  · exact v3
+
 end SigGolfCandidate.Hypertree.KeygenDomain

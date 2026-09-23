@@ -12,7 +12,7 @@ theorem sign_bottom_leaf_body (hash : Hash) (s : MachineState) (secretKey : Secr
     (valid : CapturePointerValid pointer) (ptr : s.getMem 0x80448 = BitVec.ofNat 64 pointer)
     (data : LeafData s secretKey 0 tree side 0) (step : s.getMem 0x80438 = 0) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 2 2 final ∧
-      instructions ≤ 183 ∧ cycles ≤ 197 ∧
+      instructions ≤ 195 ∧ cycles ≤ 209 ∧
       final.pc = s.getMem 0xffffe0 &&& ~~~1#64 ∧ final.getReg .x2 = 0xfffff0 ∧
       (∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =
         (Reference.leafRoot hash secretKey 0 tree side).extractLsb' (64*i.val) 64) ∧
@@ -63,9 +63,9 @@ theorem sign_bottom_leaf_body (hash : Hash) (s : MachineState) (secretKey : Secr
     (by rw [hashedSP, captureSP]; decide)
   have frame (a : Word) (outside : OutsideBottomWork side a)
       (captureOutside : ∀ i : Fin 2, a ≠ wordAddress pointer i.val) : (returnState hashed).getMem a = s.getMem a := by
-    rw [return_mem, hashedFrame a outside.1 outside.2.1 outside.2.2.2,
+    rw [return_mem, hashedFrame a (fun i => outside.1 ⟨i.val, by omega⟩) outside.2.1 outside.2.2.2,
       captureBottom_frame secret pointer secretPtr a captureOutside, secretKeep a outside]
-  refine ⟨returnState hashed, 161 + captureBottomSteps secret, 175 + captureBottomSteps secret,
+  refine ⟨returnState hashed, 173 + captureBottomSteps secret, 187 + captureBottomSteps secret,
     ?_, ?_, ?_, ?_, ?_, ?_, ?_, frame⟩
   · convert ((pre.trans capture.trace).trans core).trans returnTrace.trace using 1 <;> omega
   · have := captureBottom_steps_le secret; omega
@@ -88,7 +88,7 @@ theorem sign_bottom_leaf_body (hash : Hash) (s : MachineState) (secretKey : Secr
     exact root i
   · intro a low
     have outside := low_outside_bottom side a low
-    rw [return_mem, hashedFrame a outside.1 outside.2.1 outside.2.2.2, captureBottom_mem,
+    rw [return_mem, hashedFrame a (fun i => outside.1 ⟨i.val, by omega⟩) outside.2.1 outside.2.2.2, captureBottom_mem,
       secretKeep _ (by unfold OutsideBottomWork; cases side <;> decide),
       secretKeep _ (by unfold OutsideBottomWork; cases side <;> decide),
       secretKeep _ (by unfold OutsideBottomWork; cases side <;> decide), secretPtr,

@@ -59,7 +59,7 @@ theorem body (hash : Hash) (s : MachineState) (tree : Nat) (side : Bool) (base :
   have loadedSP : loaded.getReg .x2 = 0xffffe0 := (KeygenVerifyBottomLoad.stack s).2.trans sp
   have ret := return_block verify 0x18fc return_code hashed hashedPC (by rw [hashedSP, loadedSP]; decide)
   have frame (a : Word) (outside : OutsideBottomWork side a) : (returnState hashed).getMem a = s.getMem a := by
-    rw [return_mem, hashedFrame a outside.1 outside.2.1 outside.2.2.2]
+    rw [return_mem, hashedFrame a (fun i => outside.1 ⟨i.val, by omega⟩) outside.2.1 outside.2.2.2]
     exact keep a (outside.2.2.1 0) (outside.2.2.1 1)
   refine ⟨returnState hashed, pre.trace.trans (core.trans ret.trace), ?_, ?_, ?_, frame⟩
   · rw [return_pc, hashedSP, loadedSP]

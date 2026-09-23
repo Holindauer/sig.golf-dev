@@ -24,7 +24,7 @@ theorem decode_zero_cache (s : MachineState)
   simp [zeroCache, extractByte]
 
 theorem executes_zero_cache (hash : Hash) (secretKey : SecretKey) :
-    ∃ final, Executes hash keygen (secretKeyState secretKey) 75993 ⟨.success,final,81342,739,761⟩ ∧
+    ∃ final, Executes hash keygen (secretKeyState secretKey) 77097 ⟨.success,final,82446,739,761⟩ ∧
       (∀ i : Fin 2, final.getMem (Signing.wordAddress 0x40 i.val)=
         (Reference.keygen hash secretKey).extractLsb' (64*i.val) 64) ∧
       readBuffer final 0x60 CACHE_BYTES=zeroCache := by
@@ -33,7 +33,7 @@ theorem executes_zero_cache (hash : Hash) (secretKey : SecretKey) :
       (by rw [prefix_sp,secretKey_sp]) 159 0 secretKey (by decide) (prefix_context secretKey)
   have returned : root.pc=0x1014 := by rw [treePC,prefix_ra _ (secretKey_pc secretKey)]; decide
   refine ⟨Expansion.finishState (outputCopied root),
-    executes_of_tree_trace hash (secretKeyState secretKey) root (secretKey_pc secretKey) 75969 81318 739 761 treeTrace returned,?_,?_⟩
+    executes_of_tree_trace hash (secretKeyState secretKey) root (secretKey_pc secretKey) 77073 82422 739 761 treeTrace returned,?_,?_⟩
   · intro i
     fin_cases i
     · rw [finish_mem]; exact words 0
@@ -49,12 +49,12 @@ theorem executes_zero_cache (hash : Hash) (secretKey : SecretKey) :
 /-- Exact typed key generation, including its canonical zero cache. -/
 theorem run_exact (hash : Hash) (secretKey : SecretKey) :
     submission.runWith hash .keygen secretKey =
-      ⟨some (Reference.keygen hash secretKey,zeroCache),true,81342,739,761⟩ := by
+      ⟨some (Reference.keygen hash secretKey,zeroCache),true,82446,739,761⟩ := by
   obtain ⟨final,trace,words,cache⟩ := executes_zero_cache hash secretKey
-  have run := runWith_of_executes submission hash .keygen secretKey (secretKeyState secretKey) 75993
-    ⟨.success,final,81342,739,761⟩ (secretKey_loaded secretKey) trace (by decide)
+  have run := runWith_of_executes submission hash .keygen secretKey (secretKeyState secretKey) 77097
+    ⟨.success,final,82446,739,761⟩ (secretKey_loaded secretKey) trace (by decide)
   rw [run]
-  change (⟨some (readBuffer final 0x40 16,readBuffer final 0x60 CACHE_BYTES),true,81342,739,761⟩ :
+  change (⟨some (readBuffer final 0x40 16,readBuffer final 0x60 CACHE_BYTES),true,82446,739,761⟩ :
     RunResult (PublicKey×Cache)) = _
   rw [decode_publicKey hash secretKey final words,cache]
   rfl

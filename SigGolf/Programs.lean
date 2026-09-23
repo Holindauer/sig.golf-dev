@@ -107,6 +107,12 @@ def Submission.honest (submission : Submission) (secretKey : SecretKey) (message
   costs := recordCost costs .verify verify.hashCompressions
   return ⟨verify.value.isSome, costs, verify.cycles⟩
 
+/-- Benchmark one independent uniform message against one freshly sampled shared random oracle. -/
+noncomputable def Submission.honestWorkload (submission : Submission) (secretKey : SecretKey) :
+    ProbComp HonestResult := do
+  let message ← ($ᵗ Message : ProbComp Message)
+  withRandomOracle (submission.honest secretKey message)
+
 structure HonestSummary where
   allSucceed : Bool := true
   maxCosts : Phase → Nat := fun _ => 0

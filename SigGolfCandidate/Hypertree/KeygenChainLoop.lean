@@ -30,7 +30,7 @@ theorem Invariant.of_mem_eq {level tree step : Nat} {side : Bool} {chain : Refer
 
 /-- Addresses outside every word modified by a keygen chain loop. -/
 def Outside (a : Word) : Prop :=
-  a ≠ 0x80438 ∧ (∀ i : Fin 6, a ≠ Signing.wordAddress 0x80000 i.val) ∧
+  a ≠ 0x80438 ∧ (∀ i : Fin 8, a ≠ Signing.wordAddress 0x80000 i.val) ∧
     (∀ i : Fin 4, a ≠ Signing.wordAddress 0x80300 i.val) ∧
     (∀ i : Fin 2, a ≠ Signing.wordAddress 0x80510 i.val)
 
@@ -82,7 +82,7 @@ theorem step (hash : Hash) (s : MachineState) (pc : s.pc = 0x1318)
       level tree n side chain value gi.levelWord gi.leafWord gi.chainWord gi.stepWord gi.indexWords gi.valueWords
   have inc := increment_block keygen 0x14d4 (-472) increment_code hashed hpc
   have metadata (a : Word) (outside : Outside a) : hashed.getMem a = s.getMem a := by
-    rw [frame a outside.2.1 outside.2.2.1 outside.2.2.2,gmem]
+    rw [frame a (fun i : Fin 6 => outside.2.1 ⟨i.val, by omega⟩) outside.2.2.1 outside.2.2.2,gmem]
   have stepMem : hashed.getMem 0x80438 = BitVec.ofNat 64 n := by
     rw [frame _ (by intro i; fin_cases i <;> decide) (by intro i; fin_cases i <;> decide)
       (by intro i; fin_cases i <;> decide),gmem]

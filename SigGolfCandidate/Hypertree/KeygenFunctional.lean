@@ -7,7 +7,7 @@ set_option maxRecDepth 4096
 
 /-- Full exact keygen execution, with the reference public key in the organizer's output buffer. -/
 theorem executes (hash : Hash) (secretKey : SecretKey) :
-    ∃ final, Executes hash keygen (secretKeyState secretKey) 75993 ⟨.success,final,81342,739,761⟩ ∧
+    ∃ final, Executes hash keygen (secretKeyState secretKey) 77097 ⟨.success,final,82446,739,761⟩ ∧
       ∀ i : Fin 2, final.getMem (Signing.wordAddress 0x40 i.val)=
         (Reference.keygen hash secretKey).extractLsb' (64*i.val) 64 := by
   obtain ⟨root,treeTrace,treePC,treeSP,words⟩ :=
@@ -15,7 +15,7 @@ theorem executes (hash : Hash) (secretKey : SecretKey) :
       (by rw [prefix_sp,secretKey_sp]) 159 0 secretKey (by decide) (prefix_context secretKey)
   have returned : root.pc=0x1014 := by rw [treePC,prefix_ra _ (secretKey_pc secretKey)]; decide
   refine ⟨Expansion.finishState (outputCopied root),
-    executes_of_tree_trace hash (secretKeyState secretKey) root (secretKey_pc secretKey) 75969 81318 739 761 treeTrace returned,?_⟩
+    executes_of_tree_trace hash (secretKeyState secretKey) root (secretKey_pc secretKey) 77073 82422 739 761 treeTrace returned,?_⟩
   intro i
   fin_cases i
   · rw [finish_mem]
@@ -35,13 +35,13 @@ theorem decode_publicKey (hash : Hash) (secretKey : SecretKey) (final : MachineS
 /-- The exact submitted keygen program returns the functional reference public key for every oracle and secret key. -/
 theorem run_refines (hash : Hash) (secretKey : SecretKey) :
     ∃ cache : Cache, submission.runWith hash .keygen secretKey=
-      ⟨some (Reference.keygen hash secretKey,cache),true,81342,739,761⟩ := by
+      ⟨some (Reference.keygen hash secretKey,cache),true,82446,739,761⟩ := by
   obtain ⟨final,trace,words⟩ := executes hash secretKey
-  have run := runWith_of_executes submission hash .keygen secretKey (secretKeyState secretKey) 75993
-    ⟨.success,final,81342,739,761⟩ (secretKey_loaded secretKey) trace (by decide)
+  have run := runWith_of_executes submission hash .keygen secretKey (secretKeyState secretKey) 77097
+    ⟨.success,final,82446,739,761⟩ (secretKey_loaded secretKey) trace (by decide)
   refine ⟨readBuffer final 0x60 CACHE_BYTES,?_⟩
   rw [run]
-  change (⟨some (readBuffer final 0x40 16,readBuffer final 0x60 CACHE_BYTES),true,81342,739,761⟩ :
+  change (⟨some (readBuffer final 0x40 16,readBuffer final 0x60 CACHE_BYTES),true,82446,739,761⟩ :
     RunResult (PublicKey×Cache)) = _
   rw [decode_publicKey hash secretKey final words]
   rfl

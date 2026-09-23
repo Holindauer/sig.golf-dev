@@ -174,7 +174,7 @@ class Machine:
                 'hash_calls': self.oracle.calls, 'compressions': self.oracle.compressions}
 
 def main():
-    secret_key, message = bytes(range(16)), bytes(range(32))
+    secret_key, message = bytes(range(32)), bytes(range(32))
     profile = {}
     h = Oracle(); pk = keygen(h, secret_key)
     machine = Machine('keygen', [(0x20, secret_key)])
@@ -182,6 +182,12 @@ def main():
     assert machine.accepted and machine.buffer(0x40, 16) == pk
     assert machine.buffer(0x60, 1 << 17) == bytes(1 << 17)
     assert machine.oracle.compressions == h.compressions == 761
+    changed_key = secret_key[:16] + bytes([secret_key[16] ^ 1]) + secret_key[17:]
+    changed_pk = keygen(Oracle(), changed_key)
+    changed_machine = Machine('keygen', [(0x20, changed_key)])
+    changed_machine.execute()
+    assert changed_machine.accepted and changed_machine.buffer(0x40, 16) == changed_pk != pk
+    assert query(Oracle(), 6, 0, 0, changed_key + message) != query(Oracle(), 6, 0, 0, secret_key + message)
     profile['keygen'] = machine.metrics()
     print('keygen matches reference:', profile['keygen'], flush=True)
     h = Oracle(); signature = sign(h, secret_key, pk, message)

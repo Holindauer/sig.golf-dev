@@ -47,7 +47,7 @@ theorem outside_index_work_low (a : Word) (low : a.toNat < 0x80000) : OutsideInd
 theorem loaded_loop_entry (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (cache : Cache) (message : Message) :
     ∃ initial final,
       initialState submission .sign (secretKey,pk,cache,message) = some initial ∧
-      Trace hash sign initial 226 256 2 4 final ∧ final.pc = 0x1220 ∧
+      Trace hash sign initial 238 268 2 4 final ∧ final.pc = 0x1220 ∧
       StoredIndex final ((Reference.indexOf hash pk message (Reference.randomizer hash secretKey message)).zeroExtend 192) ∧
       final.getReg .x2 = 0x1000000 ∧ final.getMem 0x80400 = 0 ∧
       final.getMem 0x80440 = 1 ∧ final.getMem 0x80448 = 0x20080 ∧

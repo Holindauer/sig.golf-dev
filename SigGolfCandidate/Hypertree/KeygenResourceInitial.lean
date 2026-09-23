@@ -51,7 +51,7 @@ theorem secretKey_models (secretKey : SecretKey) : initialAbstract.Models (secre
     · rfl
     · simp [bytes]
     · right
-      have len : (bytes secretKey).length = 16 := by simp [bytes]
+      have len : (bytes secretKey).length = 32 := by simp [bytes]
       rw [len]
       omega
 

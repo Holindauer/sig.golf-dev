@@ -18,12 +18,12 @@ def Submission.Complete (submission : Submission) : Prop :=
   ∀ secretKey, 1 - FAILURE ≤ Pr[fun summary => summary.allSucceed = true |
     withRandomOracle (submission.allMessages secretKey)]
 
-/-- Maximize over messages before taking expectation over the shared random oracle. Failed phases are charged; unreached phases cost zero. -/
+/-- Exponential compression cost for an independent uniform message and random oracle. Failed phases are charged; unreached phases cost zero. -/
 def Submission.CompressionBounds (submission : Submission) : Prop :=
   ∀ secretKey phase, phase ∈ Phase.budgeted →
-    OracleComp.EvalDist.expectedValue (withRandomOracle (submission.allMessages secretKey))
-      (fun summary => ENNReal.ofReal (Real.rpow 2
-        ((summary.maxCosts phase : ℝ) / (phase.budget : ℝ)))) ≤ 2
+    OracleComp.EvalDist.expectedValue (submission.honestWorkload secretKey)
+      (fun result => ENNReal.ofReal (Real.rpow 2
+        ((result.costs phase : ℝ) / (phase.budget : ℝ)))) ≤ 2
 
 /-- Scored cycles cover successful honest pipelines. Arbitrary inputs remain subject to the universal termination bound. -/
 def Submission.VerificationBound (submission : Submission) (C : Nat) : Prop :=

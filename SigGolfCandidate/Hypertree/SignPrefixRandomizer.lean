@@ -5,44 +5,44 @@ open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 OracleComp Keygen
 set_option maxRecDepth 4096
 
 theorem randomizer_prepare_full (s : MachineState) (pc : s.pc = 0x1000) :
-    ∃ ready, OrdinarySteps sign s 69 ready ∧ ready.pc = 0x10b4 ∧
-      (∀ i : Fin 10, ready.getMem (wordAddress 0x80000 i.val) = randomizerInputWord s i) ∧
+    ∃ ready, OrdinarySteps sign s 81 ready ∧ ready.pc = 0x10b4 ∧
+      (∀ i : Fin 12, ready.getMem (wordAddress 0x80000 i.val) = randomizerInputWord s i) ∧
       (∀ a, a ≠ 0x80440 → a ≠ 0x80448 →
-        (∀ i : Fin 10, a ≠ wordAddress 0x80000 i.val) → ready.getMem a = s.getMem a) ∧
+        (∀ i : Fin 12, a ≠ wordAddress 0x80000 i.val) → ready.getMem a = s.getMem a) ∧
       ready.getMem 0x80440 = 1 ∧ ready.getMem 0x80448 = 0x20080 ∧ ready.getReg .x2 = s.getReg .x2 := by
   have secretKeyCode : CopyCode sign 0x1034 := by decide
   have msgCode : CopyCode sign 0x105c := by decide
   obtain ⟨secretKey, secretKeyLoop, secretKeyInv, secretKeyOutput, secretKeyFrame, _, secretKeySP⟩ := copy_all_frame sign 0x1034 secretKeyCode
-    0x20 0x80020 2 (initializeState s) (initializeState_invariant s pc)
+    0x20 0x80020 4 (initializeState s) (initializeState_invariant s pc)
     (by decide) (by decide) (by decide) (by decide) (by decide)
   have secretKeypc : secretKey.pc = 0x104c := by simpa [CopyInvariant] using secretKeyInv.2.2.1
   obtain ⟨msg, msgLoop, msgInv, msgOutput, msgFrame, _, msgSP⟩ := copy_all_frame sign 0x105c msgCode
-    0 0x80030 4 (messageCopyState secretKey) (messageCopyState_invariant secretKey secretKeypc)
+    0 0x80040 4 (messageCopyState secretKey) (messageCopyState_invariant secretKey secretKeypc)
     (by decide) (by decide) (by decide) (by decide) (by decide)
   have msgpc : msg.pc = 0x1074 := by simpa [CopyInvariant] using msgInv.2.2.1
-  have secretKeyPreserved (i : Fin 2) :
+  have secretKeyPreserved (i : Fin 4) :
       msg.getMem (wordAddress 0x80020 i.val) = s.getMem (wordAddress 0x20 i.val) := by
     rw [msgFrame, messageCopyState_mem, secretKeyOutput i.val i.isLt, initializeState_mem]
     · fin_cases i <;> simp [wordAddress]
     · intro j hj
-      apply outside_copy_word (0x80020 + 8 * i.val) 0x80030 4 j
+      apply outside_copy_word (0x80020 + 8 * i.val) 0x80040 4 j
       · have := i.isLt; omega
       · decide
       · exact hj
       · have := i.isLt; left; omega
   have messageCopied (i : Fin 4) :
-      msg.getMem (wordAddress 0x80030 i.val) = s.getMem (wordAddress 0 i.val) := by
+      msg.getMem (wordAddress 0x80040 i.val) = s.getMem (wordAddress 0 i.val) := by
     rw [msgOutput i.val i.isLt, messageCopyState_mem, secretKeyFrame, initializeState_mem]
     · fin_cases i <;> simp [wordAddress]
     · intro j hj
-      apply outside_copy_word (0 + 8 * i.val) 0x80020 2 j
+      apply outside_copy_word (0 + 8 * i.val) 0x80020 4 j
       · have := i.isLt; omega
       · decide
       · exact hj
       · have := i.isLt; left; omega
   refine ⟨randomizerHeaderState msg, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-  · exact ordinary_trans sign s _ _ 25 44
-      (ordinary_trans sign s _ _ 13 12 (initializeState_block s pc) secretKeyLoop)
+  · exact ordinary_trans sign s _ _ 37 44
+      (ordinary_trans sign s _ _ 13 24 (initializeState_block s pc) secretKeyLoop)
       (ordinary_trans sign secretKey _ _ 4 40 (messageCopyState_block secretKey secretKeypc)
         (ordinary_trans sign (messageCopyState secretKey) _ _ 24 16 msgLoop (randomizerHeaderState_block msg msgpc)))
   · simp [randomizerHeaderState_pc, msgpc]
@@ -53,6 +53,7 @@ theorem randomizer_prepare_full (s : MachineState) (pc : s.pc = 0x1000) :
       ↓reduceIte]
     all_goals first | rfl | simpa [wordAddress] using secretKeyPreserved 0 | simpa [wordAddress] using secretKeyPreserved 1 |
       simpa [wordAddress] using messageCopied 0 | simpa [wordAddress] using messageCopied 1 |
+      simpa [wordAddress] using secretKeyPreserved 2 | simpa [wordAddress] using secretKeyPreserved 3 |
       simpa [wordAddress] using messageCopied 2 | simpa [wordAddress] using messageCopied 3
 
   · intro a mode pointer outside
@@ -68,10 +69,10 @@ theorem randomizer_prepare_full (s : MachineState) (pc : s.pc = 0x1000) :
       rw [eq]
       exact outside ⟨j + 4, by omega⟩
     · intro j hj
-      have eq : wordAddress 0x80030 j = wordAddress 0x80000 (j + 6) := by
+      have eq : wordAddress 0x80040 j = wordAddress 0x80000 (j + 8) := by
         unfold wordAddress; congr 1; omega
       rw [eq]
-      exact outside ⟨j + 6, by omega⟩
+      exact outside ⟨j + 8, by omega⟩
 
   · rw [randomizerHeaderState_mem, if_neg (by decide), if_neg (by decide), if_neg (by decide), if_neg (by decide),
       msgFrame _ (by intro i hi; interval_cases i <;> decide), messageCopyState_mem,
@@ -99,8 +100,8 @@ theorem randomizer_trace_full (hash : Hash) (s : MachineState) (pc : s.pc = 0x10
   have hpc : hs.pc = 0x10cc := by simp [hs, randomizerHashState_pc, pc]
   obtain ⟨service, src, len, dst⟩ := randomizerHashState_regs s
   have hf : fetch sign hs = some (.base .ECALL) := by simp only [fetch, hpc]; decide
-  have hv : hashArgumentsValid hs = true := hash_arguments hs 640 src len dst (by decide)
-  have hlen : (hashInput hs).1 = 640 := by simp [hashInput, hs, len]
+  have hv : hashArgumentsValid hs = true := hash_arguments hs 768 src len dst (by decide)
+  have hlen : (hashInput hs).1 = 768 := by simp [hashInput, hs, len]
   let answer := hash (hashInput hs)
   have outpc : (writeHash hs answer).pc = 0x10d0 := by simp [hash_pc, hpc]
   obtain ⟨final, loop, inv, output, frame, _, copySP⟩ := copy_all_frame sign 0x10e4 randomizer_copy_code

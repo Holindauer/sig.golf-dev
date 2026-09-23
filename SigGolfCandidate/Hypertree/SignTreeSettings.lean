@@ -32,7 +32,7 @@ theorem sign_upper_leaf_call (hash : Hash) (s : MachineState) (secretKey : Secre
     (nonzero : BitVec.ofNat 64 level ≠ 0) (valid : CapturePointerValid pointer)
     (data : LeafContext s secretKey level tree side) (settings : TreeSettings s pointer message selected) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 369 380 final ∧
-      instructions ≤ 49343 ∧ cycles ≤ 52014 ∧
+      instructions ≤ 49895 ∧ cycles ≤ 52566 ∧
       final.pc = s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =
         (Reference.leafRoot hash secretKey level tree side).extractLsb' (64*i.val) 64) ∧

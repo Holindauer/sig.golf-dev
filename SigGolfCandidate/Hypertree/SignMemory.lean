@@ -31,12 +31,12 @@ theorem bytes_eq_of_words (original final : MachineState) (source destination co
     getByte_word original source i srcalign (by omega), words (i / 8) (by omega)]
 
 /-- Exact byte form of the prepared tag6/secret key/message buffer. -/
-def randomizerInputByte (s : MachineState) (i : Fin 80) : Byte :=
+def randomizerInputByte (s : MachineState) (i : Fin 96) : Byte :=
   extractByte (randomizerInputWord s ⟨i.val / 8, by have := i.isLt; omega⟩) (i.val % 8)
 
 theorem prepared_randomizer_bytes (original ready : MachineState)
-    (words : ∀ i : Fin 10, ready.getMem (wordAddress 0x80000 i.val) = randomizerInputWord original i)
-    (i : Fin 80) :
+    (words : ∀ i : Fin 12, ready.getMem (wordAddress 0x80000 i.val) = randomizerInputWord original i)
+    (i : Fin 96) :
     ready.getByte (BitVec.ofNat 64 (0x80000 + i.val)) = randomizerInputByte original i := by
   rw [getByte_word ready 0x80000 i.val (by decide) (by have := i.isLt; omega)]
   exact congrArg (fun word => extractByte word (i.val % 8))
@@ -64,11 +64,11 @@ theorem copy_bytes_of_content (source destination total : Nat) (original final :
 #print axioms bytes_eq_of_words
 
 /-- The prepared bytes are exactly the domain header followed by secret key and message. -/
-theorem randomizerInputByte_spec (s : MachineState) (i : Fin 80) :
+theorem randomizerInputByte_spec (s : MachineState) (i : Fin 96) :
     randomizerInputByte s i =
       if i.val = 0 then 6 else if i.val < 32 then 0 else
-        if i.val < 48 then s.getByte (BitVec.ofNat 64 (0x20 + (i.val - 32)))
-        else s.getByte (BitVec.ofNat 64 (i.val - 48)) := by
+        if i.val < 64 then s.getByte (BitVec.ofNat 64 (0x20 + (i.val - 32)))
+        else s.getByte (BitVec.ofNat 64 (i.val - 64)) := by
   fin_cases i <;> first | rfl | simp [randomizerInputByte, randomizerInputWord, extractByte]
 
 /-- Extracting a byte from a stored 64-bit slice agrees with direct byte extraction. -/

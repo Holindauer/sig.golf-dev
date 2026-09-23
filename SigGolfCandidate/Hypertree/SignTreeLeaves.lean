@@ -27,7 +27,7 @@ theorem sign_upper_tree_leaves (hash : Hash) (s : MachineState) (secretKey : Sec
     (nonzero : BitVec.ofNat 64 level ≠ 0) (valid : CapturePointerValid pointer)
     (data : TreeContext s secretKey level tree) (settings : TreeSettings s pointer message selected) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 738 760 final ∧
-      instructions ≤ 98698 ∧ cycles ≤ 104040 ∧ final.pc = 0x13f8 ∧ final.getReg .x2 = 0xfffff0 ∧
+      instructions ≤ 99802 ∧ cycles ≤ 105144 ∧ final.pc = 0x13f8 ∧ final.getReg .x2 = 0xfffff0 ∧
       final.getMem 0xfffff0 = s.getReg .x1 ∧ TreeContext final secretKey level tree ∧
       TreeSettings final pointer message selected ∧
       (∀ side : Bool, ∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =

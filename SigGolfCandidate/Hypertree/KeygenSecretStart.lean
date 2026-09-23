@@ -12,7 +12,7 @@ structure Context (level tree : Nat) (side : Bool) (secretKey : SecretKey) (s : 
   leafWord : s.getMem 0x80428 = BitVec.ofNat 64 (Reference.sideNumber side)
   indexWords : ∀ i : Fin 3, s.getMem (Signing.wordAddress 0x80408 i.val) =
     (BitVec.ofNat 192 tree).extractLsb' (64*i.val) 64
-  secretKeyWords : ∀ i : Fin 2, s.getMem (Signing.wordAddress 0x20 i.val) = secretKey.extractLsb' (64*i.val) 64
+  secretKeyWords : ∀ i : Fin 4, s.getMem (Signing.wordAddress 0x20 i.val) = secretKey.extractLsb' (64*i.val) 64
   modeWord : s.getMem 0x80440 = 0
 
 /-- Secret derivation followed by STEP=0 establishes the complete chain-loop invariant. -/
@@ -20,7 +20,7 @@ theorem prepare (hash : Hash) (s : MachineState) (pc : s.pc=0x1204)
     (level tree : Nat) (side : Bool) (chain : Reference.Chain) (secretKey : SecretKey)
     (context : Context level tree side secretKey s)
     (counter : s.getMem 0x80430 = BitVec.ofNat 64 chain.val) :
-    ∃ final, Trace hash keygen s 81 88 1 1 final ∧ final.pc=0x1318 ∧
+    ∃ final, Trace hash keygen s 93 100 1 1 final ∧ final.pc=0x1318 ∧
       KeygenChainLoop.Invariant level tree 0 side chain (Reference.secret hash secretKey level tree side chain) final ∧
       final.getReg .x1=s.getReg .x1 ∧ final.getReg .x2=s.getReg .x2 ∧
       (∀ a, KeygenChainLoop.Outside a → final.getMem a=s.getMem a) := by

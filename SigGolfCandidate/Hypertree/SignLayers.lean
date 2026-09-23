@@ -23,7 +23,7 @@ theorem sign_layers (hash : Hash) (secretKey : SecretKey) (count : Nat) :
     level+count=160 → index<2^192 → s.pc=(if level=160 then 0x12f8 else 0x1220) →
     LoopData s secretKey level index current →
     ∃ final instructions cycles, Trace hash sign s instructions cycles (loopCalls count level) (loopBlocks count level) final ∧
-      instructions ≤ 100000*count ∧ cycles ≤ 105000*count ∧ final.pc=0x12f8 ∧
+      instructions ≤ 100417*count ∧ cycles ≤ 105766*count ∧ final.pc=0x12f8 ∧
       (∀ i : Fin 2, final.getMem (wordAddress 0x80500 i.val) =
         (Reference.rootsAfter hash secretKey count level index current).extractLsb' (64*i.val) 64) ∧
       LayersStored final level (Reference.signLayers hash secretKey count level index current) ∧
@@ -46,9 +46,9 @@ theorem sign_layers (hash : Hash) (secretKey : SecretKey) (count : Nat) :
       ih next (level+1) (index/2) (Reference.treeRoot hash secretKey level (index/2)) (by omega) (by omega) nextPC nextData
     refine ⟨final,n+ns,c+cs,?_,?_,?_,finalPC,root,?_,?_⟩
     · simpa only [loopCalls_succ,loopBlocks_succ] using run.trans rest
-    · have : n≤100000 := by split at nb <;> omega
+    · have : n≤100417 := by split at nb <;> omega
       omega
-    · have : c≤105000 := by split at cb <;> omega
+    · have : c≤105766 := by split at cb <;> omega
       omega
     · exact ⟨stored.prefix_frame next final level _ bound restFrame,storedRest⟩
     · intro address low aligned before

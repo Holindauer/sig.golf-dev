@@ -10,7 +10,7 @@ def BUDGET_SIGN : Nat := 2 ^ 17
 def BUDGET_EXPAND : Nat := 2 ^ 20
 def LIFETIME : Nat := 2 ^ 24
 def SECURITY_BITS : Nat := 127
-def CYCLE_LIMIT : Nat := 2 ^ 40
+def CYCLE_LIMIT : Nat := 2 ^ 32
 def MEMORY_BYTES : Nat := 2 ^ 24
 def MAX_IMAGE_BYTES : Nat := 2 ^ 20
 def CACHE_BYTES : Nat := 2 ^ 17
@@ -19,7 +19,7 @@ noncomputable def FAILURE : ENNReal := 1 / 2 ^ 256
 
 abbrev Byte := BitVec 8
 abbrev Bytes (n : Nat) := BitVec (8 * n)
-abbrev SecretKey := Bytes 16
+abbrev SecretKey := Bytes 32
 abbrev Message := Bytes 32
 abbrev PublicKey := Bytes 16
 abbrev Cache := Bytes CACHE_BYTES

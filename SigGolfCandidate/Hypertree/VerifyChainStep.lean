@@ -14,7 +14,7 @@ structure ChainData (s : MachineState) (level tree : Nat) (side : Bool) (chain :
   valueEq : ∀ i : Fin 2, s.getMem (wordAddress 0x80510 i.val) = value.extractLsb' (64*i.val) 64
 
 def OutsideChainWork (a : Word) : Prop :=
-  (∀ i : Fin 6, a ≠ wordAddress 0x80000 i.val) ∧
+  (∀ i : Fin 8, a ≠ wordAddress 0x80000 i.val) ∧
   (∀ i : Fin 4, a ≠ wordAddress 0x80300 i.val) ∧
   (∀ i : Fin 2, a ≠ wordAddress 0x80510 i.val) ∧ a ≠ 0x80438
 
@@ -79,7 +79,7 @@ theorem chain_step (hash : Hash) (s : MachineState) (level tree step : Nat)
   · exact (increment_stack hashed (-332)).1.trans (ra.trans (check_stack s).1)
   · exact (increment_stack hashed (-332)).2.trans (sp.trans (check_stack s).2)
   · intro a outside
-    rw [increment_mem, if_neg outside.2.2.2, keep a outside.1 outside.2.1 outside.2.2.1]
+    rw [increment_mem, if_neg outside.2.2.2, keep a (fun i => outside.1 ⟨i.val, by omega⟩) outside.2.1 outside.2.2.1]
 
 /-- info: 'SigGolfCandidate.Hypertree.Verifying.chain_step' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

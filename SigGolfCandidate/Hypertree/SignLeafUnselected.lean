@@ -14,7 +14,7 @@ theorem sign_unselected_leaf_loop (hash : Hash) (s : MachineState) (secretKey : 
     (unselected : s.getMem 0x80428 ≠ s.getMem 0x80420)
     (endpoints : EndpointsBefore s hash secretKey level tree side start) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles (8*remaining) (8*remaining) final ∧
-      instructions ≤ 1059 * remaining ∧ cycles ≤ 1115 * remaining ∧ final.pc = 0x18c8 ∧
+      instructions ≤ 1071 * remaining ∧ cycles ≤ 1127 * remaining ∧ final.pc = 0x18c8 ∧
       LeafData final secretKey level tree side 46 ∧
       EndpointsBefore final hash secretKey level tree side 46 ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
@@ -66,7 +66,7 @@ theorem sign_unselected_leaf_chains (hash : Hash) (s : MachineState) (secretKey 
     (ptr : s.getMem 0x80448 = BitVec.ofNat 64 pointer)
     (unselected : s.getMem 0x80428 ≠ s.getMem 0x80420) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles 368 368 final ∧
-      instructions ≤ 48714 ∧ cycles ≤ 51290 ∧ final.pc = 0x18c8 ∧
+      instructions ≤ 49266 ∧ cycles ≤ 51842 ∧ final.pc = 0x18c8 ∧
       LeafData final secretKey level tree side 46 ∧
       EndpointsBefore final hash secretKey level tree side 46 ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧

@@ -49,7 +49,7 @@ theorem run_refines (hash : Hash) (pk : PublicKey) (message : Message) (witness 
   obtain ⟨tailSteps, final, tailBound, tailRun, _⟩ := verify_footer_executes hash recovered pc
   have execution := run.then_executes tailRun
   have actual := runWith_of_executes submission hash .verify (message, pk, witness) initial (steps+tailSteps)
-    _ loaded execution (by change steps+tailSteps ≤ 2^40; omega)
+    _ loaded execution (by change steps+tailSteps ≤ 2^32; omega)
   refine ⟨cycles+tailSteps, calls, blocks, by omega, hcalls, hblocks, ?_⟩
   rw [actual]
   by_cases yes : RootMatches recovered

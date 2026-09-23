@@ -9,7 +9,7 @@ open SigGolf SigGolf.Riscv RiscvZkvm.Rv64
 theorem sign_secretKey (submission : Submission) (valid : (submission.image .sign).Valid submission.sizes)
     (secretKey : SecretKey) (pk : PublicKey) (cache : Cache) (message : Message) (s : MachineState)
     (loaded : initialState submission .sign (secretKey, pk, cache, message) = some s)
-    (i : Nat) (hi : i < 16) :
+    (i : Nat) (hi : i < 32) :
     s.getByte (BitVec.ofNat 64 (0x20 + i)) = secretKey.extractLsb' (8 * i) 8 := by
   unfold initialState at loaded
   rw [if_pos valid] at loaded
@@ -19,7 +19,7 @@ theorem sign_secretKey (submission : Submission) (valid : (submission.image .sig
   rw [Memory.write_preserves_byte _ 0 (bytes message) 0x20 i (by decide) (by simp) (by omega) (by right; simp)]
   rw [Memory.write_preserves_byte _ 0x60 (bytes cache) 0x20 i (by decide) (by rw [Memory.bytes_length (n := CACHE_BYTES)]; decide) (by omega) (by left; omega)]
   rw [Memory.write_preserves_byte _ 0x40 (bytes pk) 0x20 i (by decide) (by simp) (by omega) (by left; omega)]
-  exact Memory.write_value_byte _ 0x20 16 secretKey i (by decide) (by decide) hi
+  exact Memory.write_value_byte _ 0x20 32 secretKey i (by decide) (by decide) hi
 
 /-- The message occupies its fixed buffer in the official initial sign state. -/
 theorem sign_message (submission : Submission) (valid : (submission.image .sign).Valid submission.sizes)

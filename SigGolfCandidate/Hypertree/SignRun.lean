@@ -7,7 +7,7 @@ set_option maxRecDepth 4096
 
 /-- Exact official signer output for arbitrary secretKeys, public keys, caches, messages, and oracles. -/
 theorem sign_run_refines (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (cache : Cache) (message : Message) :
-    ∃ cycles, cycles≤16800271 ∧ submission.runWith hash .sign (secretKey,pk,cache,message)=
+    ∃ cycles, cycles≤16922843 ∧ submission.runWith hash .sign (secretKey,pk,cache,message)=
       ⟨if Reference.keygen hash secretKey=pk then
         some ((signCompact hash secretKey pk message).wire (signCompact_valid hash secretKey pk message)) else none,
         true,cycles,117508,121008⟩ := by
@@ -30,7 +30,7 @@ theorem sign_run_refines (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) 
 
 /-- Honest signer execution succeeds for every fixed oracle, with no cache assumptions. -/
 theorem sign_run_honest (hash : Hash) (secretKey : SecretKey) (cache : Cache) (message : Message) :
-    ∃ cycles, cycles≤16800271 ∧ submission.runWith hash .sign (secretKey,Reference.keygen hash secretKey,cache,message)=
+    ∃ cycles, cycles≤16922843 ∧ submission.runWith hash .sign (secretKey,Reference.keygen hash secretKey,cache,message)=
       ⟨some ((signCompact hash secretKey (Reference.keygen hash secretKey) message).wire
         (signCompact_valid hash secretKey (Reference.keygen hash secretKey) message)),true,cycles,117508,121008⟩ := by
   simpa using sign_run_refines hash secretKey (Reference.keygen hash secretKey) cache message
@@ -38,7 +38,7 @@ theorem sign_run_honest (hash : Hash) (secretKey : SecretKey) (cache : Cache) (m
 /-- Universal actual signer termination and exact hash-resource accounting. -/
 theorem sign_run_bound (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (cache : Cache) (message : Message) :
     let result := submission.runWith hash .sign (secretKey,pk,cache,message)
-    result.finished=true ∧ result.cycles≤16800271 ∧ result.cycles<CYCLE_LIMIT ∧
+    result.finished=true ∧ result.cycles≤16922843 ∧ result.cycles<CYCLE_LIMIT ∧
       result.hashCalls=117508 ∧ result.hashCompressions=121008 ∧ result.hashCompressions≤BUDGET_SIGN := by
   obtain ⟨cycles,bound,run⟩ := sign_run_refines hash secretKey pk cache message
   dsimp only

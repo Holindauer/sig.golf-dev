@@ -33,7 +33,7 @@ theorem completeness : submission.Complete := by
   obtain ⟨cycles,calls,blocks,_,_,_,run⟩ := honest_exact hash secretKey message
   rw [run]
 
-/-- Uniform costs imply the organizer's exponential moment bound after the all-message maximum. -/
+/-- Uniform honest costs imply the exponential budget for an independent uniform message. -/
 theorem compressionBounds : submission.CompressionBounds := by
   apply compressionBounds_of_honest_cost
   intro hash secretKey message phase budgeted

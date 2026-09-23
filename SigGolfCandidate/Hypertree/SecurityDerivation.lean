@@ -58,10 +58,10 @@ def input (secretKey : SecretKey) : Slot → Query
   | .randomizer message => randomizerInput secretKey message
 
 @[simp] theorem chain_input_length (secretKey : SecretKey) (address : ChainAddress) :
-    (input secretKey (.chain address)).1 = 384 := by simp [input, bytes]
+    (input secretKey (.chain address)).1 = 512 := by simp [input, bytes]
 
 @[simp] theorem nonce_input_length (secretKey : SecretKey) (message : Message) :
-    (input secretKey (.randomizer message)).1 = 640 := by simp [input]
+    (input secretKey (.randomizer message)).1 = 768 := by simp [input]
 
 theorem input_secretKeyAt (secretKey : SecretKey) (slot : Slot) : SecretKeyAt (input secretKey slot) secretKey := by
   cases slot with

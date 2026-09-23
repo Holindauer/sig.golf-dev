@@ -13,13 +13,13 @@ def randomizerPayload (secretKey : SecretKey) (message : Message) : List Byte :=
     (bytes secretKey ++ bytes message)
 
 @[simp] theorem randomizerPayload_length (secretKey : SecretKey) (message : Message) :
-    (randomizerPayload secretKey message).length = 80 := by simp [randomizerPayload, bytes]
+    (randomizerPayload secretKey message).length = 96 := by simp [randomizerPayload, bytes]
 
-theorem randomizerPayload_byte (secretKey : SecretKey) (message : Message) (i : Fin 80) :
+theorem randomizerPayload_byte (secretKey : SecretKey) (message : Message) (i : Fin 96) :
     (randomizerPayload secretKey message)[i.val]'(by simp) =
       if i.val = 0 then 6 else if i.val < 32 then 0 else
-        if i.val < 48 then secretKey.extractLsb' (8 * (i.val - 32)) 8
-        else message.extractLsb' (8 * (i.val - 48)) 8 := by
+        if i.val < 64 then secretKey.extractLsb' (8 * (i.val - 32)) 8
+        else message.extractLsb' (8 * (i.val - 64)) 8 := by
   fin_cases i <;> simp [randomizerPayload, bytes, List.getElem_append]
 
 theorem randomizerHashState_mem (s : MachineState) (a : Word) :
@@ -32,15 +32,15 @@ theorem randomizerHashState_byte (s : MachineState) (a : Word) :
 /-- The bytecode's first oracle input is exactly the reference randomizer query.
 Only the secret key and message loader facts are needed; all scratch preparation is proved. -/
 theorem randomizer_query (original ready : MachineState) (secretKey : SecretKey) (message : Message)
-    (hsecretKey : ∀ i, i < 16 → original.getByte (BitVec.ofNat 64 (0x20 + i)) = secretKey.extractLsb' (8 * i) 8)
+    (hsecretKey : ∀ i, i < 32 → original.getByte (BitVec.ofNat 64 (0x20 + i)) = secretKey.extractLsb' (8 * i) 8)
     (hmessage : ∀ i, i < 32 → original.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8 * i) 8)
-    (words : ∀ i : Fin 10, ready.getMem (wordAddress 0x80000 i.val) = randomizerInputWord original i) :
+    (words : ∀ i : Fin 12, ready.getMem (wordAddress 0x80000 i.val) = randomizerInputWord original i) :
     hashInput (randomizerHashState ready) = Reference.packed (randomizerPayload secretKey message) := by
   apply Serialization.hashInput_of_list (randomizerHashState ready) 0x80000 (randomizerPayload secretKey message)
   · exact (randomizerHashState_regs ready).2.1
   · rw [(randomizerHashState_regs ready).2.2.1, randomizerPayload_length]; rfl
   · intro i hi
-    have bound : i < 80 := by simpa using hi
+    have bound : i < 96 := by simpa using hi
     rw [randomizerHashState_byte, prepared_randomizer_bytes original ready words ⟨i, bound⟩,
       randomizerInputByte_spec, randomizerPayload_byte secretKey message ⟨i, bound⟩]
     dsimp only
@@ -48,15 +48,15 @@ theorem randomizer_query (original ready : MachineState) (secretKey : SecretKey)
     · rfl
     · rfl
     · exact hsecretKey (i - 32) (by omega)
-    · exact hmessage (i - 48) (by omega)
+    · exact hmessage (i - 64) (by omega)
 
 /-- Actual entry-to-randomizer execution refines the reference function, for every
 fixed oracle. The typed loader can discharge the two explicit input-byte hypotheses. -/
 theorem entry_randomizer_refines (hash : Hash) (s : MachineState) (secretKey : SecretKey) (message : Message)
     (pc : s.pc = 0x1000)
-    (hsecretKey : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x20 + i)) = secretKey.extractLsb' (8 * i) 8)
+    (hsecretKey : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 (0x20 + i)) = secretKey.extractLsb' (8 * i) 8)
     (hmessage : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8 * i) 8) :
-    ∃ final, Trace hash sign s 105 120 1 2 final ∧ final.pc = 0x10fc ∧
+    ∃ final, Trace hash sign s 117 132 1 2 final ∧ final.pc = 0x10fc ∧
       ∀ i : Fin 4, final.getMem (wordAddress 0x20060 i.val) =
         (Reference.randomizer hash secretKey message).extractLsb' (64 * i.val) 64 := by
   obtain ⟨ready, final, trace, finalpc, words, output⟩ := entry_randomizer_trace hash s pc
@@ -76,7 +76,7 @@ theorem loaded_randomizer_refines (hash : Hash) (secretKey : SecretKey) (pk : Pu
     (cache : Cache) (message : Message) :
     ∃ initial final,
       initialState submission .sign (secretKey, pk, cache, message) = some initial ∧
-      Trace hash sign initial 105 120 1 2 final ∧ final.pc = 0x10fc ∧
+      Trace hash sign initial 117 132 1 2 final ∧ final.pc = 0x10fc ∧
       readBuffer final 0x20060 32 = Reference.randomizer hash secretKey message := by
   obtain ⟨initial, loaded, pc⟩ := initialState_exists submission admitted .sign (secretKey, pk, cache, message)
   obtain ⟨final, trace, finalpc, words⟩ := entry_randomizer_refines hash initial secretKey message pc
@@ -96,9 +96,9 @@ theorem loaded_randomizer_refines (hash : Hash) (secretKey : SecretKey) (pk : Pu
 /-- Stronger first-stage refinement retaining all low-memory inputs for the index hash. -/
 theorem entry_randomizer_refines_frame (hash : Hash) (s : MachineState) (secretKey : SecretKey) (message : Message)
     (pc : s.pc = 0x1000)
-    (hsecretKey : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x20 + i)) = secretKey.extractLsb' (8 * i) 8)
+    (hsecretKey : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 (0x20 + i)) = secretKey.extractLsb' (8 * i) 8)
     (hmessage : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8 * i) 8) :
-    ∃ final, Trace hash sign s 105 120 1 2 final ∧ final.pc = 0x10fc ∧
+    ∃ final, Trace hash sign s 117 132 1 2 final ∧ final.pc = 0x10fc ∧
       (∀ i : Fin 4, final.getMem (wordAddress 0x20060 i.val) =
         (Reference.randomizer hash secretKey message).extractLsb' (64 * i.val) 64) ∧
       (∀ a, a.toNat < 0x20060 → final.getMem a = s.getMem a) := by
@@ -118,7 +118,7 @@ theorem entry_randomizer_refines_frame (hash : Hash) (s : MachineState) (secretK
       (outside 0x80300 4 (by decide) (by decide))]
     exact prepareFrame a (outside 0x80440 1 (by decide) (by decide) 0)
       (outside 0x80448 1 (by decide) (by decide) 0)
-      (outside 0x80000 10 (by decide) (by decide))
+      (outside 0x80000 12 (by decide) (by decide))
 
 /-- Word preservation below the signature buffer preserves each loaded input byte. -/
 theorem low_words_byte (original final : MachineState)

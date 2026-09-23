@@ -29,7 +29,7 @@ def indexInput (pk : PublicKey) (message : Message) (r : Bytes 32) : Query :=
   omega
 
 @[simp] theorem randomizerInput_length (secretKey : SecretKey) (message : Message) :
-    (randomizerInput secretKey message).1 = 640 := by simp [randomizerInput, bytes]
+    (randomizerInput secretKey message).1 = 768 := by simp [randomizerInput, bytes]
 
 @[simp] theorem indexInput_length (pk : PublicKey) (message : Message) (r : Bytes 32) :
     (indexInput pk message r).1 = 896 := by simp [indexInput, bytes]
@@ -58,7 +58,7 @@ theorem randomizerInput_secretKey_injective (message : Message) :
   have hp := SecurityPacking.packed_injective h
   have hb : bytes first = bytes second := by
     simpa [randomizerInput, addressedInput, List.append_assoc] using hp
-  exact SecurityPacking.bytes_injective 16 hb
+  exact SecurityPacking.bytes_injective 32 hb
 
 /-- Oracle computation for the exact randomized-index prefix of reference signing. -/
 def randomizedIndex (secretKey : SecretKey) (pk : PublicKey) (message : Message) :

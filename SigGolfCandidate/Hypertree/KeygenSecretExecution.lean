@@ -23,13 +23,13 @@ theorem compute (image : Image) (hash : Hash) (p : Word) (code : Code image p)
     (hchain : s.getMem 0x80430 = BitVec.ofNat 64 chain.val)
     (hindex : ∀ i : Fin 3, s.getMem (Signing.wordAddress 0x80408 i.val) =
       (BitVec.ofNat 192 tree).extractLsb' (64*i.val) 64)
-    (hsecretKey : ∀ i : Fin 2, s.getMem (Signing.wordAddress 0x20 i.val) =
+    (hsecretKey : ∀ i : Fin 4, s.getMem (Signing.wordAddress 0x20 i.val) =
       secretKey.extractLsb' (64*i.val) 64) :
-    ∃ final, Trace hash image s 77 84 1 1 final ∧ final.pc = p+260 ∧
+    ∃ final, Trace hash image s 89 96 1 1 final ∧ final.pc = p+260 ∧
       (∀ i : Fin 2, final.getMem (Signing.wordAddress 0x80510 i.val) =
         (Reference.secret hash secretKey level tree side chain).extractLsb' (64*i.val) 64) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
-      (∀ a, (∀ i : Fin 6, a ≠ Signing.wordAddress 0x80000 i.val) →
+      (∀ a, (∀ i : Fin 8, a ≠ Signing.wordAddress 0x80000 i.val) →
         (∀ i : Fin 4, a ≠ Signing.wordAddress 0x80300 i.val) →
         (∀ i : Fin 2, a ≠ Signing.wordAddress 0x80510 i.val) →
         final.getMem a = s.getMem a) := by
@@ -46,7 +46,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word) (code : Code image p)
     intro i
     rw [cframe _ (by intro j; fin_cases i <;> fin_cases j <;> decide)]
     exact hindex i
-  have valueEq : ∀ i : Fin 2, copied.getMem (Signing.wordAddress 0x80020 i.val) =
+  have valueEq : ∀ i : Fin 4, copied.getMem (Signing.wordAddress 0x80020 i.val) =
       secretKey.extractLsb' (64*i.val) 64 := by intro i; rw [content i]; exact hsecretKey i
   let prepared := KeygenSecretHeader.state copied
   have headTrace := KeygenSecretHeader.block image (p+40) code.2.1 copied cpc
@@ -58,7 +58,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word) (code : Code image p)
   have hf : fetch image prepared = some (.base .ECALL) := by
     simpa only [fetch_at,hpc] using code.2.2.1
   let hashed := writeHash prepared (hash (hashInput prepared))
-  have hashTrace := KeygenDomain.hash_trace image hash prepared hf service source bits destination
+  have hashTrace := KeygenDomain.secret_hash_trace image hash prepared hf service source bits destination
   have hashPC : hashed.pc = p+216 := by simp only [hashed,hash_pc,hpc]; simp [BitVec.add_assoc]
   have suffixCode : CopyCode image ((p+216)+20) := by
     simpa [BitVec.add_assoc] using code.2.2.2.2
@@ -69,7 +69,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word) (code : Code image p)
   · simpa [BitVec.add_assoc] using fpc
   · intro i
     rw [result i]
-    exact KeygenDomain.answer_words hash prepared 1 level tree (Reference.sideNumber side) chain.val 0 secretKey
+    exact KeygenDomain.secret_answer_words hash prepared level tree (Reference.sideNumber side) chain.val secretKey
       source bits destination words i
   · exact fra.trans ((hash_registers _ _ _).trans ((KeygenSecretHeader.stack copied).1.trans cra))
   · exact fsp.trans ((hash_registers _ _ _).trans ((KeygenSecretHeader.stack copied).2.trans csp))
