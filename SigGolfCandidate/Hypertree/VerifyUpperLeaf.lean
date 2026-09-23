@@ -18,7 +18,7 @@ theorem upper_leaf_body (hash : Hash) (s : MachineState) (level tree : Nat) (sid
     (counter : s.getMem 0x80430 = 0) (sp : s.getReg .x2 = 0xffffe0)
     (aligned : base % 8 = 0) (bound : base+736 ≤ 0x80000) :
     ∃ final steps cycles calls, Trace hash verify s steps cycles (calls+1) (calls+12) final ∧
-      steps ≤ 33781 ∧ cycles ≤ 11166 ∧ calls ≤ 322 ∧
+      steps ≤ 33781 ∧ cycles ≤ 10550 ∧ calls ≤ 322 ∧
       final.pc = s.getMem 0xffffe0 &&& ~~~1#64 ∧ final.getReg .x2 = 0xfffff0 ∧
       (∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =
         (Reference.compressLeaf hash level tree side (recoveredEndpoint hash level tree side message values)).extractLsb' (64*i.val) 64) ∧

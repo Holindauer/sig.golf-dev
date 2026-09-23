@@ -1,8 +1,9 @@
+import SigGolfCandidate.Hypertree.CounterCheck
 import SigGolfCandidate.Hypertree.ChainLoopControl
 import SigGolfCandidate.Hypertree.FastIncrement
 import SigGolfCandidate.Hypertree.InplaceInitialPrepare
-import SigGolfCandidate.Hypertree.InplaceCore
-import SigGolfCandidate.Hypertree.PersistentHashArgs
+import SigGolfCandidate.Hypertree.CounterCore
+import SigGolfCandidate.Hypertree.CounterArgs
 import SigGolfCandidate.Hypertree.CheckReuse
 
 namespace SigGolfCandidate.Hypertree.Verifying
@@ -14,14 +15,14 @@ theorem verify_chain_check : ChainLoopControl.CheckCode verify 0x14ec := by deci
 
 theorem verify_short_check : CheckReuse.Code verify 0x14f4 := by unfold CheckReuse.Code; decide
 
-theorem verify_chain_code : InplaceInitialPrepare.Code verify 0x1500 ∧ InplaceCore.Code verify 0x15ec := by
-  unfold InplaceInitialPrepare.Code InplaceCore.Code InplaceFinish.Code
+theorem verify_chain_code : InplaceInitialPrepare.Code verify 0x1500 ∧ CounterCore.Code verify 0x15ec := by
+  unfold InplaceInitialPrepare.Code CounterCore.Code RegisterCounter.FinishCode
   decide
 
-theorem verify_cached_check : InplaceCheck.Code verify 0x1580 := by unfold InplaceCheck.Code; decide
+theorem verify_cached_check : CounterCheck.Code verify 0x1580 := by unfold CounterCheck.Code RegisterCounter.CheckCode; decide
 
-theorem verify_cached_code : PersistentHashArgs.Code verify 0x158c ∧ InplaceCore.Code verify 0x15ec := by
-  unfold PersistentHashArgs.Code InplaceCore.Code InplaceFinish.Code
+theorem verify_cached_code : CounterArgs.Code verify 0x1588 ∧ CounterCore.Code verify 0x15ec := by
+  unfold CounterArgs.Code CounterCore.Code RegisterCounter.FinishCode
   decide
 theorem verify_restore_code : InplaceRestore.Code verify 0x1604 := by unfold InplaceRestore.Code; decide
 

@@ -15,7 +15,7 @@ theorem verify_layers (hash : Hash) (witness : Bytes signatureBytes) (count leve
     (pc : s.pc = if count = 0 then 0x1220 else 0x1148)
     (data : LoopData s level index current witness) :
     ∃ final steps cycles calls blocks lastIndex, Trace hash verify s steps cycles calls blocks final ∧
-      steps ≤ 34415*count ∧ cycles + (if level = 0 then 11519 else 0) ≤ 11807*count ∧ calls ≤ 324*count ∧ blocks ≤ 335*count ∧
+      steps ≤ 34415*count ∧ cycles + (if level = 0 then 10903 else 0) ≤ 11191*count ∧ calls ≤ 324*count ∧ blocks ≤ 335*count ∧
       final.pc = 0x1220 ∧
       LoopData final 152 lastIndex (Reference.recoverLayers hash level index current (wireLayers witness count level)) witness ∧
       LowFrame s final := by
