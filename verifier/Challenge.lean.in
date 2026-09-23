@@ -1,0 +1,13 @@
+import SigGolf
+
+namespace SigGolf.Challenge
+
+noncomputable def submission : SigGolf.Submission := sorry
+
+theorem signature_bytes : submission.sizes.signature = {{S}} := sorry
+
+theorem witness_bytes : submission.sizes.witness = {{W}} := sorry
+
+theorem certificate : SigGolf.Certificate submission {{C}} := sorry
+
+end SigGolf.Challenge

@@ -1,0 +1,12 @@
+{
+  "challenge_module": "SigGolf.Challenge",
+  "solution_module": "Solution",
+  "theorem_names": [
+    "SigGolf.Challenge.signature_bytes",
+    "SigGolf.Challenge.witness_bytes",
+    "SigGolf.Challenge.certificate"
+  ],
+  "definition_names": ["SigGolf.Challenge.submission"],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+  "enable_nanoda": false
+}

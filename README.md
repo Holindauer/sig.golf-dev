@@ -8,6 +8,8 @@ Design a **stateless hash-based signature scheme** minimizing `S × C`: signatur
 2. Nonnegative integers `S`, `W`, and `C`: signature bytes, witness bytes, and verification cycles.
 3. Lean 4 proofs of the statements below for those exact images, sizes, and bound.
 
+Open a PR against the [submissions repository’s `beta` branch](https://github.com/leanEthereum/sig.golf-submissions/tree/beta); its README gives the required file layout.
+
 ## Parameters
 
 | Constant        |                 Value |
@@ -96,8 +98,7 @@ The total hash-call count includes key generation, signing, `A`’s queries, and
 
 ### Program requirements
 
-1. **Memory:** each program uses at most 16 MiB of memory.
-2. **Termination:** every program terminates with a result or failure in fewer than `CYCLE_LIMIT` cycles, for every input and oracle.
+1. **Termination:** every program terminates with a result or failure in fewer than `CYCLE_LIMIT` cycles, for every input and oracle.
 
 ## RISC-V interface
 
@@ -109,7 +110,7 @@ Each program satisfies **`4 × instruction count + embedded-data bytes < 2^20`**
 
 Code occupies a separate, immutable instruction address space. Instruction i is at `0x1000 + 4 × i`.
 
-Memory occupies `0x000000`–`0xFFFFFF` (16 MiB), including embedded data, inputs, outputs, scratch space, and stack.
+Memory occupies `0x000000`–`0xFFFFFF` (16 MiB), including embedded data, inputs, outputs, scratch space, and stack. The verifier enforces this range directly; it is not a separate Lean proof obligation.
 
 Initialize memory to zero. Load D embedded bytes at `data_base = 16 × floor((0x1000000 - D) / 16)`. Initially, `sp = data_base` and `PC = 0x1000`; all other integer registers are zero.
 

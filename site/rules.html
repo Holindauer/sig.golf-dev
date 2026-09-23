@@ -38,6 +38,7 @@
             <li>Three integers: <code>S</code> (signature size in bytes), <code>W</code> (witness size in bytes), and <code>C</code> (verification cycles).</li>
             <li>All Lean 4 proofs required below.</li>
           </ul>
+          <p>Open a pull request against <a href="https://github.com/leanEthereum/sig.golf-submissions/tree/beta">sig.golf-submissions → beta</a>. Follow its <a href="https://github.com/leanEthereum/sig.golf-submissions/blob/beta/README.md">submission layout</a>.</p>
         </section>
 
         <section id="parameters" class="rule-section">
@@ -113,7 +114,6 @@
 
           <h3>Program requirements</h3>
           <ol class="claim-list">
-            <li><b>Memory</b><span>Each program uses at most 16 MiB of memory.</span></li>
             <li><b>Termination</b><span>Every program terminates with a result or failure in fewer than <math class="rule-math" aria-label="T, cycle limit" title="CYCLE_LIMIT"><mi>T</mi></math> cycles, for every input and oracle.</span></li>
           </ol>
         </section>
@@ -123,7 +123,7 @@
           <p>Use <a href="https://docs.riscv.org/reference/isa/v20260120/unpriv/rv64.html">RV64I</a> and the <a href="https://docs.riscv.org/reference/isa/v20260120/unpriv/m-st-ext.html">M extension</a>. Each program satisfies <math class="rule-math" aria-label="four times instruction count plus embedded data bytes is less than two to the power twenty"><mn>4</mn><mo>×</mo><mtext>instruction count</mtext><mo>+</mo><mtext>embedded-data bytes</mtext><mo>&lt;</mo><msup><mn>2</mn><mn>20</mn></msup></math>, checked directly at submission.</p>
 
           <h3>Code and memory</h3>
-          <p>Code occupies a separate, immutable instruction address space. Instruction <code>i</code> is at <code>0x1000 + 4 × i</code>. Memory occupies <code>0x000000–0xFFFFFF</code> (16 MiB), including embedded data, inputs, outputs, scratch space, and stack.</p>
+          <p>Code occupies a separate, immutable instruction address space. Instruction <code>i</code> is at <code>0x1000 + 4 × i</code>. Memory occupies <code>0x000000–0xFFFFFF</code> (16 MiB), including embedded data, inputs, outputs, scratch space, and stack. The verifier enforces this range directly; it is not a separate Lean proof obligation.</p>
           <p>Initialize memory to zero. Load <code>D</code> embedded bytes at <math class="rule-math" aria-label="data base equals sixteen times the floor of zero x one zero zero zero zero zero zero minus D, divided by sixteen"><mi>data_base</mi><mo>=</mo><mn>16</mn><mo>×</mo><mo>⌊</mo><mfrac><mrow><mn>0x1000000</mn><mo>−</mo><mi>D</mi></mrow><mn>16</mn></mfrac><mo>⌋</mo></math>. Initially, <code>sp = data_base</code> and <code>PC = 0x1000</code>; all other integer registers are zero.</p>
 
           <h3>Inputs and outputs</h3>
