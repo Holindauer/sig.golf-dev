@@ -55,7 +55,8 @@ h2 { font-size: 25px; line-height: 1.2; letter-spacing: -.025em; margin: 0; }
 .score-record .record-empty { flex: 1; display: grid; place-items: center; margin: 0; text-align: center; font-size: 32px; font-variant-numeric: tabular-nums; }
 .section-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 15px; }
 .section-aside { color: var(--muted); font-size: 12px; }
-.score-plot { height: 320px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--data-surface); overflow: hidden; }
+.score-plot { display: block; width: 100%; height: 320px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--data-surface); overflow: hidden; }
+.score-plot .hit-area { fill: transparent; stroke: none; pointer-events: all; }
 .empty-plot { position: relative; display: grid; place-items: center; color: var(--muted); }
 .empty-plot::before { content: ""; position: absolute; inset: 36px 18px 36px 58px; border-left: 1px solid var(--data-grid); border-bottom: 1px solid var(--data-grid); background: repeating-linear-gradient(to bottom, var(--data-grid) 0 1px, transparent 1px 61px); opacity: .8; }
 .empty-plot-y, .empty-plot-x { position: absolute; z-index: 1; font-size: 12px; }
