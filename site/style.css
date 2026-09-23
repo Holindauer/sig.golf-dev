@@ -7,6 +7,8 @@
   --line: #e3e5e5;
   --blue: #286ec4;
   --blue-dark: #17549e;
+  --data-surface: rgba(33, 118, 255, .085);
+  --data-header: #e7f0ff;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -53,18 +55,18 @@ h2 { font-size: 25px; line-height: 1.2; letter-spacing: -.025em; margin: 0; }
 .score-record .record-empty { flex: 1; display: grid; place-items: center; margin: 0; text-align: center; font-size: 32px; font-variant-numeric: tabular-nums; }
 .section-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 15px; }
 .section-aside { color: var(--muted); font-size: 12px; }
-.score-plot { height: 320px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); overflow: hidden; }
+.score-plot { height: 320px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--data-surface); overflow: hidden; }
 .score-plot svg { display: block; width: 100%; height: 100%; }
 .score-plot a { cursor: pointer; }
 .score-plot .hit-area { fill: transparent; stroke: none; }
 .score-plot a:hover circle:not(.hit-area), .score-plot a:focus circle:not(.hit-area) { stroke: var(--ink); stroke-width: 2.5; opacity: 1; }
 .pareto .score-plot { height: 360px; }
 .zeus-full { position: absolute; z-index: 2; right: -80px; bottom: 307px; width: 564px; max-width: none; height: auto; pointer-events: none; }
-.board-panel { padding: 20px 24px 24px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.board-panel { padding: 20px 24px 24px; border: 1px solid var(--line); border-radius: 12px; background: var(--data-surface); }
 .board-panel h2 { font-size: 20px; }
 .table-wrap { overflow: auto; max-height: 70vh; margin-top: 16px; border: 1px solid var(--line); border-radius: 8px; }
 .lb-table { width: 100%; min-width: 740px; border-collapse: separate; border-spacing: 0; font-size: 14px; }
-.lb-table th { position: sticky; top: 0; z-index: 1; padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--page); color: var(--muted); text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.lb-table th { position: sticky; top: 0; z-index: 1; padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--data-header); color: var(--muted); text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
 .lb-table th.number, .lb-table td.number { text-align: right; }
 .lb-table td { padding: 11px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; white-space: nowrap; }
 .lb-table tr:last-child td { border-bottom: 0; }
