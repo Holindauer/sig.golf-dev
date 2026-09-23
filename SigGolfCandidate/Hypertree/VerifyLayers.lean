@@ -15,7 +15,7 @@ theorem verify_layers (hash : Hash) (witness : Bytes signatureBytes) (count leve
     (pc : s.pc = if count = 0 then 0x1220 else 0x1148)
     (data : LoopData s level index current witness) :
     ∃ final steps cycles calls blocks lastIndex, Trace hash verify s steps cycles calls blocks final ∧
-      steps ≤ 34415*count ∧ cycles ≤ 35329*count ∧ calls ≤ 324*count ∧ blocks ≤ 335*count ∧
+      steps ≤ 34415*count ∧ cycles + (if level = 0 then 35041 else 0) ≤ 35329*count ∧ calls ≤ 324*count ∧ blocks ≤ 335*count ∧
       final.pc = 0x1220 ∧
       LoopData final 160 lastIndex (Reference.recoverLayers hash level index current (wireLayers witness count level)) witness ∧
       LowFrame s final := by
@@ -38,7 +38,7 @@ theorem verify_layers (hash : Hash) (witness : Bytes signatureBytes) (count leve
         (by omega) (by omega) nextPC' nextData
     refine ⟨final, steps+tailSteps, cycles+tailCycles, calls+tailCalls, blocks+tailBlocks, lastIndex,
       run.trans tailRun, ?_, ?_, ?_, ?_, finalPC, finalData, frame.trans s next final tailFrame⟩
-    all_goals omega
+    all_goals split_ifs at * <;> omega
 
 /-- info: 'SigGolfCandidate.Hypertree.Verifying.verify_layers' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

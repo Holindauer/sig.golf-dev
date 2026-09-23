@@ -27,7 +27,7 @@ theorem verify_layer_tree_exact (hash : Hash) (s : MachineState) (level index : 
     intro address _ low
     exact frame _ (outside_tree_low _ (by change address % 2^64 < 0x80000; omega))
   have totalFrame := preFrame.trans s ready final treeFrame
-  refine ⟨final, preSteps+steps, preSteps+cycles, calls, blocks, ?_, by omega, by omega, hcalls, hblocks, ?_, ?_, totalFrame, countEq⟩
+  refine ⟨final, preSteps+steps, preSteps+cycles, calls, blocks, ?_, by split_ifs at * <;> omega, by split_ifs at * <;> omega, hcalls, hblocks, ?_, ?_, totalFrame, countEq⟩
   · simpa only [Nat.zero_add] using pre.trace.trans run
   · rw [fpc, rra]; rfl
   · exact ⟨fsp.trans rsp, finalData.levelEq, finalData.indexEq, finalData.pointerEq,
@@ -54,7 +54,7 @@ theorem verify_layer_exact (hash : Hash) (s : MachineState) (level index : Nat)
   have finalPC := advanceState_layer_pc recovered 0x11d4 level recoveredPC small recoveredData.levelEq
   let n := if recovered.getMem 0x80400 = 0 then 17 else 18
   have hn : n ≤ 18 := by dsimp [n]; split <;> decide
-  refine ⟨advanceState recovered, 29+steps+n, 29+cycles+n, calls, blocks, ?_, by omega, by omega, hcalls, hblocks,
+  refine ⟨advanceState recovered, 29+steps+n, 29+cycles+n, calls, blocks, ?_, by split_ifs at * <;> omega, by split_ifs at * <;> omega, hcalls, hblocks,
     ?_, finalData, ?_, countEq⟩
   · simpa only [Nat.zero_add, Nat.add_zero] using (pre.trace.trans run).trans post.trace
   · simpa using finalPC

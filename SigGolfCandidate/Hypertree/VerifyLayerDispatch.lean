@@ -10,7 +10,7 @@ theorem prepare_tree (s : MachineState) (level index : Nat) (side : Bool)
     (pc : s.pc = 0x11bc) (small : level < 160)
     (data : LoopData s level index current witness)
     (selector : s.getMem 0x80420 = BitVec.ofNat 64 (Reference.sideNumber side)) :
-    ∃ ready steps, OrdinarySteps verify s steps ready ∧ steps ≤ 460 ∧
+    ∃ ready steps, OrdinarySteps verify s steps ready ∧ steps ≤ (if level = 0 then 5 else 460) ∧
       ready.pc = 0x12f0 ∧ ready.getReg .x1 = 0x11d4 ∧ ready.getReg .x2 = 0x1000000 ∧
       LayerData ready level index (0x3d3b0+layerOffset level) side current (wireLayer witness level) ∧
       LowFrame s ready := by
@@ -26,7 +26,7 @@ theorem prepare_tree (s : MachineState) (level index : Nat) (side : Bool)
     exact words address aligned (by omega) (Or.inl (by omega)) (by omega)
   have stored : WitnessStored ready witness := data.witnessEq.transfer_words s ready witness lowFrame
   refine ⟨ready, _, run, ?_, readyPC, readyRA, readySP.trans data.stack, ?_, lowFrame⟩
-  · split <;> decide
+  · simp only [data.levelEq, level_word_zero level small, le_refl]
   · constructor
     · exact (words 0x80400 (by decide) (by decide) (by decide) (by decide)).trans data.levelEq
     · intro i

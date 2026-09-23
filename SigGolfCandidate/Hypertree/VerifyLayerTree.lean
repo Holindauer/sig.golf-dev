@@ -11,7 +11,7 @@ theorem verify_layer_tree (hash : Hash) (s : MachineState) (level index : Nat) (
     (data : LoopData s level index current witness)
     (selector : s.getMem 0x80420 = BitVec.ofNat 64 (Reference.sideNumber side)) :
     ∃ final steps cycles calls blocks, Trace hash verify s steps cycles calls blocks final ∧
-      steps ≤ 34368 ∧ cycles ≤ 35282 ∧ calls ≤ 324 ∧ blocks ≤ 335 ∧
+      steps ≤ 34368 ∧ cycles ≤ (if level = 0 then 241 else 35282) ∧ calls ≤ 324 ∧ blocks ≤ 335 ∧
       final.pc = 0x11d4 ∧
       LoopData final level index (Reference.recoverLayer hash level index side current (wireLayer witness level)) witness ∧
       LowFrame s final := by
@@ -27,7 +27,7 @@ theorem verify_layer_tree (hash : Hash) (s : MachineState) (level index : Nat) (
     intro address _ low
     exact frame _ (outside_tree_low _ (by change address % 2^64 < 0x80000; omega))
   have totalFrame := preFrame.trans s ready final treeFrame
-  refine ⟨final, preSteps+steps, preSteps+cycles, calls, blocks, ?_, by omega, by omega, hcalls, hblocks, ?_, ?_, totalFrame⟩
+  refine ⟨final, preSteps+steps, preSteps+cycles, calls, blocks, ?_, by split_ifs at * <;> omega, by split_ifs at * <;> omega, hcalls, hblocks, ?_, ?_, totalFrame⟩
   · simpa only [Nat.zero_add] using pre.trace.trans run
   · rw [fpc, rra]; rfl
   · exact ⟨fsp.trans rsp, finalData.levelEq, finalData.indexEq, finalData.pointerEq,

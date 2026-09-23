@@ -45,7 +45,7 @@ theorem recover_leaf_call (hash : Hash) (s : MachineState) (level tree base : Na
     (leaf : s.getMem 0x80428 = BitVec.ofNat 64 (Reference.sideNumber side))
     (small : level < 160) (aligned : base % 8 = 0) (bound : base+752 ≤ 0x80000) :
     ∃ final steps cycles calls blocks, Trace hash verify s steps cycles calls blocks final ∧
-      steps ≤ 33795 ∧ cycles ≤ 34702 ∧ calls ≤ 323 ∧ blocks ≤ 334 ∧
+      steps ≤ 33795 ∧ cycles ≤ (if level = 0 then 116 else 34702) ∧ calls ≤ 323 ∧ blocks ≤ 334 ∧
       final.pc = s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =
         (Reference.recoverLeaf hash level tree side message signature).extractLsb' (64*i.val) 64) ∧
@@ -66,7 +66,7 @@ theorem recover_leaf_call (hash : Hash) (s : MachineState) (level tree base : Na
     obtain ⟨final, steps, cycles, calls, run, hsteps, hcycles, hcalls, fpc, fsp, output, frame⟩ :=
       upper_leaf_call hash s level tree side base message signature pc sp
         (data.upper s level tree base side message signature zero leaf) nonzero aligned (by omega)
-    exact ⟨final, steps, cycles, calls+1, calls+12, run, hsteps, hcycles, by omega, by omega, fpc, fsp, output, frame⟩
+    exact ⟨final, steps, cycles, calls+1, calls+12, run, hsteps, by simpa [zero] using hcycles, by omega, by omega, fpc, fsp, output, frame⟩
 
 /-- info: 'SigGolfCandidate.Hypertree.Verifying.recover_leaf_call' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

@@ -31,7 +31,7 @@ theorem digit_sum_lower (message : Digest) :
     have first : (∑ i : Fin 43, (digit message (Fin.castAdd 3 i)).val) = total := by
       apply Finset.sum_congr rfl
       intro i _
-      simp [digit, Fin.isLt, messageDigit]
+      simp [digit, messageDigit]
     rw [first]
     simp [Fin.sum_univ_succ, digit, checksum, total, Nat.add_assoc]
   rw [split_sum]

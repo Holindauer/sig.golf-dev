@@ -11,7 +11,7 @@ theorem recover_tree_call (hash : Hash) (s : MachineState) (level tree base : Na
     (data : LayerData s level tree base side message signature)
     (small : level < 160) (aligned : base % 8 = 0) (bound : base+752 ≤ 0x80000) :
     ∃ final steps cycles calls blocks, Trace hash verify s steps cycles calls blocks final ∧
-      steps ≤ 33908 ∧ cycles ≤ 34822 ∧ calls ≤ 324 ∧ blocks ≤ 335 ∧
+      steps ≤ 33908 ∧ cycles ≤ (if level = 0 then 236 else 34822) ∧ calls ≤ 324 ∧ blocks ≤ 335 ∧
       final.pc = s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (wordAddress 0x80500 i.val) =
         (Reference.recoverLayer hash level tree side message signature).extractLsb' (64*i.val) 64) ∧
@@ -34,7 +34,7 @@ theorem recover_tree_call (hash : Hash) (s : MachineState) (level tree base : Na
     finish_tree hash recovered level tree base side message signature recoveredPC recoveredSP small aligned bound
       recoveredData.levelEq recoveredData.indexEq recoveredData.pointerEq recoveredData.selectorEq output recoveredData.siblingEq
   refine ⟨final, 9+leafSteps+postSteps, 9+leafCycles+postCycles, leafCalls+1, leafBlocks+1,
-    ?_, by omega, by omega, by omega, by omega, ?_, ?_, current, ?_⟩
+    ?_, by omega, by split_ifs at * <;> omega, by omega, by omega, ?_, ?_, current, ?_⟩
   · simpa only [Nat.zero_add] using (pre.trace.trans leafRun).trans post
   · rw [finalPC, leafFrame _ (by decide) (by unfold OutsideUpperLeaf OutsideLeafWork; cases side <;> decide),
       VerifyTreeEntry.saved s sp]

@@ -11,7 +11,7 @@ theorem verify_layer (hash : Hash) (s : MachineState) (level index : Nat)
     (pc : s.pc = 0x1148) (small : level < 160) (indexSmall : index < 2^192)
     (data : LoopData s level index current witness) :
     ∃ final steps cycles calls blocks, Trace hash verify s steps cycles calls blocks final ∧
-      steps ≤ 34415 ∧ cycles ≤ 35329 ∧ calls ≤ 324 ∧ blocks ≤ 335 ∧
+      steps ≤ 34415 ∧ cycles ≤ (if level = 0 then 288 else 35329) ∧ calls ≤ 324 ∧ blocks ≤ 335 ∧
       final.pc = (if level+1 = 160 then 0x1220 else 0x1148) ∧
       LoopData final (level+1) (index/2)
         (Reference.recoverLayer hash level (index/2) (index%2 == 1) current (wireLayer witness level)) witness ∧
@@ -27,7 +27,7 @@ theorem verify_layer (hash : Hash) (s : MachineState) (level index : Nat)
   have finalPC := advanceState_layer_pc recovered 0x11d4 level recoveredPC small recoveredData.levelEq
   let n := if recovered.getMem 0x80400 = 0 then 17 else 18
   have hn : n ≤ 18 := by dsimp [n]; split <;> decide
-  refine ⟨advanceState recovered, 29+steps+n, 29+cycles+n, calls, blocks, ?_, by omega, by omega, hcalls, hblocks,
+  refine ⟨advanceState recovered, 29+steps+n, 29+cycles+n, calls, blocks, ?_, by omega, by split_ifs at * <;> omega, hcalls, hblocks,
     ?_, finalData, ?_⟩
   · simpa only [Nat.zero_add, Nat.add_zero] using (pre.trace.trans run).trans post.trace
   · simpa using finalPC
