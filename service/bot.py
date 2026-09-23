@@ -16,6 +16,7 @@ import signal
 import subprocess
 import sys
 import time
+import uuid
 from pathlib import Path
 
 from github import BRANCH, REPO, SHA, Github, GithubError, publish_verified, registry_from_branch, write_local_registry
@@ -66,12 +67,10 @@ def checked_status(api: Github, commit: str, context: str, bot_login: str) -> st
 def run_verifier(pr: dict, contract: str, work_root: Path, secret_dir: Path) -> dict:
     number = pr['number']
     commit = pr['head']['sha']
-    work = work_root / f'{number}-{commit[:12]}'
-    if work.exists():
-        shutil.rmtree(work)
+    work = work_root / f'{number}-{commit[:12]}-{uuid.uuid4().hex[:8]}'
     cmd = [sys.executable, str(ROOT / 'verifier' / 'verify.py'), '--repository', REPO,
            '--pr', str(number), '--commit', commit, '--trusted', str(ROOT), '--work', str(work),
-           '--hide', str(secret_dir)]
+           '--hide', str(secret_dir), '--cleanup']
     verifier_user = os.environ.get('SIG_VERIFIER_USER')
     if verifier_user:
         if not re.fullmatch(r'[a-z_][a-z0-9_-]*', verifier_user):

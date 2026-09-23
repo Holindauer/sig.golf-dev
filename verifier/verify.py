@@ -249,6 +249,7 @@ def main() -> int:
     parser.add_argument('--trusted', type=Path, default=TRUSTED)
     parser.add_argument('--work', type=Path)
     parser.add_argument('--hide', type=Path, action='append', default=[])
+    parser.add_argument('--cleanup', action='store_true')
     args = parser.parse_args()
     if bool(args.local) == bool(args.pr and args.commit):
         parser.error('provide either --local or both --pr and --commit')
@@ -257,6 +258,18 @@ def main() -> int:
         args.work = Path(tempfile.mkdtemp(prefix='sig-verify-'))
         args.work.rmdir()
     result = verify(args)
+    if args.cleanup and args.work.exists():
+        try:
+            # Candidate code can change permissions inside its writable build tree.
+            for directory, children, _ in os.walk(args.work, followlinks=False):
+                os.chmod(directory, os.stat(directory).st_mode | 0o700)
+                for child in children:
+                    path = Path(directory) / child
+                    if not path.is_symlink():
+                        os.chmod(path, path.stat().st_mode | 0o700)
+            shutil.rmtree(args.work)
+        except OSError as exc:
+            result.update(status='failed', reason=f'workspace cleanup failed: {exc}')
     print(json.dumps(result, sort_keys=True))
     return 0 if result['status'] == 'verified' else 1
 
