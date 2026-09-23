@@ -92,3 +92,13 @@ Proposed C = 3316075, score = 396708684400, S = W = 119632. Bound: `145 + 288 + 
 Next route: `../research/FusedFinish.lean` proves a ten-step output-copy/counter-update block reaches exactly the old final state. Prototype: `../research/fused_finish_probe.py`. It preserves the 19-word footprint and saves another two cycles per chain hash. A full integrated certificate is still required.
 
 The complete combined-preparation certificate, axiom guards, exported Solution.lean, and source policy pass. The output-copy/counter prototype also passes all reference/rejection tests at 2006639 sample cycles. Final broad-build result and commit are checkpointed in autoresearch state.
+
+## Combined output copy and counter update
+
+Checkout `research-finish`, based on `5f5d721`. The combined ten-step ending preserves the final state of the previous copy/increment pair across its original 19-word footprint. The chain core theorem includes the increment in its trace; the full iteration uses 47 steps/54 cycles.
+
+Proposed C = 3218131, score = 384991447792, S = W = 119632. Bound: `145 + 288 + 159 * 20237 + 15`. Reference/rejection tests and final validation are recorded in autoresearch state.
+
+Next route: 152-level hypertree. The standalone shared-budget and index-monitor proofs pass with permitted axiom guards; the prototype reference/bytecode tests pass at 113616 signature bytes and 1891993 sample cycles. Full adaptation of reference, bytecode, security, termination and resource proofs remains. See `../research/height152-notes.md`; do not treat the prototype as certified.
+
+The complete combined-ending certificate and axiom guards, exported Solution.lean, source policy and reference/rejection checks passed. Organizer definitions and pinned dependencies are unchanged. Broad-build status and exact commit are in autoresearch state.

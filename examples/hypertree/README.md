@@ -1,13 +1,13 @@
 # Binary hypertree candidate
 
-The four RISC-V images have a complete Lean certificate: `SigGolfCandidate.Hypertree.Candidate.certificate : SigGolf.Certificate submission 3316075`, in [Certificate.lean](../../SigGolfCandidate/Hypertree/Certificate.lean).
+The four RISC-V images have a complete Lean certificate: `SigGolfCandidate.Hypertree.Candidate.certificate : SigGolf.Certificate submission 3218131`, in [Certificate.lean](../../SigGolfCandidate/Hypertree/Certificate.lean).
 
 | Parameter | Value |
 | --- | ---: |
 | Signature bytes S | 119,632 |
 | Witness bytes W | 119,632 |
-| Maximum honest verification cycles C | 3,316,075 |
-| Score S × C | 396,708,684,400 |
+| Maximum honest verification cycles C | 3,218,131 |
+| Score S × C | 384,991,447,792 |
 
 The signer derives a 32-byte randomizer as H(domain 6, secret key, message) and includes it in the signature. The index is the low 160 bits of H(domain 5, public key, message, randomizer). The construction uses two hash-preimage leaves at the bottom and 159 layers of two-leaf Merkle trees with base-8 Winternitz signatures (46 chains, 128-bit values). It has no FORS component. Signing ignores the public cache. Expansion copies the signature.
 
@@ -27,7 +27,7 @@ The proof connects the organizer's bytecode security experiment to the reference
 | Key generation | 82,446 | 739 | 761 |
 | Signing | 16,922,843 | 117,508 | 121,008 |
 | Expansion | 89,733 | 0 | 0 |
-| Verification | 3,316,075 | ≤ 51,841 | ≤ 53,602 |
+| Verification | 3,218,131 | ≤ 51,841 | ≤ 53,602 |
 
 Key-generation and expansion counts are exact. Signing hash counts are exact for a matching public key; its cycle count is an upper bound. Verification bounds cover arbitrary typed witnesses.
 
@@ -37,9 +37,9 @@ Regenerate images with `python3 examples/hypertree/build.py` and key-generation 
 
 The verifier cycle proof uses the Winternitz checksum to bound the sum of chain lengths. The 46 digits sum to at least 14, so at most 308 chain hashes are needed per upper leaf. This tightens the certified cost without changing the program images or signature format.
 
-The bottom layer is bounded separately: 116 cycles for its leaf, 236 for its tree, and 288 for the full layer including dispatch. The complete bound is `145 + 288 + 159 * 20853 + 15 = 3316075` cycles.
+The bottom layer is bounded separately: 116 cycles for its leaf, 236 for its tree, and 288 for the full layer including dispatch. The complete bound is `145 + 288 + 159 * 20237 + 15 = 3218131` cycles.
 
-The verifier unrolls the two 16-byte copies inside each chain hash. Each replacement preserves all registers, memory, and the following program counter while saving seven cycles. Together with the shared-base header, the complete chain iteration costs 56 cycles instead of 103. `FastCopy16.lean` proves the replacement and connects it to the actual verifier image.
+The verifier unrolls the two 16-byte copies inside each chain hash. Each replacement preserves all registers, memory, and the following program counter while saving seven cycles. Together with the shared-base header, the complete chain iteration costs 54 cycles instead of 103. `FastCopy16.lean` proves the replacement and connects it to the actual verifier image.
 
 The shared-base header uses 24 instructions instead of 42. `FastChainHeader.lean` proves exact final-state equivalence and execution; `FastHeaderChain.lean` connects its 58-cycle core to the complete verifier. All following instruction addresses remain unchanged.
 
@@ -50,3 +50,5 @@ The shared-base header uses 24 instructions instead of 42. `FastChainHeader.lean
 `Copy6.lean` proves six-step copies preserve the memory, stack, return-address, and program-counter guarantees required by the verifier. `Copy6Chain.lean` connects them to the actual image, establishing a 40-step/47-cycle chain core. Unused temporary registers may change.
 
 `FusedPrepare.lean` combines the input copy and HASH header setup into 31 steps, reaching exactly the previous prepared state. `FusedChain.lean` establishes the resulting 38-step/45-cycle core.
+
+`FusedFinish.lean` combines the output copy and counter update into ten instructions, preserving their complete final state. `FinishChain.lean` includes that increment in its trace; the complete iteration uses 47 steps/54 cycles.

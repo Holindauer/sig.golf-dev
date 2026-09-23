@@ -52,8 +52,8 @@ theorem leaf_loop_exact (hash : Hash) (s : MachineState) (level tree : Nat) (sid
     obtain ⟨final, steps, cycles, calls, run, hsteps, hcycles, hcalls, finalPC, finalCounter,
       finalData, finalPrefix, finalRA, finalSP, finalFrame, exactCalls⟩ :=
       ih next (start+1) (by omega) nextPC nextData nextCounter nextPrefix
-    refine ⟨final, (49*(7-(Reference.digit message chain).val)+49)+steps,
-      (56*(7-(Reference.digit message chain).val)+49)+cycles,
+    refine ⟨final, (47*(7-(Reference.digit message chain).val)+49)+steps,
+      (54*(7-(Reference.digit message chain).val)+49)+cycles,
       (7-(Reference.digit message chain).val)+calls, pre.trans run, ?_, ?_, ?_,
       finalPC, finalCounter, finalData, finalPrefix, finalRA.trans nextRA, finalSP.trans nextSP, ?_, ?_⟩
     · omega

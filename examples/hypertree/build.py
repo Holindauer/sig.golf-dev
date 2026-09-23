@@ -61,6 +61,14 @@ class Assembler:
     def halt(self, accepted): self.li(5, 0); self.li(10, int(accepted)); self.emit(0x73)
     def copy(self, source, destination, count=16):
         assert count % 8 == 0
+        if (self.optimize_address_reuse and count == 16 and source == ANSWER and destination == VALUE
+                and 'chain_step' in self.labels and 'chain_end' not in self.labels):
+            start=len(self.words); self.emit((128<<12)|(28<<7)|0x37)
+            self.ld(11,28,768);self.store(11,28,1296);self.ld(11,28,776);self.store(11,28,1304)
+            self.i(0x13,0,28,28,1080);self.ld(6,28);self.i(0x13,0,6,6,1);self.store(6,28)
+            self.jump('chain_step')
+            while len(self.words)-start<19:self.i(0x13,0,0,0,0)
+            return
         if (self.optimize_address_reuse and count==16 and source==VALUE and destination==HASH+32 and 'chain_step' in self.labels and 'chain_end' not in self.labels):
             start=len(self.words);self.emit((128<<12)|(28<<7)|0x37)
             self.ld(11,28,source-HASH);self.store(11,28,32);self.ld(11,28,source-HASH+8);self.store(11,28,40)
@@ -236,12 +244,8 @@ def leaf_functions(a, verifying):
     if not verifying: capture(a)
     a.load(6, STEP); a.li(7, 7); a.branch(6, 7, 'chain_end')
     a.copy(VALUE, HASH + 32); a.hash(2, 48, leaf=True, chain=True, step=True); a.copy(ANSWER, VALUE)
-    a.load(6, STEP); a.i(0x13, 0, 6, 6, 1)
-    if verifying:
-        a.store(6, 28); a.jump('chain_step')
-        a.i(0x13, 0, 0, 0, 0); a.i(0x13, 0, 0, 0, 0)
-    else:
-        a.save(6, STEP); a.jump('chain_step')
+    if not verifying:
+        a.load(6, STEP); a.i(0x13, 0, 6, 6, 1); a.save(6, STEP); a.jump('chain_step')
     a.label('chain_end')
     a.load(6, CHAIN); a.shift(7, 6, 4); a.li(10, ENDPOINTS); a.add(7, 7, 10)
     a.load(10, VALUE); a.load(11, VALUE + 8); a.store(10, 7); a.store(11, 7, 8)

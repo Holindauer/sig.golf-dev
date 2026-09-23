@@ -24,8 +24,8 @@
       "compressions": 0
     },
     "verify": {
-      "instructions_executed": 1857707,
-      "cycles": 2059713,
+      "instructions_executed": 1804633,
+      "cycles": 2006639,
       "hash_calls": 26858,
       "compressions": 28608
     }
