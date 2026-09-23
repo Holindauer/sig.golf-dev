@@ -18,6 +18,7 @@ class Assembler:
         self.serial = 0
         self.optimize_copy16 = False
         self.optimize_chain_header = False
+        self.optimize_address_reuse = False
         self.optimize_only_chain = False
     def emit(self, w): self.words.append(w & 0xffffffff)
     def label(self, name):
@@ -65,7 +66,12 @@ class Assembler:
             # Initialize pointers at their final values and address the two words backwards.
             start = len(self.words)
             old_size = (1 if -2048 <= source < 2048 else 2) + (1 if -2048 <= destination < 2048 else 2) + 7
-            self.li(6, source + 16); self.li(7, destination + 16); self.li(10, 0)
+            self.li(6, source + 16)
+            if self.optimize_address_reuse:
+                self.i(0x13, 0, 7, 6, destination-source)
+            else:
+                self.li(7, destination + 16)
+            self.li(10, 0)
             self.ld(11, 6, -16); self.store(11, 7, -16)
             self.ld(11, 6, -8); self.store(11, 7, -8)
             end = self.fresh('fast_copy_end')
@@ -105,6 +111,24 @@ class Assembler:
             else: self.load(11, source)
             self.save(11, HASH + offset)
     def hash(self, tag, size, **fields):
+        if (self.optimize_address_reuse and tag == 2 and size == 48
+                and fields == dict(leaf=True, chain=True, step=True)
+                and 'chain_step' in self.labels and 'chain_end' not in self.labels):
+            start = len(self.words)
+            self.emit((128 << 12) | (28 << 7) | 0x37)
+            self.li(10, 2)
+            for source, shift in [(LEVEL,8),(LEAF,16),(CHAIN,24),(STEP,32)]:
+                self.ld(11,28,source-HASH); self.shift(11,11,shift); self.add(10,10,11)
+            self.store(10,28)
+            for offset,source in [(8,INDEX0),(16,INDEX1),(24,INDEX2)]:
+                self.ld(11,28,source-HASH); self.store(11,28,offset)
+            self.i(0x13,0,28,28,24)
+            self.i(0x13,0,10,28,-24); self.li(11,384)
+            self.i(0x13,0,12,28,744); self.li(5,1)
+            end = self.fresh('reuse_header_end'); self.jump(end)
+            while len(self.words)-start < 48: self.i(0x13,0,0,0,0)
+            self.label(end); self.emit(0x73)
+            return
         self.header(tag, **fields)
         self.li(10, HASH); self.li(11, size * 8); self.li(12, ANSWER); self.li(5, 1); self.emit(0x73)
     def finish(self):
@@ -229,6 +253,7 @@ def build(phase):
     verifying = phase == 'verify'
     a.optimize_copy16 = verifying
     a.optimize_chain_header = verifying
+    a.optimize_address_reuse = verifying
     a.optimize_only_chain = True
     if phase == 'keygen':
         a.set(LEVEL, HEIGHT - 1); a.call('tree'); a.copy(CURRENT, 0x40); a.halt(True)

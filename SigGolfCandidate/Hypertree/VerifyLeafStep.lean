@@ -15,8 +15,8 @@ theorem leaf_step (hash : Hash) (s : MachineState) (level tree : Nat) (side : Bo
     (pc : s.pc = 0x1490) (data : LeafData s level tree side base message values)
     (counter : s.getMem 0x80430 = BitVec.ofNat 64 chain.val)
     (aligned : base % 8 = 0) (bound : base+736 ≤ 0x80000) :
-    ∃ final, Trace hash verify s (64*(7-(Reference.digit message chain).val)+49)
-      (71*(7-(Reference.digit message chain).val)+49)
+    ∃ final, Trace hash verify s (59*(7-(Reference.digit message chain).val)+49)
+      (66*(7-(Reference.digit message chain).val)+49)
       (7-(Reference.digit message chain).val) (7-(Reference.digit message chain).val) final ∧
       final.pc = (if chain.val+1 = 46 then 0x1690 else 0x1490) ∧
       final.getMem 0x80430 = BitVec.ofNat 64 (chain.val+1) ∧

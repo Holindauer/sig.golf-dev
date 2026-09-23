@@ -50,3 +50,13 @@ Validation caught an unintended application of the header optimization at the bo
 The next-route module `../research/AddressReuseProof.lean` now passes Lean standalone against the copy16 baseline: all three exact-state equivalences and ordinary execution traces (27 header/setup steps, 9 steps per copy) are proved with permitted-axiom guards. It still needs integration into a fresh candidate image and propagation through the full certificate.
 
 The complete header certificate and permitted-axiom guards pass. The exported local `Solution.lean` is checked separately; final broad-build status and exact commit are recorded in the autoresearch state.
+
+## Reuse addresses in chain copies and HASH argument setup
+
+Checkout `research-address-reuse`, based on `162e3f7`. The full header/setup now executes 27 instructions, and each copy executes nine. The program keeps all static instruction addresses and complete final states unchanged. The chain core uses 46 steps/53 cycles; the full iteration uses 59 steps/66 cycles.
+
+Proposed C = 3805795, score = 455294867440, with unchanged S = W = 119632. Bound: `145 + 288 + 159 * 23933 + 15`. Reference comparisons and malformed-input rejection pass; sample verification costs 2325083 cycles with unchanged hash counts. The local bundle is `../research-address-reuse-submission`. Final full-build validation status is recorded in `../autoresearch-state.json`.
+
+Next route: `../research/FastIncrement.lean` proves a six-step counter increment matches the original eight-step increment, including its backward jump and complete state. Integrate the shorter fragment followed by two unreachable padding words in a new isolated checkout; preserve the checked candidate and pending PR until official validation.
+
+The complete address-reuse certificate, permitted-axiom guards, and exported `Solution.lean` all passed. Organizer modules and pinned dependencies are unchanged. Final broad-build status and commit are saved in the autoresearch state.
