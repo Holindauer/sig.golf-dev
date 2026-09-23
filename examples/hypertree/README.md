@@ -16,7 +16,7 @@ The certificate establishes all organizer requirements for the exact images in [
 - Static admission, including fixed sizes and image limits.
 - Termination below 2^32 cycles for every typed input and every oracle, including adversarial caches, signatures, and witnesses.
 - Honest success for every secret key, message, and oracle, implying the required simultaneous all-message success probability.
-- Exponential compression budgets after maximizing over messages.
+- Exponential compression budgets for an independent uniform message and random oracle.
 - Security at every total hash-call budget Q: forgery probability at most Q / 2^127, against adaptive adversaries with up to 2^24 signing requests. Both final-submission forms and all honest and adversarial hash calls are included.
 - The claimed verification cycle bound.
 
@@ -24,8 +24,8 @@ The proof connects the organizer's bytecode security experiment to the reference
 
 | Program | Proved cycle bound | Hash calls | Compressions |
 | --- | ---: | ---: | ---: |
-| Key generation | 81,342 | 739 | 761 |
-| Signing | 16,800,271 | 117,508 | 121,008 |
+| Key generation | 82,446 | 739 | 761 |
+| Signing | 16,922,843 | 117,508 | 121,008 |
 | Expansion | 89,733 | 0 | 0 |
 | Verification | 5,883,520 | ≤ 51,841 | ≤ 53,602 |
 

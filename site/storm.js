@@ -5,6 +5,9 @@ const $ = selector => document.querySelector(selector);
 const handInImage = {x: 548, y: 148};
 const BOLT_HOLD_MS = 1000;
 const BOLT_FADE_MS = 500;
+const BOLT_ARRIVAL_MS = 380;
+const FIRST_STRIKE_MIN_MS = 2000;
+const FIRST_STRIKE_MAX_MS = 4000;
 const STRIKE_INTERVAL_MIN_MS = 5000;
 const STRIKE_INTERVAL_MAX_MS = 10000;
 const mix = (a, b, t) => a + (b - a) * t;
@@ -18,12 +21,14 @@ const unit = () => randomWord() / 4294967296;
 const nextIntervalMs = () => STRIKE_INTERVAL_MIN_MS + unit() * (STRIKE_INTERVAL_MAX_MS - STRIKE_INTERVAL_MIN_MS);
 
 let lastStrike = -Infinity;
-let nextStrike = performance.now() + nextIntervalMs();
+let nextStrike = performance.now() + FIRST_STRIKE_MIN_MS + unit() * (FIRST_STRIKE_MAX_MS - FIRST_STRIKE_MIN_MS);
 let paused = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let layout = [];
 let pageRoute = [];
 let pageHand = null;
 let lastLeaves = null;
+let boltLength = 0;
+let treeGroups = [];
 
 function element(tag, attributes, parent) {
   const node = document.createElementNS(NS, tag);
@@ -152,6 +157,7 @@ function newStrike() {
 
   const trees = $('#trees');
   trees.replaceChildren();
+  treeGroups = [];
   pageRoute = jaggedEdge(top, roots[0], 5, 18);
   layout = [];
   const baseSpread = clamp(width * .23, 85, 235);
@@ -161,7 +167,8 @@ function newStrike() {
     const target = targets[treeIndex];
     const leaf = leaves[treeIndex];
     const points = treeShape(root, target, leaf, width, baseSpread);
-    const group = element('g', {'stroke-linecap': 'round', 'stroke-linejoin': 'round'}, trees);
+    const group = element('g', {'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: '0'}, trees);
+    treeGroups.push(group);
     element('ellipse', {
       cx: mix(root.x, target.x, .5), cy: mix(root.y, target.y, .5),
       rx: Math.min(baseSpread * 1.18, width * .3), ry: Math.max(28, span * .75),
@@ -210,7 +217,13 @@ function newStrike() {
   }
 
   const d = pathData(pageRoute);
-  for (const id of ['path-blur', 'path-glow', 'path-core']) $('#' + id).setAttribute('d', d);
+  for (const id of ['path-blur', 'path-glow', 'path-core']) {
+    const path = $('#' + id);
+    path.setAttribute('d', d);
+    boltLength = path.getTotalLength();
+    path.style.strokeDasharray = `${boltLength} ${boltLength}`;
+    path.style.strokeDashoffset = `${boltLength}`;
+  }
   return true;
 }
 
@@ -224,9 +237,17 @@ function render(now) {
   if (paused) return;
   if (now >= nextStrike) strike(now);
   const age = now - lastStrike;
-  const light = age < 0 ? 0 : age < BOLT_HOLD_MS ? 1 : clamp(1 - (age - BOLT_HOLD_MS) / BOLT_FADE_MS);
-  const visible = light > .012 ? light : 0;
-  $('#sky-glow').setAttribute('opacity', (light * .38).toFixed(3));
+  const fade = age < 0 ? 0 : age < BOLT_HOLD_MS ? 1 : clamp(1 - (age - BOLT_HOLD_MS) / BOLT_FADE_MS);
+  const arrival = clamp(age / BOLT_ARRIVAL_MS);
+  const visible = fade * clamp(age / 130);
+  const sweep = 1 - (1 - arrival) ** 2;
+  const offset = boltLength * (1 - sweep);
+  for (const id of ['path-blur', 'path-glow', 'path-core']) $('#' + id).style.strokeDashoffset = `${offset}`;
+  treeGroups.forEach((group, index) => {
+    const reveal = clamp((age - index * 110) / 170);
+    group.setAttribute('opacity', reveal.toFixed(3));
+  });
+  $('#sky-glow').setAttribute('opacity', (visible * .38).toFixed(3));
   $('#energy').setAttribute('opacity', visible.toFixed(3));
   $('#trees').setAttribute('opacity', visible.toFixed(3));
   requestAnimationFrame(render);

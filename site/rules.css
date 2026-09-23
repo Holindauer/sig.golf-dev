@@ -32,6 +32,7 @@
 .claim-list b:before, #proofs .callout b:before { content: counter(claim,decimal-leading-zero) ' / '; margin-right: 4px; color: var(--blue); font-size: 11px; }
 #proofs .callout { counter-increment: claim; }
 .claim-list span, #proofs .callout span { color: #334f6d; font-size: 13px; }
+.rule-todo { color: #bf3038; font-weight: 700; }
 .fine-print { font-size: 12px; }
 .two-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 20px; }
 .detail-card { padding: 16px 17px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13px; }

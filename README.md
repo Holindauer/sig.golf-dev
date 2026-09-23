@@ -75,7 +75,7 @@ Stop at the first failure. We say the `experiment succeeds` when all stages succ
 2. **Compression budgets:** for every secret key and P in {`keygen`, `sign`, `expand`}, `E_{H,M}[2^(K_P / BUDGET_P)] <= 2`.
 3. **Verification cycles:** for every secret key, message and oracle, if the experiment succeeds, `verify` uses at most `C` cycles.
 
-`Pr_H` is over H; `E_{H,M}` is over an independently sampled random oracle H and uniform 32-byte message digest M. Attacker-chosen messages or altered caches/signatures may cost more; every program execution remains below `CYCLE_LIMIT` cycles.
+`Pr_H` is over H; `E_{H,M}` is over an independently sampled random oracle H and uniform 32-byte message digest M. Attacker-chosen messages or altered caches/signatures may cost more. TODO: Can we improve this? Every program execution remains below `CYCLE_LIMIT` cycles.
 
 ### Security
 
