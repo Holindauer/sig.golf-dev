@@ -117,11 +117,19 @@ def once(api: Github, work_root: Path, local_records: Path, state_file: Path, se
     login = me.get('login') if isinstance(me, dict) else None
     if not isinstance(login, str):
         raise GithubError('cannot identify bot account')
-    write_local_registry(local_records, registry_from_branch(api))
+    registry = registry_from_branch(api)
+    write_local_registry(local_records, registry)
+    current = {entry['commit'] for entry in registry['submissions']
+               if entry.get('contract_commit') == contract}
+    retired = {entry['commit'] for entry in registry['submissions']
+               if entry.get('contract_commit') != contract} - current
     processed = 0
     for pr in open_prs(api):
         commit = pr.get('head', {}).get('sha')
         if not isinstance(commit, str) or not SHA.fullmatch(commit):
+            continue
+        # A reset requires a new PR head; old verified snapshots remain historical.
+        if commit in retired:
             continue
         if checked_status(api, commit, context, login) in {'success', 'failure'}:
             continue
