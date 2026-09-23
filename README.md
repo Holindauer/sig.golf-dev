@@ -58,7 +58,7 @@ RiscV cycle breakdown:
 
 ## Required Lean statements
 
-### Honest execution
+### Completeness
 
 For any `secretKey`, `message` and oracle H, consider the following experiment:
 
