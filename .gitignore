@@ -3,5 +3,5 @@
 .venv/
 __pycache__/
 *.pyc
-verifier/.tools/
+verifier/.tools
 verifier/.work/
