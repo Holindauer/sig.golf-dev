@@ -18,7 +18,7 @@ function missing(label) {
   const title = document.createElement('h1');
   title.textContent = label + ' not found';
   const back = document.createElement('a');
-  back.href = '/site/#leaderboard';
+  back.href = '/#leaderboard';
   back.textContent = '← Back to leaderboard';
   document.querySelector('main').append(title, back);
 }

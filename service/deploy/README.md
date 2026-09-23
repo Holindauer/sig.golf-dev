@@ -4,7 +4,7 @@
 
 Use separate `sigbot` and `sigverify` accounts. Give `sigbot` read access to a file containing only the GitHub token, and narrowly permit it to run `verifier/verify.py` as `sigverify` through sudo. Both users share `/srv/sig-golf/work`; only `sigbot` writes the public `records.json` and `state.json`. The trusted Lean build cache and dependencies belong to `sigverify`. Run `verifier/setup_tools.sh` or use the exact compatible pinned tools already present on the host. Install `sig-bot.service` as a systemd service.
 
-Import `/srv/sig-golf/app/service/deploy/beta.Caddyfile` from the host Caddyfile. It serves `beta.sig.golf`, routes `/llms.txt`, and permits fetching presentation metadata from GitHub. Keep the `ots.golf` route unchanged. The optional `OTS_SHARED_VERIFY_LOCK` and `SIG_SHARED_VERIFY_LOCK` must name the same lock file to prevent the two verifiers running together on this host.
+Import `/srv/sig-golf/app/service/deploy/beta.Caddyfile` from the host Caddyfile. It serves the homepage at `https://beta.sig.golf/`, redirects the old `/site/` homepage to `/`, routes `/llms.txt`, and permits fetching presentation metadata from GitHub. Keep the `ots.golf` route unchanged. The optional `OTS_SHARED_VERIFY_LOCK` and `SIG_SHARED_VERIFY_LOCK` must name the same lock file to prevent the two verifiers running together on this host.
 
 For a fresh host, clone both beta branches, build the trusted Lean project and verifier tools, copy `site/` to the public root, configure the two service accounts and token, enable the bot service, then enable the Caddy route. The bot rebuilds its local registry from `sig.golf-submissions/beta` on every scan.
 
