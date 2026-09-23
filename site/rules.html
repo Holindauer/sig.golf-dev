@@ -7,6 +7,19 @@
   <title>Rules — sig.golf</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/rules.css">
+  <style>
+    .program-block { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--data-grid); scroll-margin-top: 25px; }
+    .program-block:first-of-type { margin-top: 20px; padding-top: 0; border-top: 0; }
+    .program-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+    .program-heading h3 { margin: 0; }
+    .program-block code { white-space: nowrap; }
+    .program-heading > span { color: var(--muted); font-size: 12px; }
+    .rule-section .program-block p { margin: 10px 0 12px; }
+    .program-io { display: grid; gap: 5px; margin: 0; font-size: 14px; }
+    .program-io > div { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; }
+    .program-io dt { color: var(--secondary); font-weight: 650; }
+    .program-io dd { margin: 0; }
+  </style>
   <script src="/rules.js" defer></script>
 </head>
 <body>
