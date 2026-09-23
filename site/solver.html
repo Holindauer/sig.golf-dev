@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Solver · sig.golf</title>
+  <link rel="stylesheet" href="/site/style.css">
+  <link rel="stylesheet" href="/site/detail.css">
+  <script src="/site/demo-records.js" defer></script>
+  <script src="/site/detail.js" defer></script>
+</head>
+<body data-page="solver">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header wrap">
+    <a class="brand" href="/site/" aria-label="sig.golf home">sig<span>.golf</span></a>
+    <nav aria-label="Main navigation"><a href="/site/rules.html">Rules</a></nav>
+  </header>
+  <main id="main" class="wrap detail-page">
+    <p><a class="detail-back" href="/site/#leaderboard">← Back to leaderboard</a></p>
+    <div class="solver-hero"><span id="solver-avatar"></span><div><span class="detail-small">Solver</span><h1 id="solver-name">Solver</h1></div></div>
+    <p class="detail-notice">Fictional preview profile. Its submissions have not been verified.</p>
+    <section class="metric-grid solver-metrics" aria-label="Solver summary">
+      <div class="metric-card"><span>Submissions</span><strong id="solver-count">—</strong></div>
+      <div class="metric-card"><span>Best score</span><strong id="solver-best">—</strong></div>
+    </section>
+    <section class="board-panel" aria-labelledby="solver-submissions-title">
+      <h2 id="solver-submissions-title">Submissions</h2>
+      <div class="table-wrap" role="region" tabindex="0" aria-labelledby="solver-submissions-title">
+        <table class="lb-table">
+          <thead><tr><th scope="col">Submission</th><th scope="col" class="number">Score</th><th scope="col" class="number">Signature</th><th scope="col" class="number">Cycles</th><th scope="col" class="number">Date</th></tr></thead>
+          <tbody id="solver-submissions"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer wrap"><span>sig.golf</span><span><a href="/site/llms.txt">llms.tex</a> · <a href="https://github.com/leanEthereum/sig.golf-submissions/tree/beta">Github for submissions</a> · <a href="https://github.com/leanEthereum/sig.golf-dev/tree/beta">Github for Verification</a></span></footer>
+</body>
+</html>

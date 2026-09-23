@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Beta rules for sig.golf: submission format, proof obligations, RISC-V interface, and scoring for stateless hash-based signatures.">
+  <title>Rules — sig.golf</title>
+  <link rel="stylesheet" href="/site/style.css">
+  <link rel="stylesheet" href="/site/rules.css">
+  <script src="/site/rules.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header wrap">
+    <a class="brand" href="/site/" aria-label="sig.golf home">sig<span>.golf</span></a>
+    <nav aria-label="Main navigation"><a href="/site/rules.html" aria-current="page">Rules</a></nav>
+  </header>
+
+  <main id="main" class="wrap rules-page">
+    <div class="rules-layout">
+      <nav class="rules-toc" aria-label="On this page">
+        <span class="toc-heading">On this page</span>
+        <a href="#submission">Submission</a>
+        <a href="#parameters">Parameters</a>
+        <a href="#programs">Programs</a>
+        <a href="#model">Model and costs</a>
+        <a href="#proofs">Required proofs</a>
+        <a href="#interface">RISC-V interface</a>
+        <a href="#project">Lean project</a>
+      </nav>
+
+      <div class="rules-content">
+        <section id="submission" class="rule-section">
+          <div class="section-kicker">01 / Entry</div>
+          <h2>Submission</h2>
+          <p>Submit the four RISC-V program images below, including embedded data; nonnegative integers <code>S</code>, <code>W</code>, and <code>C</code> for signature bytes, witness bytes, and verification cycles; and Lean 4 proofs of the statements on this page for those exact images, sizes, and bound.</p>
+        </section>
+
+        <section id="parameters" class="rule-section">
+          <div class="section-kicker">02 / Fixed values</div>
+          <h2>Parameters</h2>
+          <div class="table-grid">
+            <div class="rule-table-wrap"><table><caption>Competition constants</caption><thead><tr><th>Constant</th><th>Value</th></tr></thead><tbody>
+              <tr><td><code>BUDGET_KEYGEN</code></td><td>2<sup>20</sup> compressions</td></tr>
+              <tr><td><code>BUDGET_SIGN</code></td><td>2<sup>17</sup> compressions</td></tr>
+              <tr><td><code>BUDGET_EXPAND</code></td><td>2<sup>20</sup> compressions</td></tr>
+              <tr><td><code>FAILURE</code></td><td>2<sup>−256</sup></td></tr>
+              <tr><td><code>LIFETIME</code></td><td>2<sup>24</sup> signing requests</td></tr>
+              <tr><td><code>SECURITY_BITS</code></td><td>127</td></tr>
+              <tr><td><code>CYCLE_LIMIT</code></td><td>2<sup>32</sup> cycles</td></tr>
+            </tbody></table></div>
+            <div class="rule-table-wrap"><table><caption>Fixed object sizes</caption><thead><tr><th>Object</th><th>Bytes</th></tr></thead><tbody>
+              <tr><td>Message digest</td><td>32</td></tr>
+              <tr><td>Seed</td><td>16</td></tr>
+              <tr><td>Public key</td><td>16</td></tr>
+              <tr><td>Cache</td><td>2<sup>17</sup> (128 KiB)</td></tr>
+              <tr><td>Compact signature</td><td><code>S ≥ 1</code></td></tr>
+              <tr><td>Expanded witness</td><td><code>W ≤ 2^17</code> (128 KiB)</td></tr>
+            </tbody></table></div>
+          </div>
+        </section>
+
+        <section id="programs" class="rule-section">
+          <div class="section-kicker">03 / Pipeline</div>
+          <h2>Programs</h2>
+          <div class="rule-table-wrap"><table><thead><tr><th>Program</th><th>Inputs</th><th>Outputs</th><th>Context</th></tr></thead><tbody>
+            <tr><td><code>keygen</code></td><td>Seed</td><td>Public key and cache, or failure</td><td>Enclave</td></tr>
+            <tr><td><code>sign</code></td><td>Seed, public key, cache, message</td><td>Signature or failure</td><td>Enclave</td></tr>
+            <tr><td><code>expand</code></td><td>Message, public key, signature</td><td>Witness or failure</td><td>Prover host</td></tr>
+            <tr><td><code>verify</code></td><td>Message, public key, witness</td><td>Accept or reject</td><td>zkVM</td></tr>
+          </tbody></table></div>
+          <p>The seed is secret. The cache is public and untrusted. <code>expand</code> converts the compact signature into a verification witness, for example by restoring pruned Merkle paths. It may simply copy the signature when <code>S = W</code>.</p>
+        </section>
+
+        <section id="model" class="rule-section">
+          <div class="section-kicker">04 / Accounting</div>
+          <h2>Model and costs</h2>
+          <p>All programs and the adversary share a random oracle <code>H</code>. Security counts calls to <code>H</code>. Program budgets and HASH cycles count compressions: hashing <code>n</code> bits costs <code>max(1, ceil(n / 512))</code> compressions.</p>
+          <div class="rule-table-wrap"><table><caption>RISC-V cycle breakdown</caption><thead><tr><th>Operation</th><th>Cost</th></tr></thead><tbody>
+            <tr><td>Ordinary instruction, including loads and stores</td><td>1 cycle</td></tr>
+            <tr><td>HASH</td><td>8 cycles per compression; no extra instruction charge</td></tr>
+            <tr><td>HALT</td><td>1 cycle</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section id="proofs" class="rule-section">
+          <div class="section-kicker">05 / Certificate</div>
+          <h2>Required Lean statements</h2>
+          <h3>Honest execution</h3>
+          <p>For any <code>seed</code>, <code>message</code>, and oracle <code>H</code>, run <code>keygen(seed)</code> to get the public key and cache; <code>sign(seed, public key, cache, message)</code> to get the signature; <code>expand(message, public key, signature)</code> to get the witness; then <code>verify(message, public key, witness)</code> to get the verdict. Stop at the first failure. The experiment succeeds when all stages succeed and verification accepts.</p>
+          <p><code>K_P</code> counts program <code>P</code>'s compressions in this experiment, including retries and failed attempts; it is zero if <code>P</code> is never reached. For each fixed seed and <code>H</code>, <code>Kmax_P</code> is the maximum of <code>K_P</code> over all messages. <code>BUDGET_P</code> denotes <code>P</code>'s named budget.</p>
+          <ol class="claim-list">
+            <li><b>Success</b><span>For every seed, <code>Pr_H[experiment succeeds for every message] ≥ 1 − FAILURE</code>.</span></li>
+            <li><b>Compression budgets</b><span>For every seed, <code>E_H[2^(Kmax_P / BUDGET_P)] ≤ 2</code> for each <code>P</code> in {<code>keygen</code>, <code>sign</code>, <code>expand</code>}.</span></li>
+            <li><b>Verification cycles</b><span>For every seed, message, and oracle, if the experiment succeeds, <code>verify</code> uses at most <code>C</code> cycles.</span></li>
+          </ol>
+          <p class="fine-print"><code>Pr_H</code> means probability over <code>H</code>; <code>E_H</code> means expected value over <code>H</code>.</p>
+
+          <h3>Security</h3>
+          <p>Consider a classical probabilistic adversary <code>A</code> with unrestricted computation and an integer hash-call budget <code>Q ≥ 1</code>. Sample <code>H</code> and a uniform seed independently. Initialize an empty transcript <code>T</code> and count every call to <code>H</code> throughout the experiment. Run <code>keygen(seed)</code>; failure ends the experiment without a win. Otherwise give <code>A</code> the public key and cache.</p>
+          <p><code>A</code> may adaptively query:</p>
+          <div class="two-cards">
+            <div class="detail-card"><b><code>random_oracle(input_A)</code></b><p>Return <code>H(input_A)</code>.</p></div>
+            <div class="detail-card"><b><code>signing_oracle(message_A, cache_A)</code></b><p>Run <code>sign(seed, public key, cache_A, message_A)</code> with the original seed and public key. Return the signature or failure. Add each returned <code>(message_A, signature)</code> to <code>T</code>. Allow at most <code>LIFETIME</code> requests.</p></div>
+          </div>
+          <p><code>A</code> makes one final submission in either form:</p>
+          <div class="two-cards">
+            <div class="detail-card"><b>Witness weak unforgeability</b><p>Submit <code>(message_A, witness_A)</code>. Win if <code>verify(message_A, public key, witness_A)</code> accepts, no pair in <code>T</code> has message <code>message_A</code>, and the total hash-call count is at most <code>Q</code>.</p></div>
+            <div class="detail-card"><b>Signature strong unforgeability</b><p>Submit <code>(message_A, signature_A)</code>. Win if <code>expand(message_A, public key, signature_A)</code> returns a witness that <code>verify</code> accepts, <code>(message_A, signature_A)</code> is not in <code>T</code>, and the total hash-call count is at most <code>Q</code>.</p></div>
+          </div>
+          <p>The total hash-call count includes key generation, signing, <code>A</code>'s queries, and final expansion and verification when performed.</p>
+          <div class="callout"><b>Security claim</b><span>For every <code>A</code> and <code>Q ≥ 1</code>, <code>Pr[A wins] ≤ Q / 2^SECURITY_BITS</code>, over the seed, <code>H</code>, and <code>A</code>'s private randomness.</span></div>
+
+          <h3>Program requirements</h3>
+          <ol class="claim-list">
+            <li><b>Memory</b><span>Each program uses at most 16 MiB of memory.</span></li>
+            <li><b>Termination</b><span>Every program terminates with a result or failure in fewer than <code>CYCLE_LIMIT</code> cycles, for every input and oracle.</span></li>
+          </ol>
+        </section>
+
+        <section id="interface" class="rule-section">
+          <div class="section-kicker">06 / Machine</div>
+          <h2>RISC-V interface</h2>
+          <p>Use <a href="https://docs.riscv.org/reference/isa/v20260120/unpriv/rv64.html">RV64I</a> and the <a href="https://docs.riscv.org/reference/isa/v20260120/unpriv/m-st-ext.html">M extension</a>. Each program satisfies <code>4 × instruction count + embedded-data bytes &lt; 2^20</code>, checked directly at submission.</p>
+
+          <h3>Code and memory</h3>
+          <p>Code occupies a separate, immutable instruction address space. Instruction <code>i</code> is at <code>0x1000 + 4 × i</code>. Memory occupies <code>0x000000–0xFFFFFF</code> (16 MiB), including embedded data, inputs, outputs, scratch space, and stack.</p>
+          <p>Initialize memory to zero. Load <code>D</code> embedded bytes at <code>data_base = 16 × floor((0x1000000 − D) / 16)</code>. Initially, <code>sp = data_base</code> and <code>PC = 0x1000</code>; all other integer registers are zero.</p>
+
+          <h3>Inputs and outputs</h3>
+          <p>Inputs and outputs use the same addresses, fixed for each submission:</p>
+          <div class="rule-table-wrap"><table><thead><tr><th>Address</th><th>Buffer</th></tr></thead><tbody>
+            <tr><td><code>0x00</code></td><td>Message</td></tr>
+            <tr><td><code>0x20</code></td><td>Seed</td></tr>
+            <tr><td><code>0x40</code></td><td>Public key</td></tr>
+            <tr><td><code>0x60</code></td><td>Cache</td></tr>
+            <tr><td><code>0x20060</code></td><td>Signature</td></tr>
+            <tr><td><code>0x20060 + 8 × ceil(S / 8)</code></td><td>Witness</td></tr>
+          </tbody></table></div>
+          <p>Load the inputs and read the outputs listed in the Programs table at their declared sizes. Other input fields start at zero. HALT ends execution with <code>a0 = 1</code> for success, or <code>a0 = 0</code> for failure. For <code>verify</code>, these mean acceptance and rejection, respectively.</p>
+
+          <h3>System calls</h3>
+          <p>ECALL selects one of two services through <code>t0</code>:</p>
+          <div class="rule-table-wrap"><table><thead><tr><th><code>t0</code></th><th>Service</th><th>Arguments</th></tr></thead><tbody>
+            <tr><td><code>0</code></td><td>HALT</td><td>Status and outputs above</td></tr>
+            <tr><td><code>1</code></td><td>HASH</td><td><code>a0 = input address</code>, <code>a1 = input length in bits</code>, <code>a2 = output address</code></td></tr>
+          </tbody></table></div>
+          <p>HASH writes <code>H</code>'s 32-byte answer at the output address.</p>
+
+          <h3>Further details</h3>
+          <dl class="detail-list">
+            <div><dt>Proof checking</dt><dd>The certificate must pass Lean's kernel against the organizer's definitions. Its transitive axiom dependencies may contain only <code>propext</code>, <code>Classical.choice</code>, and <code>Quot.sound</code>.</dd></div>
+            <div><dt>Instructions</dt><dd>Encodings are 32 bits. Fetching outside the code or at a non-4-byte-aligned address fails. <code>FENCE</code> has no effect; <code>EBREAK</code> fails.</dd></div>
+            <div><dt>Registers</dt><dd><code>x0–x31</code> are 64 bits. <code>x0</code> always reads zero and ignores writes. Aliases are <code>sp = x2</code>, <code>t0 = x5</code>, and <code>a0–a2 = x10–x12</code>. PC is separate.</dd></div>
+            <div><dt>Memory access</dt><dd>Addresses count bytes; multi-byte integers are little-endian. Loads and stores access only memory, not code. Accesses of 1, 2, 4, or 8 bytes require alignment to their size. Misaligned accesses fail.</dd></div>
+            <div><dt>Bounds</dt><dd>Every memory access and buffer must fit completely in memory. For unsigned byte address <code>p</code> and length <code>n</code>, require <code>p + n ≤ 0x1000000</code>. All size, layout, and bounds calculations use mathematical integers without overflow. Instruction arithmetic and effective-address calculation follow RV64IM.</dd></div>
+            <div><dt>Buffer layout</dt><dd>Cache, signature, and witness occupy separate consecutive areas, with up to seven alignment bytes after the signature. Require <code>0x20060 + 8 × ceil(S / 8) + W ≤ data_base</code> for each program.</dd></div>
+            <div><dt>Input loading</dt><dd>Reject incorrect sizes or buffers extending beyond <code>data_base</code>. Starting addresses are 8-byte aligned; lengths need not be multiples of eight.</dd></div>
+            <div><dt>Output extraction</dt><dd>Read each output at its declared size from its fixed address in final memory. On failure, ignore output buffers.</dd></div>
+            <div><dt>HASH arguments</dt><dd>Addresses and bit length <code>n</code> are unsigned 64-bit values. The input's <code>ceil(n / 8)</code> bytes and the output's 32 bytes must fit entirely in memory; check this before any oracle call or write. Both input and output addresses must be 8-byte aligned.</dd></div>
+            <div><dt>HASH execution</dt><dd>Read exactly <code>n</code> bits in increasing byte-address order, least-significant bit first within each byte; ignore unused high bits of the final byte. Read all input before writing the answer, so buffers may overlap. Preserve integer registers and advance PC by 4.</dd></div>
+            <div><dt>Faults</dt><dd>Unknown services, invalid arguments, invalid HALT statuses, invalid instruction encodings, and memory or instruction-fetch faults end the program with failure (<code>verify</code> rejects). Invalid fetches or encodings cost zero cycles; other faults cost one cycle and make no oracle call.</dd></div>
+          </dl>
+        </section>
+
+        <section id="project" class="rule-section">
+          <div class="section-kicker">07 / Source</div>
+          <h2>Lean project</h2>
+          <p><code>SigGolf.Certificate submission C</code> in <a href="https://github.com/leanEthereum/sig.golf-dev/blob/beta/SigGolf/Statements.lean">SigGolf/Statements.lean</a> is the competition claim for the exact four program images and declared sizes. <a href="https://github.com/leanEthereum/sig.golf-dev/blob/beta/SigGolf/Security.lean">SigGolf/Security.lean</a> defines the attacker and both forgery experiments; <a href="https://github.com/leanEthereum/sig.golf-dev/blob/beta/SigGolf/Riscv.lean">SigGolf/Riscv.lean</a> defines execution and costs.</p>
+          <p>Build the statements and regression checks with <code>lake build SigGolf SigGolfTests</code>. Dependencies are pinned in <code>lake-manifest.json</code>. These files define the requirements; they do not certify a particular signature scheme.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer wrap"><span>sig.golf</span><span><a href="/site/llms.txt">llms.tex</a> · <a href="https://github.com/leanEthereum/sig.golf-submissions/tree/beta">Github for submissions</a> · <a href="https://github.com/leanEthereum/sig.golf-dev/tree/beta">Github for Verification</a></span></footer>
+</body>
+</html>

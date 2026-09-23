@@ -7,27 +7,34 @@
   <title>sig.golf — Stateless signatures, proved</title>
   <link rel="stylesheet" href="/site/style.css">
   <script src="/site/storm.js" defer></script>
+  <script src="/site/demo-records.js" defer></script>
   <script src="/site/demo-data.js" defer></script>
 </head>
 <body>
   <svg id="page-bolt" aria-hidden="true" preserveAspectRatio="none">
-    <defs><filter id="bolt-blur" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="9"/></filter><radialGradient id="skyflash"><stop stop-color="#d8edff" stop-opacity=".62"/><stop offset=".42" stop-color="#79b7ef" stop-opacity=".27"/><stop offset="1" stop-color="#538cc9" stop-opacity="0"/></radialGradient><radialGradient id="handflash"><stop stop-color="#effaff" stop-opacity=".89"/><stop offset=".24" stop-color="#b3dcff" stop-opacity=".57"/><stop offset="1" stop-color="#78b8f7" stop-opacity="0"/></radialGradient></defs>
+    <defs>
+      <filter id="bolt-blur" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="9"/></filter>
+      <filter id="branch-blur" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="3.5"/></filter>
+      <radialGradient id="skyflash"><stop stop-color="#d8edff" stop-opacity=".62"/><stop offset=".42" stop-color="#79b7ef" stop-opacity=".27"/><stop offset="1" stop-color="#538cc9" stop-opacity="0"/></radialGradient>
+      <radialGradient id="handflash"><stop stop-color="#effaff" stop-opacity=".72"/><stop offset=".24" stop-color="#b3dcff" stop-opacity=".38"/><stop offset="1" stop-color="#78b8f7" stop-opacity="0"/></radialGradient>
+      <radialGradient id="treeflash"><stop stop-color="#c7e6ff" stop-opacity=".36"/><stop offset=".55" stop-color="#dbeeff" stop-opacity=".14"/><stop offset="1" stop-color="#dbeeff" stop-opacity="0"/></radialGradient>
+    </defs>
     <ellipse id="sky-glow" cx="0" cy="0" rx="0" ry="0" fill="url(#skyflash)" opacity="0"/>
     <ellipse id="hand-glow" cx="0" cy="0" rx="86" ry="86" fill="url(#handflash)" opacity="0"/>
     <g id="trees" opacity="0"></g>
-    <g id="energy" opacity="0"><path id="path-blur" fill="none" stroke="#75aefa" stroke-width="15" stroke-linejoin="round" stroke-linecap="round" filter="url(#bolt-blur)"/><path id="path-glow" fill="none" stroke="#286ec4" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><path id="path-core" fill="none" stroke="#f9fcff" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></g>
+    <g id="energy" opacity="0"><path id="path-blur" fill="none" stroke="#75aefa" stroke-width="18" stroke-linejoin="round" stroke-linecap="round" filter="url(#bolt-blur)"/><path id="path-glow" fill="none" stroke="#3b71a8" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><path id="path-core" fill="none" stroke="#fbfeff" stroke-width="2.1" stroke-linejoin="round" stroke-linecap="round"/></g>
   </svg>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-header wrap">
     <a class="brand" href="/site/" aria-label="sig.golf home">sig<span>.golf</span></a>
     <nav aria-label="Main navigation">
-      <a href="https://github.com/leanEthereum/sig.golf-dev/blob/beta/README.md">Rules</a>
+      <a href="/site/rules.html">Rules</a>
     </nav>
   </header>
 
   <main id="main" class="wrap">
     <section class="intro" aria-labelledby="page-title">
-      <h1 id="page-title">Make every byte<br>and cycle count.</h1>
+      <h1 id="page-title">Zeus seeks the best stateless hash-based signature.</h1>
       <p class="intro-copy">Build a stateless hash-based signature scheme. Prove it in Lean. Minimize the product of signature size and RISC-V verification time.</p>
     </section>
 
@@ -52,19 +59,24 @@
       <img id="zeus-full" class="zeus-full" src="/site/assets/zeus-full.png" alt="Full-length Zeus statue reaching for lightning, with his feet at the top edge of the score chart">
     </section>
 
+    <section class="pareto" aria-labelledby="pareto-title">
+      <div class="section-heading"><h2 id="pareto-title">Pareto frontier</h2></div>
+      <div class="score-plot"><svg id="pareto-chart" role="img" aria-label="Signature size versus verification cycles; the blue line marks non-dominated submissions"></svg></div>
+    </section>
+
     <section id="leaderboard" class="leaderboard" aria-labelledby="leaderboard-title">
       <div class="board-panel">
         <h2 id="leaderboard-title">Leaderboard</h2>
         <div class="table-wrap" role="region" tabindex="0" aria-labelledby="leaderboard-title">
           <table class="lb-table">
-            <thead><tr><th scope="col">Solver</th><th scope="col" class="number">Score</th><th scope="col" class="number">Signature</th><th scope="col" class="number">Cycles</th><th scope="col" class="number">Gain</th><th scope="col" class="number">Date</th></tr></thead>
-            <tbody id="leaders"><tr><td colspan="6" class="empty-row">No verified submissions yet.</td></tr></tbody>
+            <thead><tr><th scope="col">Solver</th><th scope="col" class="number">Score</th><th scope="col" class="number">Signature</th><th scope="col" class="number">Cycles</th><th scope="col" class="number">Date</th></tr></thead>
+            <tbody id="leaders"><tr><td colspan="5" class="empty-row">No verified submissions yet.</td></tr></tbody>
           </table>
         </div>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer wrap"><span>sig.golf · stateless signatures</span><span><a href="https://github.com/leanEthereum/sig.golf-dev/blob/beta/README.md">Rules</a> · <a href="https://github.com/leanEthereum/sig.golf-dev">Model and source</a> · <a href="https://github.com/leanEthereum/sig.golf-submissions">Submissions</a></span></footer>
+  <footer class="site-footer wrap"><span>sig.golf</span><span><a href="/site/llms.txt">llms.tex</a> · <a href="https://github.com/leanEthereum/sig.golf-submissions/tree/beta">Github for submissions</a> · <a href="https://github.com/leanEthereum/sig.golf-dev/tree/beta">Github for Verification</a></span></footer>
 </body>
 </html>

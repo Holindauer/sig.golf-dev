@@ -1,71 +1,46 @@
 'use strict';
 
-// Phony preview records. Remove this file and its script tag before launch.
-const previewFamilies = [
-  'Aster', 'Boreas', 'Cedar', 'Dorian', 'Echo', 'Fjord', 'Grove',
-  'Helios', 'Iris', 'Juniper', 'Kite', 'Laurel', 'Mosaic', 'Nereid'
-];
-let previewSeed = 0x51a7c0de;
-function previewRandom() {
-  previewSeed ^= previewSeed << 13;
-  previewSeed ^= previewSeed >>> 17;
-  previewSeed ^= previewSeed << 5;
-  return (previewSeed >>> 0) / 4294967296;
-}
-const previewScores = Array.from({length: 50}, (_, index) => {
-  const progress = index / 49;
-  const signature = Math.max(512, Math.round(
-    6100 * Math.exp(-1.45 * progress) * (.79 + .46 * previewRandom()) / 8
-  ) * 8);
-  const cycles = Math.max(8000, Math.round(
-    90000 * Math.exp(-1.75 * progress) * (.77 + .5 * previewRandom())
-  ));
-  return {
-    name: previewFamilies[index % previewFamilies.length] + ' ' +
-      (1 + Math.floor(index / previewFamilies.length)),
-    date: new Date(Date.UTC(2026, 1, 1 + index * 3)),
-    signature,
-    cycles,
-    score: signature * cycles
-  };
-});
-const previewFormat = value => value.toLocaleString('en-US');
-const previewRecords = [];
-let previewRecordScore = Infinity;
-for (const entry of previewScores) {
-  if (entry.score < previewRecordScore) {
-    previewRecords.push(entry);
-    previewRecordScore = entry.score;
-  }
-}
+// Phony preview records. Replace with verified submission data before launch.
 document.querySelector('#best-score').textContent = previewFormat(previewRecordScore);
 
 const previewLeaders = document.querySelector('#leaders');
 previewLeaders.replaceChildren();
-const recentRecords = previewRecords.slice(-10).reverse();
-for (const [index, entry] of recentRecords.entries()) {
+const sortedEntries = [...previewScores].sort((a, b) => a.score - b.score || a.date - b.date);
+for (const [index, entry] of sortedEntries.entries()) {
   const row = document.createElement('tr');
   row.className = 'lb-row' + (index === 0 ? ' current' : '');
+  row.addEventListener('click', event => {
+    if (!event.target.closest('a')) location.href = previewSubmissionUrl(entry);
+  });
   const solver = document.createElement('td');
   solver.className = 'lb-solver';
-  for (const [className, value] of [
-    ['lb-rank', String(index + 1).padStart(2, '0')],
-    ['lb-avatar', entry.name[0]],
-    ['lb-login', entry.name]
-  ]) {
-    const span = document.createElement('span');
-    span.className = className;
-    span.textContent = value;
-    solver.appendChild(span);
+  const rank = document.createElement('span');
+  rank.className = 'lb-rank';
+  rank.textContent = String(index + 1).padStart(2, '0');
+  solver.append(rank, previewAvatar(entry.profile));
+  const solverLink = document.createElement('a');
+  solverLink.className = 'lb-login';
+  solverLink.href = previewSolverUrl(entry.profile);
+  solverLink.textContent = entry.profile.login;
+  solver.appendChild(solverLink);
+  if (entry.assistant) {
+    const badge = document.createElement('span');
+    badge.className = 'lb-model';
+    badge.textContent = entry.assistant;
+    badge.title = 'Assisted by ' + entry.assistant;
+    solver.appendChild(badge);
   }
   row.appendChild(solver);
-  const previous = previewRecords[previewRecords.indexOf(entry) - 1];
-  const gain = previous ? '−' + previewFormat(previous.score - entry.score) : 'first record';
+  const score = document.createElement('td');
+  score.className = 'number lb-score';
+  const scoreLink = document.createElement('a');
+  scoreLink.href = previewSubmissionUrl(entry);
+  scoreLink.textContent = previewFormat(entry.score);
+  score.appendChild(scoreLink);
+  row.appendChild(score);
   for (const [text, className] of [
-    [previewFormat(entry.score), 'number lb-score'],
     [previewFormat(entry.signature) + ' B', 'number'],
     [previewFormat(entry.cycles), 'number'],
-    [gain, 'number lb-gain'],
     [entry.date.toLocaleDateString('en-US', {month: 'short', day: 'numeric', timeZone: 'UTC'}), 'number lb-date']
   ]) {
     const cell = document.createElement('td');
@@ -85,6 +60,7 @@ function chartNode(parent, tag, attributes, content) {
   return node;
 }
 function compactScore(value) {
+  if (value === 0) return '0';
   if (value >= 1000000000) return (value / 1000000000).toFixed(1) + 'B';
   if (value >= 1000000) return Math.round(value / 1000000) + 'M';
   return Math.round(value / 1000) + 'k';
@@ -102,19 +78,15 @@ function renderPreviewChart() {
   const top = 36;
   const bottom = height - 36;
   const dataRight = width - (desktop ? 205 : 14);
-  const values = previewScores.map(entry => Math.log(entry.score));
-  const low = Math.min(...values);
-  const high = Math.max(...values);
-  const pad = (high - low) * .08;
-  const minLog = low - pad;
-  const maxLog = high + pad;
-  const yFor = score => top + (maxLog - Math.log(score)) / (maxLog - minLog) * (bottom - top);
+  const maxScore = Math.max(...previewScores.map(entry => entry.score));
+  const axisMax = Math.ceil(maxScore / 250000000) * 250000000;
+  const yFor = score => top + (axisMax - score) / axisMax * (bottom - top);
   const xFor = index => left + index / (previewScores.length - 1) * (dataRight - left);
 
   chartNode(chart, 'text', {
     x: left, y: 15, fill: '#737b80', 'font-size': '12',
     'font-family': 'system-ui, sans-serif'
-  }, 'Score (log scale)');
+  }, 'Score');
 
   for (let tick = 0; tick <= 4; tick++) {
     const y = top + tick / 4 * (bottom - top);
@@ -122,7 +94,7 @@ function renderPreviewChart() {
       x1: left, y1: y, x2: dataRight, y2: y,
       stroke: '#e3e5e5', 'stroke-width': '1'
     });
-    const value = Math.exp(maxLog - tick / 4 * (maxLog - minLog));
+    const value = axisMax * (1 - tick / 4);
     chartNode(chart, 'text', {
       x: left - 9, y: y + 4, 'text-anchor': 'end',
       fill: '#737b80', 'font-size': '11',
@@ -167,13 +139,20 @@ function renderPreviewChart() {
   previewScores.forEach((entry, index) => {
     const isRecord = entry.score < runningBest;
     runningBest = Math.min(runningBest, entry.score);
-    const dot = chartNode(chart, 'circle', {
+    const point = chartNode(chart, 'a', {
+      href: previewSubmissionUrl(entry), tabindex: '0',
+      'aria-label': entry.name + ', score ' + previewFormat(entry.score) + '. View submission.'
+    });
+    chartNode(point, 'circle', {
+      class: 'hit-area', cx: xFor(index), cy: yFor(entry.score), r: 12
+    });
+    const dot = chartNode(point, 'circle', {
       cx: xFor(index), cy: yFor(entry.score),
       r: isRecord ? 4.5 : 2.5,
       fill: isRecord ? '#286ec4' : '#8caed1',
       stroke: isRecord ? '#fff' : 'none',
       'stroke-width': isRecord ? '1.8' : '0',
-      opacity: isRecord ? '1' : '.75', tabindex: '0'
+      opacity: isRecord ? '1' : '.75'
     });
     chartNode(dot, 'title', {},
       entry.name + ' · ' + entry.date.toISOString().slice(0, 10) +
@@ -211,6 +190,83 @@ function renderPreviewChart() {
     }, previewFormat(previewRecordScore));
   }
 }
+function renderParetoChart() {
+  const chart = document.querySelector('#pareto-chart');
+  const width = Math.round(chart.clientWidth);
+  const height = Math.round(chart.clientHeight);
+  if (!width || !height) return;
+  chart.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+  chart.replaceChildren();
+
+  const left = width > 760 ? 64 : 48;
+  const right = width - 22;
+  const top = 34;
+  const bottom = height - 58;
+  const maxSignature = Math.ceil(Math.max(...previewScores.map(x => x.signature)) / 1000) * 1000;
+  const maxCycles = Math.ceil(Math.max(...previewScores.map(x => x.cycles)) / 20000) * 20000;
+  const xFor = signature => left + signature / maxSignature * (right - left);
+  const yFor = cycles => top + (maxCycles - cycles) / maxCycles * (bottom - top);
+
+  chartNode(chart, 'text', {
+    x: left, y: 15, fill: '#737b80', 'font-size': '12',
+    'font-family': 'system-ui, sans-serif'
+  }, width < 340 ? 'Cycles' : 'Verification cycles');
+  chartNode(chart, 'text', {
+    x: (left + right) / 2, y: height - 5, 'text-anchor': 'middle',
+    fill: '#737b80', 'font-size': '12', 'font-family': 'system-ui, sans-serif'
+  }, 'Signature size (bytes) →');
+  for (let tick = 0; tick <= 4; tick++) {
+    const y = top + tick / 4 * (bottom - top);
+    const x = left + tick / 4 * (right - left);
+    chartNode(chart, 'line', {
+      x1: left, y1: y, x2: right, y2: y, stroke: '#e3e5e5', 'stroke-width': '1'
+    });
+    chartNode(chart, 'text', {
+      x: left - 9, y: y + 4, 'text-anchor': 'end', fill: '#737b80',
+      'font-size': '11', 'font-family': 'system-ui, sans-serif'
+    }, compactScore(maxCycles * (1 - tick / 4)));
+    chartNode(chart, 'text', {
+      x, y: bottom + 18, 'text-anchor': tick === 0 ? 'start' : tick === 4 ? 'end' : 'middle',
+      fill: '#737b80', 'font-size': '11', 'font-family': 'system-ui, sans-serif'
+    }, previewFormat(maxSignature * tick / 4));
+  }
+  chartNode(chart, 'line', {
+    x1: left, y1: top, x2: left, y2: bottom, stroke: '#e3e5e5', 'stroke-width': '1'
+  });
+
+  const frontier = previewPareto.map((entry, index) =>
+    (index ? ' L' : 'M') + xFor(entry.signature).toFixed(1) + ' ' +
+    yFor(entry.cycles).toFixed(1)).join('');
+  chartNode(chart, 'path', {
+    d: frontier, fill: 'none', stroke: '#286ec4',
+    'stroke-width': '2.5', 'stroke-linejoin': 'round'
+  });
+  for (const entry of [...previewScores.filter(x => !x.pareto), ...previewPareto]) {
+    const point = chartNode(chart, 'a', {
+      href: previewSubmissionUrl(entry), tabindex: '0',
+      'aria-label': entry.name + ', ' + previewFormat(entry.signature) +
+        ' signature bytes and ' + previewFormat(entry.cycles) +
+        ' verification cycles. View submission.'
+    });
+    chartNode(point, 'circle', {
+      class: 'hit-area', cx: xFor(entry.signature), cy: yFor(entry.cycles), r: 12
+    });
+    const dot = chartNode(point, 'circle', {
+      cx: xFor(entry.signature), cy: yFor(entry.cycles),
+      r: entry.pareto ? 5 : 3, fill: entry.pareto ? '#286ec4' : '#9bb5ce',
+      stroke: entry.pareto ? '#fff' : 'none',
+      'stroke-width': entry.pareto ? '1.8' : '0',
+      opacity: entry.pareto ? '1' : '.65'
+    });
+    chartNode(dot, 'title', {}, entry.name + ' · ' +
+      previewFormat(entry.signature) + ' B × ' + previewFormat(entry.cycles) +
+      ' cycles = ' + previewFormat(entry.score) +
+      (entry.pareto ? ' · Pareto frontier' : ''));
+  }
+}
 renderPreviewChart();
-addEventListener('resize', () => requestAnimationFrame(renderPreviewChart));
-window.previewScores = previewScores;
+renderParetoChart();
+addEventListener('resize', () => requestAnimationFrame(() => {
+  renderPreviewChart();
+  renderParetoChart();
+}));

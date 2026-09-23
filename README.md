@@ -40,7 +40,7 @@ Every object has a fixed size in bytes:
 | `expand` | Message, public key, signature   | Witness or failure               | Prover host |
 | `verify` | Message, public key, witness     | Accept or reject                 | zkVM        |
 
-The seed is secret. The cache is public and untrusted. `expand` converts the compact signature into a verification witness, for example by unprunning Merkle paths. It may simply copy the signature when `S = W`.
+The seed is secret. The cache is public and untrusted. `expand` converts the compact signature into a verification witness, for example by restoring pruned Merkle paths. It may simply copy the signature when `S = W`.
 
 ## Model and costs
 

@@ -116,7 +116,8 @@ function newStrike() {
   pageHand = hand;
   $('#hand-glow').setAttribute('cx', pageHand.x);
   $('#hand-glow').setAttribute('cy', pageHand.y);
-  const top = {x: clamp(pageHand.x + (unit() - .5) * width * .28, 20, width - 20), y: -18};
+  const topRange = clamp(width * .045, 18, 55);
+  const top = {x: clamp(pageHand.x + (unit() - .5) * topRange * 2, 20, width - 20), y: -18};
   const skyGlow = $('#sky-glow');
   skyGlow.setAttribute('cx', mix(top.x, pageHand.x, .4));
   skyGlow.setAttribute('cy', pageHand.y * .3);
@@ -160,19 +161,50 @@ function newStrike() {
     const target = targets[treeIndex];
     const leaf = leaves[treeIndex];
     const points = treeShape(root, target, leaf, width, baseSpread);
-    const group = element('g', {
-      fill: 'none', stroke: '#6c8bac', 'stroke-width': '1.35',
-      'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: '.53'
-    }, trees);
+    const group = element('g', {'stroke-linecap': 'round', 'stroke-linejoin': 'round'}, trees);
+    element('ellipse', {
+      cx: mix(root.x, target.x, .5), cy: mix(root.y, target.y, .5),
+      rx: Math.min(baseSpread * 1.18, width * .3), ry: Math.max(28, span * .75),
+      fill: 'url(#treeflash)', stroke: 'none'
+    }, group);
+    const branches = element('g', {fill: 'none'}, group);
+    const aura = element('g', {filter: 'url(#branch-blur)'}, branches);
+    const body = element('g', {}, branches);
+    const shine = element('g', {}, branches);
     const edges = [];
     for (let id = 2; id < 32; id++) {
       const edge = jaggedEdge(points[id >> 1], points[id], 3, 11);
       edges[id] = edge;
-      element('path', {d: pathData(edge)}, group);
+      const depth = Math.floor(Math.log2(id));
+      const d = pathData(edge);
+      const widthAtDepth = [0, 3.1, 2.5, 1.85, 1.28][depth];
+      element('path', {
+        d, stroke: '#88beef', 'stroke-width': (widthAtDepth * 4).toFixed(2),
+        opacity: '.24'
+      }, aura);
+      element('path', {
+        d, stroke: '#53799c', 'stroke-width': widthAtDepth.toFixed(2), opacity: '.74'
+      }, body);
+      element('path', {
+        d, stroke: '#e5f4ff', 'stroke-width': (widthAtDepth * .31).toFixed(2), opacity: '.82'
+      }, shine);
     }
-    const nodes = element('g', {fill: '#7f9eb9', stroke: 'none', opacity: '.72'}, group);
+    const nodes = element('g', {stroke: 'none'}, group);
     for (let id = 1; id < 32; id++) {
-      element('circle', {cx: points[id].x, cy: points[id].y, r: id === 1 ? 2 : 1.25}, nodes);
+      const point = points[id];
+      const isLeaf = id >= 16;
+      const radius = isLeaf ? 1.35 : id === 1 ? 3 : 2.15;
+      if (treeIndex !== 2 || id !== leaf) {
+        element('circle', {cx: point.x, cy: point.y, r: radius * 2.7,
+          fill: '#b0d9fb', opacity: isLeaf ? '.23' : '.28', filter: 'url(#branch-blur)'}, nodes);
+      }
+      if (!isLeaf && !(treeIndex === 2 && id === leaf)) {
+        element('circle', {cx: point.x, cy: point.y, r: radius,
+          fill: '#f8fcff', stroke: '#688dad', 'stroke-width': '.72', opacity: '.9'}, nodes);
+      } else if (id !== leaf || treeIndex !== 2) {
+        element('circle', {cx: point.x, cy: point.y, r: radius,
+          fill: '#c4e4fb', opacity: '.85'}, nodes);
+      }
     }
     for (const id of selectedIds(leaf)) pageRoute.push(...edges[id].slice(1));
     layout.push({root, target, leaf, spread: baseSpread});

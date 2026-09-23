@@ -1,0 +1,56 @@
+.rules-page { padding-top: 16px; }
+.rules-layout { display: grid; grid-template-columns: 190px minmax(0,1fr); gap: 58px; align-items: start; }
+.rules-toc { position: sticky; top: 30px; display: grid; gap: 2px; padding: 34px 0; }
+.toc-heading { margin: 0 0 12px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; }
+.rules-toc a { padding: 6px 0 6px 10px; border-left: 2px solid transparent; color: var(--secondary); font-size: 13px; }
+.rules-toc a:hover { color: var(--blue-dark); }
+.rules-toc a[aria-current="location"] { border-left-color: var(--blue); color: var(--blue-dark); background: #eaf3fc; font-weight: 700; }
+.rules-content { min-width: 0; }
+.rule-section { padding: 34px 0 42px; border-bottom: 1px solid var(--line); scroll-margin-top: 25px; }
+.rule-section:last-child { border-bottom: 0; padding-bottom: 0; }
+.section-kicker { color: var(--blue-dark); font-size: 11px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
+.rule-section h2 { margin: 8px 0 16px; font-size: 30px; line-height: 1.2; }
+.rule-section h3 { margin: 30px 0 10px; font-size: 18px; line-height: 1.3; letter-spacing: -.02em; }
+.rule-section p { margin: 12px 0; color: var(--secondary); }
+.rule-section p:first-of-type { margin-top: 0; }
+.rule-section code { color: #20364b; font: .93em/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+.rule-table-wrap { max-width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+.rule-table-wrap table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.45; }
+.rule-table-wrap caption { padding: 13px 15px 9px; text-align: left; font-size: 13px; font-weight: 700; }
+.rule-table-wrap th { padding: 9px 13px; background: #f4f6f7; color: var(--muted); text-align: left; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.rule-table-wrap td { padding: 9px 13px; border-top: 1px solid var(--line); vertical-align: top; }
+.rule-table-wrap td:last-child { white-space: nowrap; }
+.table-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.table-grid .rule-table-wrap td { padding-top: 7px; padding-bottom: 7px; }
+.claim-list { display: grid; gap: 8px; padding: 0; margin: 16px 0; list-style: none; counter-reset: claim; }
+.claim-list li { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 16px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); counter-increment: claim; }
+.claim-list b { font-size: 13px; }
+.claim-list b:before { content: counter(claim,decimal-leading-zero) ' / '; margin-right: 4px; color: var(--blue); font-size: 11px; }
+.claim-list span { color: var(--secondary); font-size: 13px; }
+.fine-print { font-size: 12px; }
+.two-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 20px; }
+.detail-card { padding: 16px 17px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13px; }
+.detail-card b { font-size: 13px; }
+.detail-card p { margin: 8px 0 0; }
+.callout { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 15px; margin: 18px 0; padding: 16px 17px; border-left: 3px solid var(--blue); border-radius: 7px; background: #eaf3fc; font-size: 13px; }
+.callout span { color: #334f6d; }
+.detail-list { margin: 14px 0 0; }
+.detail-list > div { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 18px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.detail-list dt { font-weight: 700; }
+.detail-list dd { margin: 0; color: var(--secondary); }
+@media (max-width: 900px) {
+  .rules-layout { grid-template-columns: 150px minmax(0,1fr); gap: 30px; }
+  .table-grid, .two-cards { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px) {
+  .rules-page { padding-top: 10px; }
+  .rules-layout { display: block; }
+  .rules-toc { position: static; display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 22px 0 3px; }
+  .toc-heading { flex-basis: 100%; margin-bottom: 2px; }
+  .rules-toc a { padding: 4px 0; }
+  .rule-section { padding: 26px 0 31px; }
+  .rule-section h2 { font-size: 26px; }
+  .claim-list li, .callout, .detail-list > div { grid-template-columns: 1fr; gap: 4px; }
+  .rule-table-wrap table { min-width: 430px; }
+  .table-grid .rule-table-wrap table { min-width: 0; }
+}
