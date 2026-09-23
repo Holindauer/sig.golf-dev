@@ -81,7 +81,12 @@ def linux_preflight(env: dict[str, str]) -> None:
 
 def linux_command(cmd: list[str], project: Path, env: dict[str, str], hidden: list[Path]) -> tuple[list[str], dict[str, str]]:
     unit = 'sig-verify-' + uuid.uuid4().hex[:12]
+    # Lake scales its parallel builds to visible CPUs; the host has eight CPUs but the
+    # verification cgroup has only 24 GiB. Keep large independent Lean modules from
+    # collectively exhausting that memory limit.
+    cpus = sorted(os.sched_getaffinity(0))[:2]
     properties = [f'MemoryMax={MEMORY_BYTES}', 'MemorySwapMax=0', f'RuntimeMaxSec={WALL_SECONDS}',
+                  f'CPUAffinity={" ".join(map(str, cpus))}',
                   'KillMode=control-group', 'TimeoutStopSec=5', 'SendSIGKILL=yes', 'TasksMax=512',
                   'RestrictAddressFamilies=~AF_UNIX', 'NoNewPrivileges=yes', 'ProtectSystem=strict',
                   f'ReadWritePaths={project / ".lake"}', 'PrivatePIDs=yes', 'ProcSubset=pid',
