@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "summary": "A 30-byte message digest selects 14 FORS leaves and one path through seven XMSS layers. FORS reconstructs a 16-byte key; seven WOTS+/Merkle proofs authenticate it to the 16-byte public root.",
+  "diagram": true,
+  "facts": [
+    {
+      "label": "Signature",
+      "value": "R 16 B + FORS 2,912 B + hypertree 4,928 B = 7,856 B"
+    },
+    {
+      "label": "Message digest",
+      "value": "30 B → 14 × 12-bit FORS indices + 54-bit tree index + 9-bit leaf index"
+    },
+    {
+      "label": "FORS",
+      "value": "14 trees, height 12; per tree: 16 B secret + 12 × 16 B siblings = 208 B"
+    },
+    {
+      "label": "XMSS hypertree",
+      "value": "7 layers, height 9 each; per layer: 35 × 16 B WOTS+ values + 9 × 16 B siblings = 704 B"
+    },
+    {
+      "label": "WOTS+ encoding",
+      "value": "16-byte value → 32 base-16 digits + 3 checksum digits"
+    },
+    {
+      "label": "Public key",
+      "value": "16 B · hypertree root"
+    }
+  ],
+  "profile": {
+    "samples": 0,
+    "method": "REPLACE: describe how your accepting RISC-V verification runs were sampled",
+    "instructions": {
+      "HALT": 0
+    },
+    "hashes": {
+      "[INPUT_BITS]": 0
+    }
+  }
+}

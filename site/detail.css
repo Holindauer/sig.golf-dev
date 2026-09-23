@@ -1,4 +1,4 @@
-.detail-page { max-width: 960px; min-height: 70vh; padding-top: 34px; }
+.detail-page { max-width: 1144px; min-height: 70vh; padding-top: 34px; }
 .detail-back { color: var(--secondary); font-size: 13px; }
 .detail-page h1 { margin: 16px 0 8px; font-size: clamp(34px, 5vw, 52px); letter-spacing: -.05em; line-height: 1.1; }
 .detail-notice { margin: 14px 0 28px; padding: 12px 16px; border-left: 3px solid var(--blue); border-radius: 5px; background: #eaf3fc; color: #334f6d; font-size: 13px; }
@@ -26,3 +26,19 @@
   .metric-card strong { font-size: 23px; }
   .detail-facts dl > div { grid-template-columns: 105px 1fr; }
 }
+
+.presentation-panel { margin-top: 22px; }
+.presentation-panel[hidden], .presentation-diagram[hidden] { display: none; }
+.presentation-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.presentation-untrusted { color: var(--muted); font-size: 12px; }
+.presentation-summary { max-width: 75ch; margin: 15px 0; white-space: pre-line; }
+.presentation-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; margin: 0 0 16px; }
+.presentation-facts > div { display: flex; gap: 7px; min-width: 0; }
+.presentation-facts dt { color: var(--muted); white-space: nowrap; }
+.presentation-facts dd { margin: 0; overflow-wrap: anywhere; }
+.presentation-diagram { display: grid; place-items: center; overflow: auto; padding: 14px; border: 1px solid var(--data-grid); border-radius: 8px; background: var(--surface); }
+.presentation-diagram img { display: block; width: 100%; min-width: 850px; max-width: 1300px; height: auto; }
+.profile-method { margin: 12px 0 0; color: var(--secondary); font-size: 13px; }
+.profile-table { min-width: 400px; }
+.profile-table td { font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) { .presentation-facts { grid-template-columns: 1fr; } }

@@ -8,3 +8,13 @@ Submit by opening a PR against beta: https://github.com/leanEthereum/sig.golf-su
 PR layout: https://github.com/leanEthereum/sig.golf-submissions/blob/beta/README.md
 
 Verified results are published in /site/records.json.
+
+Include presentation/ beside submission/ in every PR. Copy and customize:
+- /site/examples/presentation-template/presentation.json
+- /site/examples/presentation-template/scheme.svg
+
+Explain the scheme briefly and draw its signature layout, encoding, authentication, and witness expansion.
+
+Profile N accepting runs: samples=N; instructions={mnemonic: total}, with HALT=N; hashes={input_bits: total_calls}. Describe sampling in method. Submit integer totals, not averages; the site computes per-run counts and cycles.
+
+Each file ≤64 KiB. SVG must be static, without scripts or external resources. Displayed as “Provided by submission · not verified”; no effect on scoring.

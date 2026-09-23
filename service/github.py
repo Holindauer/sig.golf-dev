@@ -10,6 +10,8 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+from presentation import PresentationError, validate_json, validate_svg, MAX_PRESENTATION_BYTES
+
 REPO = 'leanEthereum/sig.golf-submissions'
 BRANCH = 'beta'
 SHA = re.compile(r'[0-9a-f]{40}|[0-9a-f]{64}')
@@ -65,7 +67,7 @@ class Github:
                   {'state': state, 'context': context, 'description': description[:140],
                    'target_url': f'https://beta.sig.golf/site/'})
 
-    def source_tree(self, commit: str) -> str:
+    def _pr_root_items(self, commit: str) -> list[dict]:
         info = self.get(f'/repos/{REPO}/git/commits/{commit}')
         tree = info.get('tree', {}).get('sha') if isinstance(info, dict) else None
         if not isinstance(tree, str) or not SHA.fullmatch(tree):
@@ -73,10 +75,57 @@ class Github:
         listing = self.get(f'/repos/{REPO}/git/trees/{tree}')
         if not isinstance(listing, dict) or listing.get('truncated') is not False:
             raise GithubError('GitHub returned an incomplete PR tree')
-        items = [item for item in listing.get('tree', []) if item.get('path') == 'submission']
+        return listing.get('tree', [])
+
+    def source_tree(self, commit: str) -> str:
+        items = [item for item in self._pr_root_items(commit) if item.get('path') == 'submission']
         if len(items) != 1 or items[0].get('type') != 'tree' or not SHA.fullmatch(items[0].get('sha', '')):
             raise GithubError('PR has no submission tree')
         return items[0]['sha']
+
+    def presentation_tree(self, commit: str, claim: dict) -> str | None:
+        """Return a validated optional tree, or ignore malformed display-only files."""
+        roots = [item for item in self._pr_root_items(commit) if item.get('path') == 'presentation']
+        if not roots:
+            return None
+        try:
+            if len(roots) != 1 or roots[0].get('type') != 'tree' or not SHA.fullmatch(roots[0].get('sha', '')):
+                raise PresentationError('presentation must be a directory')
+            tree = roots[0]['sha']
+            listing = self.get(f'/repos/{REPO}/git/trees/{tree}')
+            if not isinstance(listing, dict) or listing.get('truncated') is not False:
+                raise PresentationError('incomplete presentation tree')
+            files = listing.get('tree', [])
+            if not isinstance(files, list) or not 1 <= len(files) <= 2:
+                raise PresentationError('presentation needs presentation.json and optional scheme.svg')
+            entries = {item.get('path'): item for item in files}
+            if set(entries) - {'presentation.json', 'scheme.svg'} or 'presentation.json' not in entries:
+                raise PresentationError('presentation contains unknown files')
+            for name, item in entries.items():
+                if (item.get('type') != 'blob' or item.get('mode') not in {'100644', '100755'} or not SHA.fullmatch(item.get('sha', '')) or
+                        type(item.get('size')) is not int or not 0 <= item['size'] <= MAX_PRESENTATION_BYTES):
+                    raise PresentationError(f'{name} is not a bounded regular file')
+            def blob(name: str) -> bytes:
+                response = self.get(f'/repos/{REPO}/git/blobs/{entries[name]["sha"]}')
+                if not isinstance(response, dict) or response.get('encoding') != 'base64':
+                    raise PresentationError(f'{name} has invalid blob encoding')
+                try:
+                    data = base64.b64decode(''.join(response['content'].split()), validate=True)
+                except (KeyError, ValueError, TypeError, AttributeError) as exc:
+                    raise PresentationError(f'{name} is not base64') from exc
+                if len(data) != entries[name]['size']:
+                    raise PresentationError(f'{name} blob size changed')
+                return data
+            metadata = validate_json(blob('presentation.json'), claim)
+            if metadata.get('diagram', False) != ('scheme.svg' in entries):
+                raise PresentationError('diagram flag must match scheme.svg')
+            if 'scheme.svg' in entries:
+                validate_svg(blob('scheme.svg'))
+            return tree
+        except PresentationError as exc:
+            print(f'Ignoring invalid optional presentation at {commit}: {exc}', flush=True)
+            return None
+
 
 
 def registry_from_branch(api: Github) -> dict:
@@ -94,7 +143,7 @@ def registry_from_branch(api: Github) -> dict:
         if len(raw) > MAX_REGISTRY:
             raise ValueError('too large')
         registry = json.loads(raw)
-    except (KeyError, ValueError, TypeError) as exc:
+    except (KeyError, ValueError, TypeError, AttributeError) as exc:
         raise GithubError('invalid records.json') from exc
     if (not isinstance(registry, dict) or registry.get('version') != 1 or
             not isinstance(registry.get('submissions'), list)):
@@ -145,7 +194,10 @@ def publish_verified(api: Github, pr: dict, result: dict, contract: str,
     if not isinstance(fresh, dict) or fresh.get('head', {}).get('sha') != commit:
         raise GithubError('PR head changed after verification')
     tree = api.source_tree(commit)
+    presentation = api.presentation_tree(commit, result["claim"])
     candidate = _entry(pr, result, contract, tree)
+    if presentation is not None:
+        candidate["presentation"] = True
     for _ in range(3):
         ref = api.get(f'/repos/{REPO}/git/ref/heads/{BRANCH}')
         head = ref.get('object', {}).get('sha') if isinstance(ref, dict) else None
@@ -174,9 +226,16 @@ def publish_verified(api: Github, pr: dict, result: dict, contract: str,
         blob = api.post(f'/repos/{REPO}/git/blobs', {'content': raw.decode(), 'encoding': 'utf-8'})
         if not SHA.fullmatch(blob.get('sha', '')):
             raise GithubError('invalid record blob')
+        snapshot_tree = tree
+        if presentation is not None:
+            combined = api.post(f'/repos/{REPO}/git/trees', {'base_tree': tree, 'tree': [
+                {'path': 'presentation', 'mode': '040000', 'type': 'tree', 'sha': presentation}]})
+            snapshot_tree = combined.get('sha', '')
+            if not SHA.fullmatch(snapshot_tree):
+                raise GithubError('invalid presentation snapshot tree')
         new_tree = api.post(f'/repos/{REPO}/git/trees', {'base_tree': base_tree, 'tree': [
             {'path': 'records.json', 'mode': '100644', 'type': 'blob', 'sha': blob['sha']},
-            {'path': candidate['source_path'], 'mode': '040000', 'type': 'tree', 'sha': tree}]})
+            {'path': candidate['source_path'], 'mode': '040000', 'type': 'tree', 'sha': snapshot_tree}]})
         if not SHA.fullmatch(new_tree.get('sha', '')):
             raise GithubError('invalid publication tree')
         message = f"Verify PR #{pr['number']}: {candidate['score']} (beta)"
