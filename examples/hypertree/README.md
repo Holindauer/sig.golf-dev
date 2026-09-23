@@ -1,13 +1,13 @@
 # Binary hypertree candidate
 
-The four RISC-V images have a complete Lean certificate: `SigGolfCandidate.Hypertree.Candidate.certificate : SigGolf.Certificate submission 5883520`, in [Certificate.lean](../../SigGolfCandidate/Hypertree/Certificate.lean).
+The four RISC-V images have a complete Lean certificate: `SigGolfCandidate.Hypertree.Candidate.certificate : SigGolf.Certificate submission 5652800`, in [Certificate.lean](../../SigGolfCandidate/Hypertree/Certificate.lean).
 
 | Parameter | Value |
 | --- | ---: |
 | Signature bytes S | 119,632 |
 | Witness bytes W | 119,632 |
-| Maximum honest verification cycles C | 5,883,520 |
-| Score S × C | 703,857,264,640 |
+| Maximum honest verification cycles C | 5,652,800 |
+| Score S × C | 676,255,769,600 |
 
 The signer derives a 32-byte randomizer as H(domain 6, secret key, message) and includes it in the signature. The index is the low 160 bits of H(domain 5, public key, message, randomizer). The construction uses two hash-preimage leaves at the bottom and 159 layers of two-leaf Merkle trees with base-8 Winternitz signatures (46 chains, 128-bit values). It has no FORS component. Signing ignores the public cache. Expansion copies the signature.
 
@@ -27,10 +27,12 @@ The proof connects the organizer's bytecode security experiment to the reference
 | Key generation | 82,446 | 739 | 761 |
 | Signing | 16,922,843 | 117,508 | 121,008 |
 | Expansion | 89,733 | 0 | 0 |
-| Verification | 5,883,520 | ≤ 51,841 | ≤ 53,602 |
+| Verification | 5,652,800 | ≤ 51,841 | ≤ 53,602 |
 
 Key-generation and expansion counts are exact. Signing hash counts are exact for a matching public key; its cycle count is an upper bound. Verification bounds cover arbitrary typed witnesses.
 
 Check the rules, regressions, and complete certificate with `lake build SigGolf SigGolfTests SigGolfCandidate`.
 
 Regenerate images with `python3 examples/hypertree/build.py` and key-generation resource checkpoints with `python3 examples/hypertree/keygen_resources.py`. Run the independent algorithm/bytecode comparison with `python3 examples/hypertree/check.py`. Its SHA-256 sample is recorded in `measured-run.json`; the universal bounds and random-oracle security come from the Lean proofs.
+
+The verifier cycle proof uses the Winternitz checksum to bound the sum of chain lengths. The 46 digits sum to at least 14, so at most 308 chain hashes are needed per upper leaf. This tightens the certified cost without changing the program images or signature format.

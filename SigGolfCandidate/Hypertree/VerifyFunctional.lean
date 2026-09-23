@@ -10,7 +10,7 @@ theorem loaded_recovery (hash : Hash) (pk : PublicKey) (message : Message) (witn
     ∃ initial recovered steps cycles calls blocks,
       initialState submission .verify (message, pk, witness) = some initial ∧
       Trace hash verify initial steps cycles calls blocks recovered ∧
-      steps ≤ 5506530 ∧ cycles ≤ 5883505 ∧ calls ≤ 51841 ∧ blocks ≤ 53602 ∧
+      steps ≤ 5506530 ∧ cycles ≤ 5652785 ∧ calls ≤ 51841 ∧ blocks ≤ 53602 ∧
       recovered.pc = 0x1220 ∧
       (RootMatches recovered ↔ Reference.verify hash pk message (SignatureEncoding.decode witness).toReference) := by
   obtain ⟨initial, ready, loaded, pre, pc, data, preFrame⟩ := loaded_loop_data hash pk message witness
@@ -39,7 +39,7 @@ theorem loaded_recovery (hash : Hash) (pk : PublicKey) (message : Message) (witn
 
 /-- Universal bytecode refinement, including malformed witnesses and exact accept/reject behavior. -/
 theorem run_refines (hash : Hash) (pk : PublicKey) (message : Message) (witness : Bytes signatureBytes) :
-    ∃ cycles calls blocks, cycles ≤ 5883520 ∧ calls ≤ 51841 ∧ blocks ≤ 53602 ∧
+    ∃ cycles calls blocks, cycles ≤ 5652800 ∧ calls ≤ 51841 ∧ blocks ≤ 53602 ∧
       submission.runWith hash .verify (message, pk, witness) =
         ⟨if Reference.verify hash pk message (SignatureEncoding.decode witness).toReference then some () else none,
           true, cycles, calls, blocks⟩ := by
