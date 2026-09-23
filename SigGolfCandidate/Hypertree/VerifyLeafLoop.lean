@@ -17,7 +17,7 @@ theorem leaf_loop (hash : Hash) (s : MachineState) (level tree : Nat) (side : Bo
     (completed : EndpointPrefix s (recoveredEndpoint hash level tree side message values) start)
     (aligned : base % 8 = 0) (bound : base+736 ≤ 0x80000) :
     ∃ final steps cycles calls, Trace hash verify s steps cycles calls calls final ∧
-      steps ≤ 721*remaining ∧ cycles + 103 * ChainCost.chainPrefix message start ≤ 103 * ChainCost.chainPrefix message 46 + 49*remaining ∧ calls ≤ 7*remaining ∧ final.pc = 0x1690 ∧
+      steps ≤ 721*remaining ∧ cycles + 89 * ChainCost.chainPrefix message start ≤ 89 * ChainCost.chainPrefix message 46 + 49*remaining ∧ calls ≤ 7*remaining ∧ final.pc = 0x1690 ∧
       final.getMem 0x80430 = 46 ∧ LeafData final level tree side base message values ∧
       EndpointPrefix final (recoveredEndpoint hash level tree side message values) 46 ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
@@ -57,8 +57,8 @@ theorem leaf_loop (hash : Hash) (s : MachineState) (level tree : Nat) (side : Bo
     obtain ⟨final, steps, cycles, calls, run, hsteps, hcycles, hcalls, finalPC, finalCounter,
       finalData, finalPrefix, finalRA, finalSP, finalFrame⟩ :=
       ih next (start+1) (by omega) nextPC nextData nextCounter nextPrefix
-    refine ⟨final, (96*(7-(Reference.digit message chain).val)+49)+steps,
-      (103*(7-(Reference.digit message chain).val)+49)+cycles,
+    refine ⟨final, (82*(7-(Reference.digit message chain).val)+49)+steps,
+      (89*(7-(Reference.digit message chain).val)+49)+cycles,
       (7-(Reference.digit message chain).val)+calls, pre.trans run, ?_, ?_, ?_,
       finalPC, finalCounter, finalData, finalPrefix, finalRA.trans nextRA, finalSP.trans nextSP, ?_⟩
     · omega
@@ -70,13 +70,13 @@ theorem leaf_loop (hash : Hash) (s : MachineState) (level tree : Nat) (side : Bo
       exact (finalFrame a outside).trans (nextFrame a (outside_leaf_chain a outside)
         outside.2.2.2.2.1 (outside_leaf_endpoint a outside chain))
 
-/-- The actual verifier recovers all 46 WOTS endpoints within 33,978 cycles for arbitrary witness values. -/
+/-- The actual verifier recovers all 46 WOTS endpoints within 29,666 cycles for arbitrary witness values. -/
 theorem recover_all_chains (hash : Hash) (s : MachineState) (level tree : Nat) (side : Bool) (base : Nat)
     (message : Reference.Digest) (values : Reference.Chain → Reference.Digest)
     (pc : s.pc = 0x1490) (data : LeafData s level tree side base message values)
     (counter : s.getMem 0x80430 = 0) (aligned : base % 8 = 0) (bound : base+736 ≤ 0x80000) :
     ∃ final steps cycles calls, Trace hash verify s steps cycles calls calls final ∧
-      steps ≤ 33166 ∧ cycles ≤ 33978 ∧ calls ≤ 322 ∧ final.pc = 0x1690 ∧
+      steps ≤ 33166 ∧ cycles ≤ 29666 ∧ calls ≤ 322 ∧ final.pc = 0x1690 ∧
       final.getMem 0x80430 = 46 ∧ LeafData final level tree side base message values ∧
       (∀ chain : Reference.Chain, ∀ i : Fin 2,
         final.getMem (KeygenEndpoint.endpointAddress chain.val i.val) =

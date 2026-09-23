@@ -16,6 +16,8 @@ class Assembler:
     def __init__(self):
         self.words, self.labels, self.fixups = [], {}, []
         self.serial = 0
+        self.optimize_copy16 = False
+        self.optimize_only_chain = False
     def emit(self, w): self.words.append(w & 0xffffffff)
     def label(self, name):
         assert name not in self.labels, name
@@ -57,6 +59,21 @@ class Assembler:
     def halt(self, accepted): self.li(5, 0); self.li(10, int(accepted)); self.emit(0x73)
     def copy(self, source, destination, count=16):
         assert count % 8 == 0
+        if self.optimize_copy16 and count == 16 and (not self.optimize_only_chain or ('chain_step' in self.labels and 'chain_end' not in self.labels)):
+            # Preserve every final register, the copied memory, and following PCs.
+            # Initialize pointers at their final values and address the two words backwards.
+            start = len(self.words)
+            old_size = (1 if -2048 <= source < 2048 else 2) + (1 if -2048 <= destination < 2048 else 2) + 7
+            self.li(6, source + 16); self.li(7, destination + 16); self.li(10, 0)
+            self.ld(11, 6, -16); self.store(11, 7, -16)
+            self.ld(11, 6, -8); self.store(11, 7, -8)
+            end = self.fresh('fast_copy_end')
+            self.jump(end)
+            assert len(self.words) - start <= old_size
+            while len(self.words) - start < old_size:
+                self.i(0x13, 0, 0, 0, 0)
+            self.label(end)
+            return
         self.li(6, source); self.li(7, destination); self.li(10, count // 8)
         loop = self.fresh('copy'); self.label(loop)
         self.ld(11, 6); self.store(11, 7)
@@ -195,6 +212,8 @@ def build(phase):
     if phase == 'expand':
         a.copy(0x20060, WITNESS_BASE, SIGNATURE_BYTES); a.halt(True); return a.finish()
     verifying = phase == 'verify'
+    a.optimize_copy16 = verifying
+    a.optimize_only_chain = True
     if phase == 'keygen':
         a.set(LEVEL, HEIGHT - 1); a.call('tree'); a.copy(CURRENT, 0x40); a.halt(True)
     else:
