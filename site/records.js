@@ -153,7 +153,7 @@ function renderScoreChart() {
   const desktop = width > 760;
   const left = desktop ? 58 : 46;
   const top = 36;
-  const bottom = height - 36;
+  const bottom = height - 58;
   const dataRight = width - (desktop ? 165 : 14);
   const scoreDomain = chartDomain(scores.map(entry => entry.score), 5);
   const yFor = score => top + (scoreDomain.max - score) / (scoreDomain.max - scoreDomain.min) * (bottom - top);
@@ -171,7 +171,7 @@ function renderScoreChart() {
   const lastDay = scores[scores.length - 1].date.toISOString().slice(0, 10);
   const dayLabel = date => date.toLocaleDateString('en-US', {month: 'short', day: 'numeric', timeZone: 'UTC'});
   chartNode(chart, 'text', {
-    x: dataRight, y: 15, 'text-anchor': 'end', fill: '#737b80',
+    x: dataRight, y: height - 9, 'text-anchor': 'end', fill: '#737b80',
     'font-size': '11', 'font-family': 'system-ui, sans-serif'
   }, (firstDay === lastDay ? dayLabel(scores[0].date) :
     dayLabel(scores[0].date) + '–' + dayLabel(scores[scores.length - 1].date)) + ' · UTC');
@@ -213,7 +213,7 @@ function renderScoreChart() {
   chartNode(gradient, 'stop', {offset: '0%', 'stop-color': '#cde3f8', 'stop-opacity': '.65'});
   chartNode(gradient, 'stop', {offset: '100%', 'stop-color': '#fff', 'stop-opacity': '0'});
   chartNode(chart, 'path', {
-    d: frontier + ' H' + dataRight + ' V' + bottom + ' H' + left + ' Z',
+    d: frontier + ' H' + dataRight + ' V' + bottom + ' H' + xFor(scores[0].date) + ' Z',
     fill: 'url(#record-fill)'
   });
   chartNode(chart, 'path', {
@@ -256,7 +256,7 @@ function renderScoreChart() {
       hour: '2-digit', minute: '2-digit', timeZone: 'UTC'
     }) : dayLabel(date);
     chartNode(chart, 'text', {
-      x, y: height - 9, 'text-anchor': tick === 0 && ticks ? 'start' : tick === ticks && ticks ? 'end' : 'middle',
+      x, y: bottom + 24, 'text-anchor': tick === 0 && ticks ? 'start' : tick === ticks && ticks ? 'end' : 'middle',
       fill: '#737b80', 'font-size': '11',
       'font-family': 'system-ui, sans-serif'
     }, label);

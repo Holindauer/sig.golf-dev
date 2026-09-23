@@ -34,7 +34,7 @@
           <h2>Submission</h2>
           <p>A submission contains:</p>
           <ul>
-            <li>Four RISC-V programs: <code>keygen</code>, <code>sign</code>, <code>expand</code>, and <code>verify</code>.</li>
+            <li>Four RISC-V programs: <a href="#keygen"><code>keygen</code></a>, <a href="#sign"><code>sign</code></a>, <a href="#expand"><code>expand</code></a>, and <a href="#verify"><code>verify</code></a>.</li>
             <li>Three integers: <code>S</code> (signature size in bytes), <code>W</code> (witness size in bytes), and <code>C</code> (verification cycles).</li>
             <li>All Lean 4 proofs required below.</li>
           </ul>
@@ -66,13 +66,38 @@
 
         <section id="programs" class="rule-section">
           <h2>Programs</h2>
-          <div class="rule-table-wrap"><table><thead><tr><th>Program</th><th>Inputs</th><th>Outputs</th><th>Context</th></tr></thead><tbody>
-            <tr><td><code>keygen</code></td><td>Secret key</td><td>Public key and cache, or failure</td><td>Enclave</td></tr>
-            <tr><td><code>sign</code></td><td>Secret key, public key, cache, message</td><td>Signature or failure</td><td>Enclave</td></tr>
-            <tr><td><code>expand</code></td><td>Message, public key, signature</td><td>Witness or failure</td><td>Prover host</td></tr>
-            <tr><td><code>verify</code></td><td>Message, public key, witness</td><td>Accept or reject</td><td>zkVM</td></tr>
-          </tbody></table></div>
-          <p>The cache is public and untrusted. <code>expand</code> converts the compact signature into a verification witness, for example by restoring pruned Merkle paths. It may simply copy the signature when <code>S = W</code>.</p>
+          <section id="keygen" class="program-block" aria-labelledby="keygen-title">
+            <div class="program-heading"><h3 id="keygen-title"><code>keygen</code></h3><span>Enclave</span></div>
+            <p>Derives the public key and a public, untrusted cache from the secret key.</p>
+            <dl class="program-io">
+              <div><dt>Inputs</dt><dd>Secret key</dd></div>
+              <div><dt>Outputs</dt><dd>Public key and cache, or failure</dd></div>
+            </dl>
+          </section>
+          <section id="sign" class="program-block" aria-labelledby="sign-title">
+            <div class="program-heading"><h3 id="sign-title"><code>sign</code></h3><span>Enclave</span></div>
+            <p>Produces a compact signature for a given message.</p>
+            <dl class="program-io">
+              <div><dt>Inputs</dt><dd>Secret key, public key, cache, message</dd></div>
+              <div><dt>Outputs</dt><dd>Signature or failure</dd></div>
+            </dl>
+          </section>
+          <section id="expand" class="program-block" aria-labelledby="expand-title">
+            <div class="program-heading"><h3 id="expand-title"><code>expand</code></h3><span>Prover host</span></div>
+            <p>Converts the signature into a verification witness.<br>Example: It may restore pruned Merkle paths or copy the signature when <code>S = W</code>.</p>
+            <dl class="program-io">
+              <div><dt>Inputs</dt><dd>Message, public key, signature</dd></div>
+              <div><dt>Outputs</dt><dd>Witness or failure</dd></div>
+            </dl>
+          </section>
+          <section id="verify" class="program-block" aria-labelledby="verify-title">
+            <div class="program-heading"><h3 id="verify-title"><code>verify</code></h3><span>zkVM</span></div>
+            <p>Checks whether the witness authenticates the message under the public key.</p>
+            <dl class="program-io">
+              <div><dt>Inputs</dt><dd>Message, public key, witness</dd></div>
+              <div><dt>Outputs</dt><dd>Accept or reject</dd></div>
+            </dl>
+          </section>
         </section>
 
         <section id="model" class="rule-section">
@@ -138,7 +163,7 @@
             <tr><td><code>0x20060</code></td><td>Signature</td></tr>
             <tr><td><math class="rule-math" aria-label="hexadecimal two zero zero six zero plus eight times the ceiling of S divided by eight"><mn>0x20060</mn><mo>+</mo><mn>8</mn><mo>×</mo><mo>⌈</mo><mfrac><mi>S</mi><mn>8</mn></mfrac><mo>⌉</mo></math></td><td>Witness</td></tr>
           </tbody></table></div>
-          <p>Load the inputs and read the outputs listed in the Programs table at their declared sizes. Other input fields start at zero. HALT ends execution with <code>a0 = 1</code> for success, or <code>a0 = 0</code> for failure. For <code>verify</code>, these mean acceptance and rejection, respectively.</p>
+          <p>Load the inputs and read the outputs listed under Programs at their declared sizes. Other input fields start at zero. HALT ends execution with <code>a0 = 1</code> for success, or <code>a0 = 0</code> for failure. For <code>verify</code>, these mean acceptance and rejection, respectively.</p>
 
           <h3>System calls</h3>
           <p>ECALL selects one of two services through <code>t0</code>:</p>

@@ -105,7 +105,6 @@ async function render() {
     const entry = records.find(item => item.id === query.get('id'));
     if (!entry) return missing('Submission');
     document.title = `${entry.title || `PR #${entry.pr}`} · sig.golf`;
-    byId('detail-title').textContent = entry.title || `PR #${entry.pr}`;
     byId('detail-avatar').appendChild(avatar(entry.author));
     byId('detail-solver').textContent = entry.author;
     byId('detail-solver').href = '/solver.html?user=' + encodeURIComponent(entry.author);

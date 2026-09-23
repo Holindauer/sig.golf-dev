@@ -4,7 +4,7 @@ Design a **stateless hash-based signature scheme** minimizing `S × C`: signatur
 
 ## Submission
 
-1. The four RISC-V program images below, including embedded data.
+1. Four RISC-V program images: [keygen](#keygen), [sign](#sign), [expand](#expand), and [verify](#verify), including embedded data.
 2. Nonnegative integers `S`, `W`, and `C`: signature bytes, witness bytes, and verification cycles.
 3. Lean 4 proofs of the statements below for those exact images, sizes, and bound.
 
@@ -35,14 +35,39 @@ Every object has a fixed size in bytes:
 
 ## Programs
 
-| Program  | Inputs                                 | Outputs                          | Context     |
-| -------- | -------------------------------------- | -------------------------------- | ----------- |
-| `keygen` | Secret key                             | Public key and cache, or failure | Enclave     |
-| `sign`   | Secret key, public key, cache, message | Signature or failure             | Enclave     |
-| `expand` | Message, public key, signature         | Witness or failure               | Prover host |
-| `verify` | Message, public key, witness           | Accept or reject                 | zkVM        |
+### keygen
 
-The cache is public and untrusted. `expand` converts the compact signature into a verification witness, for example by restoring pruned Merkle paths. It may simply copy the signature when `S = W`.
+Derives the public key and a public, untrusted cache from the secret key.
+
+- **Inputs:** secret key.
+- **Outputs:** public key and cache, or failure.
+- **Context:** enclave.
+
+### sign
+
+Produces a compact signature for a given message.
+
+- **Inputs:** secret key, public key, cache, message.
+- **Outputs:** signature or failure.
+- **Context:** enclave.
+
+### expand
+
+Converts the signature into a verification witness.
+
+Example: It may restore pruned Merkle paths or copy the signature when `S = W`.
+
+- **Inputs:** message, public key, signature.
+- **Outputs:** witness or failure.
+- **Context:** prover host.
+
+### verify
+
+Checks whether the witness authenticates the message under the public key.
+
+- **Inputs:** message, public key, witness.
+- **Outputs:** accept or reject.
+- **Context:** zkVM.
 
 ## Model and costs
 
@@ -128,7 +153,7 @@ Inputs and outputs use the same addresses, fixed for each submission:
 | `0x20060`                   | Signature  |
 | `0x20060 + 8 × ceil(S / 8)` | Witness    |
 
-Load the inputs and read the outputs listed in the Programs table at their declared sizes. Other input fields start at zero.
+Load the inputs and read the outputs listed under Programs at their declared sizes. Other input fields start at zero.
 
 HALT ends execution with `a0 = 1` for success, or `a0 = 0` for failure. For `verify`, these mean acceptance and rejection, respectively.
 
