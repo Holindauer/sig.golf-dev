@@ -44,7 +44,7 @@ theorem ChainData.shortCheck (s : MachineState) (level tree : Nat) (side : Bool)
 theorem chain_step (hash : Hash) (s : MachineState) (level tree step : Nat)
     (side : Bool) (chain : Reference.Chain) (value : Reference.Digest)
     (pc : s.pc = 0x14f4) (base : s.getReg .x28 = 0x80438) (bound : step < 7) (data : ChainData s level tree side chain step value) :
-    ∃ final, Trace hash verify s 45 52 1 1 final ∧ final.pc = 0x14f4 ∧
+    ∃ final, Trace hash verify s 43 50 1 1 final ∧ final.pc = 0x14f4 ∧
       ChainData final level tree side chain (step+1) (Reference.chainHash hash level tree side chain step value) ∧
       final.getReg .x28 = 0x80438 ∧ final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, OutsideChainWork a → final.getMem a = s.getMem a) := by
@@ -57,7 +57,7 @@ theorem chain_step (hash : Hash) (s : MachineState) (level tree step : Nat)
   have checkedPC : (CheckReuse.shortCheck s).pc = 0x1500 := by rw [CheckReuse.short_pc s base, pc, if_neg ne]; rfl
   have checked := data.shortCheck
   obtain ⟨hashed, core, hashedPC, valueOut, ra, sp, frame⟩ := FinishChain.chain_compute verify hash 0x1500 verify_chain_code
-    (CheckReuse.shortCheck s) checkedPC level tree step side chain value checked.levelEq checked.leafEq checked.chainEq
+    (CheckReuse.shortCheck s) checkedPC (by rw [CheckReuse.short_base]; exact base) level tree step side chain value checked.levelEq checked.leafEq checked.chainEq
     checked.stepEq checked.indexEq checked.valueEq
   have hashedPC' : hashed.pc = 0x161c := hashedPC
   have keep (a : Word)

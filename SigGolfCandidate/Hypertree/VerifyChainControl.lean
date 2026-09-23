@@ -13,7 +13,7 @@ theorem verify_chain_check : ChainLoopControl.CheckCode verify 0x14ec := by deci
 theorem verify_short_check : CheckReuse.Code verify 0x14f4 := by unfold CheckReuse.Code; decide
 
 theorem verify_chain_code : FinishChain.ChainCode verify 0x1500 := by
-  unfold FinishChain.ChainCode FusedPrepare.Code FusedFinish.Code
+  unfold FinishChain.ChainCode ReusePrepare.Code ReuseFinish.Code
   decide
 
 end SigGolfCandidate.Hypertree.Verifying

@@ -1,17 +1,19 @@
 import SigGolfCandidate.Hypertree.Copy6
 import SigGolfCandidate.Hypertree.FusedPrepare
 import SigGolfCandidate.Hypertree.FusedFinish
+import SigGolfCandidate.Hypertree.ReusePrepare
+import SigGolfCandidate.Hypertree.ReuseFinish
 
 namespace SigGolfCandidate.Hypertree.FinishChain
 open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 Keygen
 set_option maxRecDepth 50000
 
 def ChainCode (image : Image) (p : Word) : Prop :=
-  FusedPrepare.Code image p ∧
-  instructionAt image (p+236) = some (.base .ECALL) ∧ FusedFinish.Code image (p+240)
+  ReusePrepare.Code image p ∧
+  instructionAt image (p+236) = some (.base .ECALL) ∧ ReuseFinish.Code image (p+240)
 
 theorem chain_compute (image : Image) (hash : Hash) (p : Word) (code : ChainCode image p)
-    (s : MachineState) (pc : s.pc = p) (level tree step : Nat)
+    (s : MachineState) (pc : s.pc = p) (base : s.getReg .x28 = 0x80438) (level tree step : Nat)
     (side : Bool) (chain : Reference.Chain) (value : Reference.Digest)
     (hlevel : s.getMem 0x80400 = BitVec.ofNat 64 level)
     (hleaf : s.getMem 0x80428 = BitVec.ofNat 64 (Reference.sideNumber side))
@@ -21,7 +23,7 @@ theorem chain_compute (image : Image) (hash : Hash) (p : Word) (code : ChainCode
       (BitVec.ofNat 192 tree).extractLsb' (64*i.val) 64)
     (hvalue : ∀ i : Fin 2, s.getMem (Signing.wordAddress 0x80510 i.val) =
       value.extractLsb' (64*i.val) 64) :
-    ∃ final, Trace hash image s 42 49 1 1 (ChainLoopControl.increment final (-324)) ∧ final.pc = p+284 ∧
+    ∃ final, Trace hash image s 40 47 1 1 (ChainLoopControl.increment final (-324)) ∧ final.pc = p+284 ∧
       (∀ i : Fin 2, final.getMem (Signing.wordAddress 0x80510 i.val) =
         (Reference.chainHash hash level tree side chain step value).extractLsb' (64*i.val) 64) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
@@ -52,8 +54,8 @@ theorem chain_compute (image : Image) (hash : Hash) (p : Word) (code : ChainCode
   have valueEq : ∀ i : Fin 2, copied.getMem (Signing.wordAddress 0x80020 i.val) =
       value.extractLsb' (64*i.val) 64 := by intro i; rw [content i]; exact hvalue i
   let prepared := KeygenChainHeader.state copied
-  have headTrace : OrdinarySteps image s 31 prepared :=
-    FusedPrepare.block image p code.1 s pc
+  have headTrace : OrdinarySteps image s 30 prepared :=
+    ReusePrepare.block image p code.1 s pc base
   have hpc : prepared.pc = p+236 := by
     simp only [prepared,KeygenChainHeader.pc,cpc]; simp [BitVec.add_assoc]
   obtain ⟨service,source,bits,destination⟩ := KeygenChainHeader.regs copied
@@ -72,7 +74,10 @@ theorem chain_compute (image : Image) (hash : Hash) (p : Word) (code : ChainCode
       final.getMem a = hashed.getMem a := by
     exact outframe a (by simpa [Signing.wordAddress] using outside 0)
       (by simpa [Signing.wordAddress] using outside 1)
-  have post := FusedFinish.block image (p+240) code.2.2 hashed hashPC
+  have hashBase : hashed.getReg .x28 = 0x80018 := by
+    rw [show hashed.getReg .x28 = prepared.getReg .x28 from hash_registers _ _ _]
+    exact ReusePrepare.header_base copied
+  have post := ReuseFinish.block image (p+240) code.2.2 hashed hashPC hashBase
   refine ⟨final,headTrace.trace.trans (hashTrace.trans post.trace),?_,?_,?_,?_,?_⟩
   · simpa [BitVec.add_assoc] using fpc
   · intro i

@@ -17,7 +17,7 @@ theorem leaf_loop (hash : Hash) (s : MachineState) (level tree : Nat) (side : Bo
     (completed : EndpointPrefix s (recoveredEndpoint hash level tree side message values) start)
     (aligned : base % 8 = 0) (bound : base+736 ≤ 0x80000) :
     ∃ final steps cycles calls, Trace hash verify s steps cycles calls calls final ∧
-      steps ≤ 721*remaining ∧ cycles + 52 * ChainCost.chainPrefix message start ≤ 52 * ChainCost.chainPrefix message 46 + 49*remaining ∧ calls ≤ 7*remaining ∧ final.pc = 0x1690 ∧
+      steps ≤ 721*remaining ∧ cycles + 50 * ChainCost.chainPrefix message start ≤ 50 * ChainCost.chainPrefix message 46 + 49*remaining ∧ calls ≤ 7*remaining ∧ final.pc = 0x1690 ∧
       final.getMem 0x80430 = 46 ∧ LeafData final level tree side base message values ∧
       EndpointPrefix final (recoveredEndpoint hash level tree side message values) 46 ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
@@ -57,8 +57,8 @@ theorem leaf_loop (hash : Hash) (s : MachineState) (level tree : Nat) (side : Bo
     obtain ⟨final, steps, cycles, calls, run, hsteps, hcycles, hcalls, finalPC, finalCounter,
       finalData, finalPrefix, finalRA, finalSP, finalFrame⟩ :=
       ih next (start+1) (by omega) nextPC nextData nextCounter nextPrefix
-    refine ⟨final, (45*(7-(Reference.digit message chain).val)+49)+steps,
-      (52*(7-(Reference.digit message chain).val)+49)+cycles,
+    refine ⟨final, (43*(7-(Reference.digit message chain).val)+49)+steps,
+      (50*(7-(Reference.digit message chain).val)+49)+cycles,
       (7-(Reference.digit message chain).val)+calls, pre.trans run, ?_, ?_, ?_,
       finalPC, finalCounter, finalData, finalPrefix, finalRA.trans nextRA, finalSP.trans nextSP, ?_⟩
     · omega
@@ -76,7 +76,7 @@ theorem recover_all_chains (hash : Hash) (s : MachineState) (level tree : Nat) (
     (pc : s.pc = 0x1490) (data : LeafData s level tree side base message values)
     (counter : s.getMem 0x80430 = 0) (aligned : base % 8 = 0) (bound : base+736 ≤ 0x80000) :
     ∃ final steps cycles calls, Trace hash verify s steps cycles calls calls final ∧
-      steps ≤ 33166 ∧ cycles ≤ 18270 ∧ calls ≤ 322 ∧ final.pc = 0x1690 ∧
+      steps ≤ 33166 ∧ cycles ≤ 17654 ∧ calls ≤ 322 ∧ final.pc = 0x1690 ∧
       final.getMem 0x80430 = 46 ∧ LeafData final level tree side base message values ∧
       (∀ chain : Reference.Chain, ∀ i : Fin 2,
         final.getMem (KeygenEndpoint.endpointAddress chain.val i.val) =

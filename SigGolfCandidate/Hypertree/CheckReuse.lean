@@ -52,6 +52,10 @@ theorem short_pc (s : MachineState) (base : s.getReg .x28 = 0x80438) :
   simp [shortCheck, execInstrBr, MachineState.getReg, MachineState.setReg, MachineState.setPC,
     signExtend12, signExtend13, base, BitVec.add_assoc]
 
+theorem short_base (s : MachineState) : (shortCheck s).getReg .x28 = s.getReg .x28 := by
+  simp [shortCheck, execInstrBr, MachineState.getReg, MachineState.setReg, MachineState.setPC]
+  split_ifs <;> simp
+
 theorem short_stack (s : MachineState) :
     (shortCheck s).getReg .x1 = s.getReg .x1 ∧ (shortCheck s).getReg .x2 = s.getReg .x2 := by
   simp [shortCheck, execInstrBr, MachineState.getReg, MachineState.setReg, MachineState.setPC]

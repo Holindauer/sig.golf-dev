@@ -136,3 +136,21 @@ The complete certificate passes at S=W=113616, C=2963219, score 336669089904. Fu
 A shared ChainData.check lemma initially affected the signer proof. The original lemma is restored, and the verifier uses ChainData.shortCheck separately. The final full build passed after that repair. PR7 remains the only pending submission; preserve its exact head c16dcb4a90b16585bdc3c72e9da1d95fae87530c.
 
 Next route: remove the redundant initial LUI from FusedPrepare and FusedFinish using their established x28 values. The separate prototype passes reference/rejection tests at 1792201 sample cycles. ReuseChainBases.finish_equiv passes; its first monolithic prepare_equiv proof hit kernel recursion depth, so a component-wise equality proof is being tried. Read autoresearch-state.json for its exact session/log and avoid repeating the failed proof.
+
+
+## Active route: reuse both chain base registers
+
+This checkout starts at54d8813d4fa84904aadc79fbe5d21ed161f29f1c. The ready STEP-check candidate is preserved separately. The next prototype removes the initial LUI in prepare (x28 already STEP) and finish (x28 already HASH+24), adjusts relative offsets and the jumps, and leaves static footprints unchanged. Prototype/reference tests pass at1792201 sample cycles.
+
+First resume the component-wise prepare proof session73752, log /private/tmp/siggolf-reuse-chain-bases-split-proof.log, source research/ReuseChainBases.lean outside this checkout. The previous monolithic proof failed kernel recursion; do not count it as passed. Once the equivalence proof works, integrate research/reuse-chain-bases-probe/build.py, prove actual30/9-instruction executions and required register invariants, and complete every certificate/export check before publication. PR7 remains fixed until official validation.
+
+The field-wise equality attempt has also finished with kernel deep recursion at50000. Session73752 exited1. Next split the preparation into short instruction fragments with separately checked equivalences; adding state_ext alone was insufficient. Both failures are saved in research/validation. This is unfinished local proof development, not a submission blocker.
+
+
+## Both chain base registers: validation complete
+
+The complete certificate, all permitted-axiom guards, full 3057-job build, exported Solution.lean, source policy, exact export-source comparison and reference/rejection checks pass. S=W=113616, C=2870203, score 326100984048. The sample verification cost is 1792201 cycles. The exact full bound is 145+288+151*19005+15.
+
+The preparation equivalence was proved by composing ten small instruction-fragment relations; the earlier monolithic and field-wise giant proofs hit kernel recursion and are not used. ReusePrepare and ReuseFinish prove 30/9 executed instructions under explicit base-register premises. The iteration now takes 43 instructions/50 cycles. Organizer definitions and pinned dependencies remain unchanged.
+
+Next route: cached chain hash headers. Its separate prototype/reference tests pass at 1509766 sample cycles; CachedHeaderArithmetic.lean proves the modular step-word increment and finishing-block header preservation with permitted axioms. Full loop invariants and certificate remain. See research/cached-header-notes.md and autoresearch-state.json outside this checkout. Keep PR7 exact head fixed pending official publication.
