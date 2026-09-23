@@ -27,7 +27,7 @@ theorem upper_leaf_call (hash : Hash) (s : MachineState) (level tree : Nat) (sid
     (data : LeafData s level tree side base message signature.values)
     (nonzero : BitVec.ofNat 64 level ≠ 0) (aligned : base % 8 = 0) (bound : base+736 ≤ 0x80000) :
     ∃ final steps cycles calls, Trace hash verify s steps cycles (calls+1) (calls+12) final ∧
-      steps ≤ 33795 ∧ cycles ≤ 20842 ∧ calls ≤ 322 ∧
+      steps ≤ 33795 ∧ cycles ≤ 20226 ∧ calls ≤ 322 ∧
       final.pc = s.getReg .x1 &&& ~~~1#64 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ i : Fin 2, final.getMem (KeygenSavePublic.wordAddress side i.val) =
         (Reference.recoverLeaf hash level tree side message signature).extractLsb' (64*i.val) 64) ∧

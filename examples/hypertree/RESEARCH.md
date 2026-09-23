@@ -82,3 +82,13 @@ Proposed C = 3414019, score = 408425921008, S = W = 119632. Bound: `145 + 288 + 
 Next route: `../research/FusedPrepare.lean` proves a combined copy/header block executes 31 ordinary steps and reaches exactly the prior prepared state. This removes one jump and one repeated base-address load, saving two cycles per chain hash. Prototype: `../research/fused_prepare_probe.py`. Integration and a complete certificate are still required.
 
 The complete six-step-copy certificate, permitted-axiom guards, source policy, and exported Solution.lean passed. The combined-block prototype also passes reference and malformed-input rejection tests at 2059713 sample cycles. Full broad-build status and candidate commit are in the autoresearch state.
+
+## Combined input copy and hash header
+
+Checkout `research-fused`, based on `7218095`. Combine the input copy and header setup into 31 instructions across the original 59-word footprint. Remove a repeated base load and one jump; the HASH instruction stays at the same address. `FusedPrepare.block` reaches exactly the original prepared state. The core uses 38 steps/45 cycles and the full iteration 49 steps/56 cycles.
+
+Proposed C = 3316075, score = 396708684400, S = W = 119632. Bound: `145 + 288 + 159 * 20853 + 15`. Reference and rejection tests pass at 2059713 sample cycles with unchanged hash counts. Final validation/commit are in the autoresearch state.
+
+Next route: `../research/FusedFinish.lean` proves a ten-step output-copy/counter-update block reaches exactly the old final state. Prototype: `../research/fused_finish_probe.py`. It preserves the 19-word footprint and saves another two cycles per chain hash. A full integrated certificate is still required.
+
+The complete combined-preparation certificate, axiom guards, exported Solution.lean, and source policy pass. The output-copy/counter prototype also passes all reference/rejection tests at 2006639 sample cycles. Final broad-build result and commit are checkpointed in autoresearch state.

@@ -61,6 +61,19 @@ class Assembler:
     def halt(self, accepted): self.li(5, 0); self.li(10, int(accepted)); self.emit(0x73)
     def copy(self, source, destination, count=16):
         assert count % 8 == 0
+        if (self.optimize_address_reuse and count==16 and source==VALUE and destination==HASH+32 and 'chain_step' in self.labels and 'chain_end' not in self.labels):
+            start=len(self.words);self.emit((128<<12)|(28<<7)|0x37)
+            self.ld(11,28,source-HASH);self.store(11,28,32);self.ld(11,28,source-HASH+8);self.store(11,28,40)
+            self.li(10,2)
+            for src,shift in [(LEVEL,8),(LEAF,16),(CHAIN,24),(STEP,32)]:
+                self.ld(11,28,src-HASH);self.shift(11,11,shift);self.add(10,10,11)
+            self.store(10,28)
+            for off,src in [(8,INDEX0),(16,INDEX1),(24,INDEX2)]:self.ld(11,28,src-HASH);self.store(11,28,off)
+            self.i(0x13,0,28,28,24);self.i(0x13,0,10,28,-24);self.li(11,384);self.i(0x13,0,12,28,744);self.li(5,1)
+            end=self.fresh('fused_end');self.jump(end)
+            while len(self.words)-start<59:self.i(0x13,0,0,0,0)
+            self.label(end);self.fused_hash_ready=True
+            return
         if (self.optimize_address_reuse and count == 16
                 and 'chain_step' in self.labels and 'chain_end' not in self.labels):
             start = len(self.words)
@@ -121,6 +134,10 @@ class Assembler:
             else: self.load(11, source)
             self.save(11, HASH + offset)
     def hash(self, tag, size, **fields):
+        if getattr(self, "fused_hash_ready", False):
+            assert tag == 2 and size == 48 and fields == dict(leaf=True, chain=True, step=True)
+            self.fused_hash_ready = False; self.emit(0x73)
+            return
         if (self.optimize_address_reuse and tag == 2 and size == 48
                 and fields == dict(leaf=True, chain=True, step=True)
                 and 'chain_step' in self.labels and 'chain_end' not in self.labels):
