@@ -1,5 +1,9 @@
 'use strict';
 
+const chartGrid = '#c1d1e4';
+const chartAxis = '#8ca7c5';
+const chartLine = '#1c5fa9';
+
 // Phony preview records. Replace with verified submission data before launch.
 document.querySelector('#best-score').textContent = previewFormat(previewRecordScore);
 
@@ -92,7 +96,7 @@ function renderPreviewChart() {
     const y = top + tick / 4 * (bottom - top);
     chartNode(chart, 'line', {
       x1: left, y1: y, x2: dataRight, y2: y,
-      stroke: '#e3e5e5', 'stroke-width': '1'
+      stroke: chartGrid, 'stroke-width': '1'
     });
     const value = axisMax * (1 - tick / 4);
     chartNode(chart, 'text', {
@@ -103,7 +107,7 @@ function renderPreviewChart() {
   }
   chartNode(chart, 'line', {
     x1: left, y1: top, x2: left, y2: bottom,
-    stroke: '#e3e5e5', 'stroke-width': '1'
+    stroke: chartAxis, 'stroke-width': '1'
   });
 
   let best = Infinity;
@@ -131,7 +135,7 @@ function renderPreviewChart() {
     fill: 'url(#record-fill)'
   });
   chartNode(chart, 'path', {
-    d: frontier + ' H' + dataRight, fill: 'none', stroke: '#286ec4',
+    d: frontier + ' H' + dataRight, fill: 'none', stroke: chartLine,
     'stroke-width': '2.5', 'stroke-linejoin': 'round'
   });
 
@@ -177,7 +181,7 @@ function renderPreviewChart() {
     const lastY = yFor(previewRecordScore);
     chartNode(chart, 'path', {
       d: 'M' + dataRight + ' ' + lastY + ' h12',
-      fill: 'none', stroke: '#286ec4', 'stroke-width': '1.4'
+      fill: 'none', stroke: chartLine, 'stroke-width': '1.4'
     });
     chartNode(chart, 'text', {
       x: dataRight + 18, y: lastY - 7, fill: '#737b80',
@@ -219,7 +223,7 @@ function renderParetoChart() {
     const y = top + tick / 4 * (bottom - top);
     const x = left + tick / 4 * (right - left);
     chartNode(chart, 'line', {
-      x1: left, y1: y, x2: right, y2: y, stroke: '#e3e5e5', 'stroke-width': '1'
+      x1: left, y1: y, x2: right, y2: y, stroke: chartGrid, 'stroke-width': '1'
     });
     chartNode(chart, 'text', {
       x: left - 9, y: y + 4, 'text-anchor': 'end', fill: '#737b80',
@@ -231,14 +235,14 @@ function renderParetoChart() {
     }, previewFormat(maxSignature * tick / 4));
   }
   chartNode(chart, 'line', {
-    x1: left, y1: top, x2: left, y2: bottom, stroke: '#e3e5e5', 'stroke-width': '1'
+    x1: left, y1: top, x2: left, y2: bottom, stroke: chartAxis, 'stroke-width': '1'
   });
 
   const frontier = previewPareto.map((entry, index) =>
     (index ? ' L' : 'M') + xFor(entry.signature).toFixed(1) + ' ' +
     yFor(entry.cycles).toFixed(1)).join('');
   chartNode(chart, 'path', {
-    d: frontier, fill: 'none', stroke: '#286ec4',
+    d: frontier, fill: 'none', stroke: chartLine,
     'stroke-width': '2.5', 'stroke-linejoin': 'round'
   });
   for (const entry of [...previewScores.filter(x => !x.pareto), ...previewPareto]) {
