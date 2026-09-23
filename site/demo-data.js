@@ -152,11 +152,11 @@ function renderPreviewChart() {
     });
     const dot = chartNode(point, 'circle', {
       cx: xFor(index), cy: yFor(entry.score),
-      r: isRecord ? 4.5 : 2.5,
-      fill: isRecord ? '#286ec4' : '#8caed1',
+      r: isRecord ? 4.5 : 3.2,
+      fill: isRecord ? '#286ec4' : '#5f8fbe',
       stroke: isRecord ? '#fff' : 'none',
       'stroke-width': isRecord ? '1.8' : '0',
-      opacity: isRecord ? '1' : '.75'
+      opacity: isRecord ? '1' : '.9'
     });
     chartNode(dot, 'title', {},
       entry.name + ' · ' + entry.date.toISOString().slice(0, 10) +
@@ -257,10 +257,10 @@ function renderParetoChart() {
     });
     const dot = chartNode(point, 'circle', {
       cx: xFor(entry.signature), cy: yFor(entry.cycles),
-      r: entry.pareto ? 5 : 3, fill: entry.pareto ? '#286ec4' : '#9bb5ce',
+      r: entry.pareto ? 5 : 3.6, fill: entry.pareto ? '#286ec4' : '#5f8fbe',
       stroke: entry.pareto ? '#fff' : 'none',
       'stroke-width': entry.pareto ? '1.8' : '0',
-      opacity: entry.pareto ? '1' : '.65'
+      opacity: entry.pareto ? '1' : '.88'
     });
     chartNode(dot, 'title', {}, entry.name + ' · ' +
       previewFormat(entry.signature) + ' B × ' + previewFormat(entry.cycles) +
