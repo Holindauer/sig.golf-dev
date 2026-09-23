@@ -32,7 +32,7 @@ theorem recover_chain {α : Type} (hash : Nat → α → α) (secret : α) (digi
   have hd : digit.val ≤ 7 := by omega
   simpa [Nat.add_sub_of_le hd] using (walk_append hash 0 digit.val (7 - digit.val) secret).symm
 
-/-- Deterministic compression counts for the reference algorithm. Correspondence with bytecode execution remains to be established in Lean. -/
+/-- Compression-count arithmetic for the reference algorithm. CandidateFields assembles the bytecode resource proofs; Certificate supplies the complete competition claim. -/
 def referenceKeygenCompressions : Nat := 2 * (46 * (1 + 7) + 12) + 1
 def referenceSignCompressions : Nat := 2 + 2 + 5 + 159 * referenceKeygenCompressions
 def referenceVerificationCompressions : Nat := 2 + 2 + 159 * (46 * 7 + 12 + 1)

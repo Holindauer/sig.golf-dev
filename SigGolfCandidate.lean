@@ -289,3 +289,4 @@ import SigGolfCandidate.Hypertree.SecurityMonitorNonceView
 import SigGolfCandidate.Hypertree.SecurityMonitorView
 import SigGolfCandidate.Hypertree.SecurityMonitorViewAtomic
 import SigGolfCandidate.Hypertree.SecurityMonitorViewBounds
+import SigGolfCandidate.Hypertree.Certificate
