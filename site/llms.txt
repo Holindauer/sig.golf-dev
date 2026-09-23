@@ -2,16 +2,16 @@
 
 Sig.golf is a Lean-certified competition for stateless hash-based signatures. The score is signature bytes times maximum honest RISC-V verification cycles.
 
-Rules: /site/rules.html
+Rules: /rules.html
 Formal definitions: https://github.com/leanEthereum/sig.golf-dev/tree/beta
 Submit by opening a PR against beta: https://github.com/leanEthereum/sig.golf-submissions/pulls
 PR layout: https://github.com/leanEthereum/sig.golf-submissions/blob/beta/README.md
 
-Verified results are published in /site/records.json.
+Verified results are published in /records.json.
 
 Include presentation/ beside submission/ in every PR. Copy and customize:
-- /site/examples/presentation-template/presentation.json
-- /site/examples/presentation-template/scheme.svg
+- /examples/presentation-template/presentation.json
+- /examples/presentation-template/scheme.svg
 
 Explain the scheme briefly and draw its signature layout, encoding, authentication, and witness expansion.
 

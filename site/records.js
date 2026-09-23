@@ -2,8 +2,8 @@
 
 async function loadRecords() {
   const [response, stateResponse] = await Promise.all([
-    fetch('/site/records.json', {cache: 'no-store'}),
-    fetch('/site/state.json', {cache: 'no-store'})
+    fetch('/records.json', {cache: 'no-store'}),
+    fetch('/state.json', {cache: 'no-store'})
   ]);
   if (!response.ok || !stateResponse.ok) throw new Error('Cannot load published records');
   const [registry, state] = await Promise.all([response.json(), stateResponse.json()]);
@@ -28,8 +28,8 @@ async function loadRecords() {
 }
 
 const format = value => value.toLocaleString('en-US');
-const submissionUrl = item => '/site/submission.html?id=' + encodeURIComponent(item.id);
-const solverUrl = profile => '/site/solver.html?user=' + encodeURIComponent(profile.login);
+const submissionUrl = item => '/submission.html?id=' + encodeURIComponent(item.id);
+const solverUrl = profile => '/solver.html?user=' + encodeURIComponent(profile.login);
 function avatar(profile, className = 'lb-avatar') {
   const img = document.createElement('img');
   img.className = className;

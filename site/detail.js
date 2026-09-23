@@ -2,7 +2,7 @@
 
 const byId = id => document.getElementById(id);
 const format = value => value.toLocaleString('en-US');
-const url = item => '/site/submission.html?id=' + encodeURIComponent(item.id);
+const url = item => '/submission.html?id=' + encodeURIComponent(item.id);
 const dateLabel = value => new Date(value).toLocaleDateString('en-US', {
   month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC'
 });
@@ -24,8 +24,8 @@ function missing(label) {
 }
 async function load() {
   const [response, stateResponse] = await Promise.all([
-    fetch('/site/records.json', {cache: 'no-store'}),
-    fetch('/site/state.json', {cache: 'no-store'})
+    fetch('/records.json', {cache: 'no-store'}),
+    fetch('/state.json', {cache: 'no-store'})
   ]);
   if (!response.ok || !stateResponse.ok) throw new Error('Cannot load verified records');
   const [value, state] = await Promise.all([response.json(), stateResponse.json()]);
@@ -108,7 +108,7 @@ async function render() {
     byId('detail-title').textContent = entry.title || `PR #${entry.pr}`;
     byId('detail-avatar').appendChild(avatar(entry.author));
     byId('detail-solver').textContent = entry.author;
-    byId('detail-solver').href = '/site/solver.html?user=' + encodeURIComponent(entry.author);
+    byId('detail-solver').href = '/solver.html?user=' + encodeURIComponent(entry.author);
     if (entry.assisted_by) {
       byId('detail-assistant').hidden = false;
       byId('detail-assistant').textContent = entry.assisted_by;

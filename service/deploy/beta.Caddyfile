@@ -1,11 +1,13 @@
 beta.sig.golf {
     encode zstd gzip
-    root * /srv/sig-golf/public
-    @old_home path /site /site/ /site/index.html
-    redir @old_home / 308
-    rewrite / /site/index.html
-    rewrite /llms.txt /site/llms.txt
-    file_server
+    root * /srv/sig-golf/public/site
+    redir /site / 308
+    handle_path /site/* {
+        redir https://beta.sig.golf{uri} 308
+    }
+    handle {
+        file_server
+    }
     header {
         Strict-Transport-Security "max-age=31536000"
         X-Content-Type-Options "nosniff"
