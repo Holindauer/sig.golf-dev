@@ -47,7 +47,7 @@ Derives the public key and a public, untrusted cache from the secret key.
 
 Produces a compact signature for a given message.
 
-- **Inputs:** secret key, public key, cache, message.
+- **Inputs:** secret key, cache, message.
 - **Outputs:** signature or failure.
 - **Context:** enclave.
 
@@ -90,7 +90,7 @@ RiscV cycle breakdown:
 For any `secretKey`, `message` and oracle H, consider the following experiment:
 
 1. `keygen(secretKey)` returns the `public key` and `cache`.
-2. `sign(secretKey, public key, cache, message)` returns the `signature`.
+2. `sign(secretKey, cache, message)` returns the `signature`.
 3. `expand(message, public key, signature)` returns the `witness`.
 4. `verify(message, public key, witness)` returns the verdict.
 
@@ -113,7 +113,7 @@ Consider the following experiment for a classical probabilistic adversary `A` wi
 2. Run `keygen(secretKey)`. Failure ends the experiment without a win; otherwise give `A` the public key and cache.
 3. `A` may then adaptively query two oracles:
    - **`random_oracle(input_A)`:** return H(input_A).
-   - **`signing_oracle(message_A, cache_A)`:** run `sign(secretKey, public key, cache_A, message_A)` using the original secret key and public key. Return the signature or failure. Add each returned `(message_A, signature)` to T. Allow at most `LIFETIME` requests.
+   - **`signing_oracle(message_A, cache_A)`:** run `sign(secretKey, cache_A, message_A)` using the original secret key. Return the signature or failure. Add each returned `(message_A, signature)` to T. Allow at most `LIFETIME` requests.
 4. `A` makes one final submission, choosing either form below:
    - **witness weak unforgeability:** submit `(message_A, witness_A)`. `A` wins if `verify(message_A, public key, witness_A)` accepts, and no pair in T has message `message_A`, and the total hash-call count is at most Q
    - **signature strong unforgeability:** submit `(message_A, signature_A)`. `A` wins if `expand(message_A, public key, signature_A)` returns a witness that `verify` accepts, and `(message_A, signature_A)` is not in T, and the total hash-call count is at most Q.
@@ -144,7 +144,7 @@ Load D embedded bytes at `data_base = 16 × floor((0x1000000 - D) / 16)`. Initia
 
 Each submission specifies six byte offsets, shared by all four programs: δ<sub>message</sub>, δ<sub>secret key</sub>, δ<sub>public key</sub>, δ<sub>cache</sub>, δ<sub>signature</sub>, and δ<sub>witness</sub>. Each gives the memory address where that object is written or read. The buffers have the sizes in [Parameters](#parameters), start at 8-byte-aligned addresses, do not overlap, and end at or below `data_base` for every program.
 
-Before each execution, memory is zero except for embedded data and the inputs listed under [Programs](#programs); unused object buffers remain zero. For example, before [`sign`](#sign), write the secret key, public key, cache, and message at their offsets. On success, read the signature at δ<sub>signature</sub>.
+Before each execution, memory is zero except for embedded data and the inputs listed under [Programs](#programs); unused object buffers remain zero. For example, before [`sign`](#sign), write the secret key, cache, and message at their offsets. On success, read the signature at δ<sub>signature</sub>.
 
 HALT ends execution with `a0 = 1` for success, or `a0 = 0` for failure. For [`verify`](#verify), these mean acceptance and rejection, respectively.
 

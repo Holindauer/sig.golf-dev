@@ -140,6 +140,11 @@ private def check (label : String) (condition : Bool) : IO Unit :=
       state.getByte (BitVec.ofNat 64 (witnessBase toy.sizes)) == 0x78)
     check "undeclared secretKey and cache are zero" (state.getByte 0x20 == 0 && state.getByte 0x60 == 0)
     check "initial registers" (state.pc == 0x1000 && state.getReg .x2 == 0x1000000 && state.getReg .x10 == 0)
+  match initialState toy .sign (0x12, 0x9a, 0x34) with
+  | none => throw (IO.userError "admissible image rejected by loader")
+  | some state =>
+    check "sign inputs exclude the public key" (state.getByte 0x20 == 0x12 &&
+      state.getByte 0x60 == 0x9a && state.getByte 0 == 0x34 && state.getByte 0x40 == 0)
   match initialState movedToy .verify (0x34, 0x56, 0x78) with
   | none => throw (IO.userError "custom layout rejected by loader")
   | some state =>
@@ -150,10 +155,10 @@ private def check (label : String) (condition : Bool) : IO Unit :=
   let outputState := blank.writeBytesAsWords (BitVec.ofNat 64 movedLayout.signature) [0x5a]
   let output : BitVec 8 := readOutput movedToy.sizes movedToy.layout .sign outputState
   check "custom output offset" (output == 0x5a)
-  let signed := evalWithAnswerFn zeroHash (cacheEcho.signingOracle 0 0 ⟨7, 0xa5⟩)
+  let signed := evalWithAnswerFn zeroHash (cacheEcho.signingOracle 0 ⟨7, 0xa5⟩)
   check "attacker cache reaches sign" (signed.value == some (0xa5 : BitVec 8) && signed.finished)
   check "all signing work is charged" (signed.hashCalls == 1 && signed.hashCompressions == 2)
-  let denied := evalWithAnswerFn zeroHash (failedSign.signingOracle 0 0 ⟨7, 0xa5⟩)
+  let denied := evalWithAnswerFn zeroHash (failedSign.signingOracle 0 ⟨7, 0xa5⟩)
   check "failed signing retains its cost"
     (denied.value.isNone && denied.finished && denied.hashCalls == 1 && denied.hashCompressions == 2)
   IO.println "RISC-V and security regressions passed."

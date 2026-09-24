@@ -93,7 +93,7 @@
             <div class="program-heading"><h3 id="sign-title"><code>sign</code></h3><span>Enclave</span></div>
             <p>Produces a compact signature for a given message.</p>
             <dl class="program-io">
-              <div><dt>Inputs</dt><dd>Secret key, public key, cache, message</dd></div>
+              <div><dt>Inputs</dt><dd>Secret key, cache, message</dd></div>
               <div><dt>Outputs</dt><dd>Signature or failure</dd></div>
             </dl>
           </section>
@@ -128,7 +128,7 @@
         <section id="proofs" class="rule-section">
           <h2>Required Lean statements</h2>
           <h3>Completeness</h3>
-          <p><strong>Experiment:</strong> For any <code>secretKey</code>, <code>message</code>, and oracle <a href="#oracle-definition"><code>H</code></a>, run <a href="#keygen"><code>keygen(secretKey)</code></a> to get the public key and cache; <a href="#sign"><code>sign(secretKey, public key, cache, message)</code></a> to get the signature; <a href="#expand"><code>expand(message, public key, signature)</code></a> to get the witness; then <a href="#verify"><code>verify(message, public key, witness)</code></a> to get the verdict. Stop at the first failure. The experiment succeeds when all stages succeed and verification accepts.</p>
+          <p><strong>Experiment:</strong> For any <code>secretKey</code>, <code>message</code>, and oracle <a href="#oracle-definition"><code>H</code></a>, run <a href="#keygen"><code>keygen(secretKey)</code></a> to get the public key and cache; <a href="#sign"><code>sign(secretKey, cache, message)</code></a> to get the signature; <a href="#expand"><code>expand(message, public key, signature)</code></a> to get the witness; then <a href="#verify"><code>verify(message, public key, witness)</code></a> to get the verdict. Stop at the first failure. The experiment succeeds when all stages succeed and verification accepts.</p>
           <p><math class="rule-math" aria-label="K sub P"><msub><mi>K</mi><mi>P</mi></msub></math> counts program <code>P</code>'s compressions; it is zero if <code>P</code> is never reached. <math class="rule-math" aria-label="B sub P"><msub><mi>B</mi><mi>P</mi></msub></math> denotes <code>P</code>'s named budget.</p>
           <ol class="claim-list">
             <li><b>Success</b><span>For every secret key, <math class="rule-math" aria-label="Probability over H that the experiment succeeds for every message is at least one minus epsilon"><msub><mi>Pr</mi><mi>H</mi></msub><mo>[</mo><mtext>success for every message</mtext><mo>]</mo><mo>≥</mo><mn>1</mn><mo>−</mo><mi>ε</mi></math>.</span></li>
@@ -144,7 +144,7 @@
           <p><code>A</code> may then adaptively query:</p>
           <div class="two-cards">
             <div class="detail-card"><b><code>random_oracle(input_A)</code></b><p>Return <code>H(input_A)</code>.</p></div>
-            <div class="detail-card"><b><code>signing_oracle(message_A, cache_A)</code></b><p>Run <a href="#sign"><code>sign(secretKey, public key, cache_A, message_A)</code></a> with the original secret key and public key. Return the signature or failure. Add each returned <code>(message_A, signature)</code> to <code>T</code>. Allow at most <a href="#parameter-lifetime"><math class="rule-math" aria-label="L, signing lifetime" title="LIFETIME"><mi>L</mi></math></a> requests.</p></div>
+            <div class="detail-card"><b><code>signing_oracle(message_A, cache_A)</code></b><p>Run <a href="#sign"><code>sign(secretKey, cache_A, message_A)</code></a> with the original secret key. Return the signature or failure. Add each returned <code>(message_A, signature)</code> to <code>T</code>. Allow at most <a href="#parameter-lifetime"><math class="rule-math" aria-label="L, signing lifetime" title="LIFETIME"><mi>L</mi></math></a> requests.</p></div>
           </div>
           <p><code>A</code> makes one final submission in either form:</p>
           <div class="two-cards">
@@ -170,7 +170,7 @@
 
           <h3>Inputs and outputs</h3>
           <p id="memory-layout">Each submission specifies six byte offsets, shared by all four programs: δ<sub>message</sub>, δ<sub>secret key</sub>, δ<sub>public key</sub>, δ<sub>cache</sub>, δ<sub>signature</sub>, δ<sub>witness</sub>. Each gives the memory address where that object is written or read. The buffers have the sizes in <a href="#parameters">Parameters</a>, start at 8-byte-aligned addresses, do not overlap, and end at or below <a href="#data-base"><code>data_base</code></a> for every program.</p>
-          <p>Before each execution, memory is zero except for embedded data and the inputs listed under <a href="#programs">Programs</a>; unused object buffers remain zero. For example, before <a href="#sign"><code>sign</code></a>, write the secret key, public key, cache, and message at their offsets. On success, read the signature at δ<sub>signature</sub>.</p>
+          <p>Before each execution, memory is zero except for embedded data and the inputs listed under <a href="#programs">Programs</a>; unused object buffers remain zero. For example, before <a href="#sign"><code>sign</code></a>, write the secret key, cache, and message at their offsets. On success, read the signature at δ<sub>signature</sub>.</p>
           <p>HALT ends execution with <code>a0 = 1</code> for success, or <code>a0 = 0</code> for failure. For <a href="#verify"><code>verify</code></a>, these mean acceptance and rejection, respectively.</p>
 
           <h3 id="system-calls">System calls</h3>

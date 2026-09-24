@@ -14,7 +14,7 @@ def Submission.score (submission : Submission) (cycles : Nat) : Nat :=
 
 def Input (sizes : Sizes) : Phase → Type
   | .keygen => SecretKey
-  | .sign => SecretKey × PublicKey × Cache × Message
+  | .sign => SecretKey × Cache × Message
   | .expand => Message × PublicKey × Bytes sizes.signature
   | .verify => Message × PublicKey × Bytes sizes.witness
 
@@ -34,9 +34,9 @@ def readBuffer (state : MachineState) (address n : Nat) : Bytes n :=
 def inputBuffers (sizes : Sizes) (layout : Layout) :
     (phase : Phase) → Input sizes phase → List (Nat × List Byte)
   | .keygen, secretKey => [(layout.secretKey, bytes secretKey)]
-  | .sign, (secretKey, pk, cache, message) =>
-      [(layout.secretKey, bytes secretKey), (layout.publicKey, bytes pk),
-        (layout.cache, bytes cache), (layout.message, bytes message)]
+  | .sign, (secretKey, cache, message) =>
+      [(layout.secretKey, bytes secretKey), (layout.cache, bytes cache),
+        (layout.message, bytes message)]
   | .expand, (message, pk, signature) =>
       [(layout.message, bytes message), (layout.publicKey, bytes pk),
         (layout.signature, bytes signature)]
@@ -103,7 +103,7 @@ def Submission.honest (submission : Submission) (secretKey : SecretKey) (message
   let keygen ← submission.run .keygen secretKey
   costs := recordCost costs .keygen keygen.hashCompressions
   let some (pk, cache) := keygen.value | return ⟨false, costs, 0⟩
-  let sign ← submission.run .sign (secretKey, pk, cache, message)
+  let sign ← submission.run .sign (secretKey, cache, message)
   costs := recordCost costs .sign sign.hashCompressions
   let some signature := sign.value | return ⟨false, costs, 0⟩
   let expand ← submission.run .expand (message, pk, signature)
