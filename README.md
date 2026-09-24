@@ -6,7 +6,7 @@ Design a **stateless hash-based signature scheme** minimizing `S × C`: signatur
 
 1. Four RISC-V program images: [keygen](#keygen), [sign](#sign), [expand](#expand), and [verify](#verify), including embedded data.
 2. Nonnegative integers `S`, `W`, and `C`: signature bytes, witness bytes, and verification cycles.
-3. Six byte offsets specifying where RISC-V inputs and outputs reside in memory.
+3. [Six byte offsets](#inputs-and-outputs) specifying where RISC-V inputs and outputs reside in memory.
 4. Lean 4 proofs of the [required statements](#required-lean-statements) for those exact images, sizes, layout, and bound.
 
 Open a PR against the [submissions repository’s `beta` branch](https://github.com/leanEthereum/sig.golf-submissions/tree/beta); its README gives the required file layout.

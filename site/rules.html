@@ -49,7 +49,7 @@
           <ul>
             <li>Four RISC-V programs: <a href="#keygen"><code>keygen</code></a>, <a href="#sign"><code>sign</code></a>, <a href="#expand"><code>expand</code></a>, and <a href="#verify"><code>verify</code></a>.</li>
             <li>Three integers: <code>S</code> (signature size in bytes), <code>W</code> (witness size in bytes), and <code>C</code> (verification cycles).</li>
-            <li>Six byte offsets specifying where RISC-V inputs and outputs reside in memory.</li>
+            <li><a href="#memory-layout">Six byte offsets</a> specifying where RISC-V inputs and outputs reside in memory.</li>
             <li>Lean 4 proofs for every <a href="#proofs">required statement</a>.</li>
           </ul>
           <p>Open a pull request against <a href="https://github.com/leanEthereum/sig.golf-submissions/tree/beta">sig.golf-submissions → beta</a>. Follow its <a href="https://github.com/leanEthereum/sig.golf-submissions/blob/beta/README.md">submission layout</a>.</p>
@@ -169,7 +169,7 @@
           <p>Load <code>D</code> embedded bytes at <math class="rule-math" aria-label="data base equals sixteen times the floor of zero x one zero zero zero zero zero zero minus D, divided by sixteen"><mi>data_base</mi><mo>=</mo><mn>16</mn><mo>×</mo><mo>⌊</mo><mfrac><mrow><mn>0x1000000</mn><mo>−</mo><mi>D</mi></mrow><mn>16</mn></mfrac><mo>⌋</mo></math>. Initially, <code>sp = data_base</code> and <code>PC = 0x1000</code>; all other integer registers are zero.</p>
 
           <h3>Inputs and outputs</h3>
-          <p>Each submission specifies six byte offsets, shared by all four programs: δ<sub>message</sub>, δ<sub>secret key</sub>, δ<sub>public key</sub>, δ<sub>cache</sub>, δ<sub>signature</sub>, δ<sub>witness</sub>. Each gives the memory address where that object is written or read. The buffers have the sizes in <a href="#parameters">Parameters</a>, start at 8-byte-aligned addresses, do not overlap, and end at or below <code>data_base</code> for every program.</p>
+          <p id="memory-layout">Each submission specifies six byte offsets, shared by all four programs: δ<sub>message</sub>, δ<sub>secret key</sub>, δ<sub>public key</sub>, δ<sub>cache</sub>, δ<sub>signature</sub>, δ<sub>witness</sub>. Each gives the memory address where that object is written or read. The buffers have the sizes in <a href="#parameters">Parameters</a>, start at 8-byte-aligned addresses, do not overlap, and end at or below <code>data_base</code> for every program.</p>
           <p>Before each execution, memory is zero except for embedded data and the inputs listed under <a href="#programs">Programs</a>; unused object buffers remain zero. For example, before <a href="#sign"><code>sign</code></a>, write the secret key, public key, cache, and message at their offsets. On success, read the signature at δ<sub>signature</sub>.</p>
           <p>HALT ends execution with <code>a0 = 1</code> for success, or <code>a0 = 0</code> for failure. For <a href="#verify"><code>verify</code></a>, these mean acceptance and rejection, respectively.</p>
 
