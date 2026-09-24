@@ -24,14 +24,14 @@ Design a **stateless hash-based signature scheme** minimizing `S × C`: signatur
 
 Every object has a fixed size in bytes:
 
-| Object            |                Bytes |
-| ----------------- | -------------------: |
+| Object     |                Bytes |
+| ---------- | -------------------: |
 | Message    |                   32 |
-| Secret key        |                   32 |
-| Public key        |                   16 |
-| Cache             |       2^17 (128 KiB) |
-| Signature |              `S` ≥ 1 |
-| Witness  | `W` ≤ 2^17 (128 KiB) |
+| Secret key |                   32 |
+| Public key |                   16 |
+| Cache      |       2^17 (128 KiB) |
+| Signature  |              `S` ≥ 1 |
+| Witness    | `W` ≤ 2^17 (128 KiB) |
 
 ## Programs
 
@@ -103,7 +103,7 @@ Stop at the first failure. We say the `experiment succeeds` when all stages succ
 
 `Pr_H` is over H; `E_{H,M}` is over an independently sampled random oracle H and uniform 32-byte message M. Attacker-chosen messages or altered caches/signatures may cost more. TODO: Can we improve this?
 
-3. **Verification cycles:** for every secret key, message and oracle, if the experiment succeeds, `verify` uses at most `C` cycles.
+3. **Verification cycles:** for every secret key, message and oracle, if the experiment succeeds, [`verify`](#verify) uses at most [`C`](#submission) cycles.
 
 ### Security
 

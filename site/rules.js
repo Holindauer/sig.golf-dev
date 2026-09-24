@@ -25,3 +25,21 @@ addEventListener('scroll', scheduleSectionUpdate, {passive: true});
 addEventListener('resize', scheduleSectionUpdate);
 addEventListener('hashchange', scheduleSectionUpdate);
 updateCurrentSection();
+
+const flashTimers = new WeakMap();
+function flashReference(target) {
+  const marker = target.matches('.rule-section, .program-block')
+    ? target.querySelector('h2, h3') : target;
+  if (!marker) return;
+  marker.classList.remove('rule-ref-flash');
+  void marker.offsetWidth;
+  marker.classList.add('rule-ref-flash');
+  clearTimeout(flashTimers.get(marker));
+  flashTimers.set(marker, setTimeout(() => marker.classList.remove('rule-ref-flash'), 2000));
+}
+document.addEventListener('click', event => {
+  const link = event.target.closest('a[href^="#"]');
+  if (!link) return;
+  const target = document.getElementById(link.dataset.highlight || link.hash.slice(1));
+  if (target) flashReference(target);
+});
