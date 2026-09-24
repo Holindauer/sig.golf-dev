@@ -68,7 +68,7 @@
               <tr><td><math class="rule-math" aria-label="I max, program size limit" title="MAX_IMAGE_BYTES"><msub><mi>I</mi><mtext>max</mtext></msub></math></td><td>2<sup>20</sup></td><td>Program size limit (bytes)</td></tr>
             </tbody></table></div>
             <div class="rule-table-wrap"><table><thead><tr><th>Object</th><th>Size (in Bytes)</th></tr></thead><tbody>
-              <tr><td>Message digest</td><td>32</td></tr>
+              <tr><td>Message</td><td>32</td></tr>
               <tr><td>Secret key</td><td>32</td></tr>
               <tr><td>Public key</td><td>16</td></tr>
               <tr><td>Cache</td><td>2<sup>17</sup> (128 KiB)</td></tr>
@@ -133,7 +133,7 @@
             <li><b>Success</b><span>For every secret key, <math class="rule-math" aria-label="Probability over H that the experiment succeeds for every message is at least one minus epsilon"><msub><mi>Pr</mi><mi>H</mi></msub><mo>[</mo><mtext>success for every message</mtext><mo>]</mo><mo>≥</mo><mn>1</mn><mo>−</mo><mi>ε</mi></math>.</span></li>
             <li><b>Compression budgets</b><span>For every secret key and <code>P</code> in {<code>keygen</code>, <code>sign</code>, <code>expand</code>}: <math class="rule-math" aria-label="Expectation over H and M of two raised to K sub P divided by B sub P is at most two"><msub><mi>𝔼</mi><mrow><mi>H</mi><mo>,</mo><mi>M</mi></mrow></msub><mo>[</mo><msup><mn>2</mn><mrow><msub><mi>K</mi><mi>P</mi></msub><mo>/</mo><msub><mi>B</mi><mi>P</mi></msub></mrow></msup><mo>]</mo><mo>≤</mo><mn>2</mn></math></span></li>
           </ol>
-          <p class="fine-print"><math class="rule-math" aria-label="Probability over H"><msub><mi>Pr</mi><mi>H</mi></msub></math> is over <code>H</code>; <math class="rule-math" aria-label="Expectation over H and M"><msub><mi>𝔼</mi><mrow><mi>H</mi><mo>,</mo><mi>M</mi></mrow></msub></math> is over an independently sampled random oracle <code>H</code> and uniform 32-byte message digest <code>M</code>. Attacker-chosen messages or altered caches/signatures may cost more. <strong class="rule-todo">TODO: Can we improve this?</strong></p>
+          <p class="fine-print"><math class="rule-math" aria-label="Probability over H"><msub><mi>Pr</mi><mi>H</mi></msub></math> is over <code>H</code>; <math class="rule-math" aria-label="Expectation over H and M"><msub><mi>𝔼</mi><mrow><mi>H</mi><mo>,</mo><mi>M</mi></mrow></msub></math> is over an independently sampled random oracle <code>H</code> and uniform 32-byte message <code>M</code>. Attacker-chosen messages or altered caches/signatures may cost more. <strong class="rule-todo">TODO: Can we improve this?</strong></p>
           <ol class="claim-list" start="3">
             <li><b>Verification cycles</b><span>For every secret key, message, and oracle, if the experiment succeeds, <code>verify</code> uses at most <code>C</code> cycles.</span></li>
           </ol>
