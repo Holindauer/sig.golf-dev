@@ -6,9 +6,10 @@
 .rules-toc a[aria-current="location"] { border-left-color: var(--blue); color: var(--blue-dark); background: #eaf3fc; font-weight: 700; }
 .rules-content { min-width: 0; }
 .rules-content [id] { scroll-margin-top: 32px; }
-.rule-ref-flash { background-color: #fff0b3; box-shadow: 0 0 0 4px rgba(232, 164, 35, .3); border-radius: 3px; }
+#score-s, #score-w, #score-c { scroll-margin-top: 30vh; }
+.rule-ref-flash { background-color: #f1f7ff; box-shadow: 0 0 0 3px rgba(40, 110, 196, .10); border-radius: 3px; }
 .rule-section h2.rule-ref-flash { width: fit-content; }
-.rule-ref-flash > td { background-color: #fff0b3; }
+.rule-ref-flash > td { background-color: #f1f7ff; }
 .rule-section { padding: 34px 0 42px; border-bottom: 1px solid var(--line); scroll-margin-top: 25px; }
 .rule-section:last-child { border-bottom: 0; padding-bottom: 0; }
 .rule-section h2 { margin: 8px 0 16px; font-size: 30px; line-height: 1.2; }
@@ -18,7 +19,7 @@
 .rule-math { vertical-align: middle; }
 .rule-math[display="block"] { margin: 9px 0 2px; font-size: 1.16em; }
 .rule-section code { color: #20364b; font: .93em/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
-.rule-table-wrap { max-width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+.rule-table-wrap { max-width: 100%; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
 .rule-table-wrap table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.45; }
 .rule-table-wrap caption { padding: 13px 15px 9px; text-align: left; font-size: 13px; font-weight: 700; }
 .rule-table-wrap th { padding: 9px 13px; background: #f4f6f7; color: var(--muted); text-align: left; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
@@ -58,7 +59,11 @@
   .rules-toc a { padding: 4px 0; }
   .rule-section { padding: 26px 0 31px; }
   .rule-section h2 { font-size: 26px; }
-  .claim-list li, .callout, .detail-list > div { grid-template-columns: 1fr; gap: 4px; }
-  .rule-table-wrap table { min-width: 430px; }
-  .table-grid .rule-table-wrap table { min-width: 0; }
+  .claim-list li, #proofs .callout, .detail-list > div { grid-template-columns: 1fr; gap: 4px; }
+  .rule-table-wrap th, .rule-table-wrap td, .rule-table-wrap td:last-child { white-space: normal; }
+  .rule-table-wrap th, .rule-table-wrap td { padding-left: 8px; padding-right: 8px; }
+  .constants-table table { table-layout: fixed; }
+  .constants-table th:first-child { width: 80px; }
+  .constants-table th:nth-child(2) { width: 64px; }
+  .constants-table th:nth-child(2), .constants-table td:nth-child(2) { white-space: nowrap; }
 }
