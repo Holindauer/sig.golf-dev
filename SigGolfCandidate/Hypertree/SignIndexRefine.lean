@@ -131,18 +131,18 @@ theorem loaded_index_refines (hash : Hash) (secretKey : SecretKey) (pk : PublicK
         Reference.indexOf hash pk message (Reference.randomizer hash secretKey message) := by
   obtain ⟨initial, loaded, pc⟩ := initialState_exists submission admitted .sign (secretKey, pk, cache, message)
   obtain ⟨randomized, randomTrace, randomPC, randomWords, frame⟩ := entry_randomizer_refines_frame hash initial secretKey message pc
-    (Loader.sign_secretKey submission (admitted.2 .sign) secretKey pk cache message initial loaded)
-    (Loader.sign_message submission (admitted.2 .sign) secretKey pk cache message initial loaded)
+    (Loader.sign_secretKey submission (admitted.2 .sign) (by rfl) secretKey pk cache message initial loaded)
+    (Loader.sign_message submission (admitted.2 .sign) (by rfl) secretKey pk cache message initial loaded)
   have pkBytes : ∀ i, i < 16 → randomized.getByte (BitVec.ofNat 64 (0x40 + i)) = pk.extractLsb' (8 * i) 8 := by
     intro i hi
     rw [low_words_byte initial randomized frame 0x40 i (by decide) (by omega)]
-    exact Loader.sign_publicKey submission (admitted.2 .sign) secretKey pk cache message initial loaded i hi
+    exact Loader.sign_publicKey submission (admitted.2 .sign) (by rfl) secretKey pk cache message initial loaded i hi
   have msgBytes : ∀ i, i < 32 → randomized.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8 * i) 8 := by
     intro i hi
     have unchanged := low_words_byte initial randomized frame 0 i (by decide) (by omega)
     simp only [Nat.zero_add] at unchanged
     rw [unchanged]
-    exact Loader.sign_message submission (admitted.2 .sign) secretKey pk cache message initial loaded i hi
+    exact Loader.sign_message submission (admitted.2 .sign) (by rfl) secretKey pk cache message initial loaded i hi
   have randBytes := bytes_of_answer_words randomized 0x20060 (Reference.randomizer hash secretKey message)
     (by decide) (by decide) randomWords
   obtain ⟨final, indexTrace, finalPC, index⟩ := index_refines hash randomized pk message

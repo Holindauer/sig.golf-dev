@@ -41,6 +41,16 @@ structure Sizes where
   witness : Nat
   deriving DecidableEq, Repr
 
+/-- One set of byte offsets shared by all four programs. -/
+structure Layout where
+  message : Nat
+  secretKey : Nat
+  publicKey : Nat
+  cache : Nat
+  signature : Nat
+  witness : Nat
+  deriving DecidableEq, Repr
+
 def Sizes.Valid (sizes : Sizes) : Prop :=
   1 ≤ sizes.signature ∧ sizes.witness ≤ MAX_WITNESS_BYTES
 

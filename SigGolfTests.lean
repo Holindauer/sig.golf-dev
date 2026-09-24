@@ -11,7 +11,9 @@ private def acceptImage : Image := ⟨[addi 10 0 1, 0x73], []⟩
 private def hashImage (bits : Nat) : Image :=
   ⟨[addi 5 0 1, addi 10 0 0, addi 11 0 bits, addi 12 0 0, 0x73,
     addi 5 0 0, addi 10 0 1, 0x73], []⟩
-private def toy : Submission := ⟨⟨1, 1⟩, fun _ => hashImage 513⟩
+private def toy : Submission := ⟨⟨1, 1⟩, standardLayout ⟨1, 1⟩, fun _ => hashImage 513⟩
+private def movedLayout : Layout := ⟨0x40000, 0x40020, 0x40040, 0x50000, 0x80000, 0x81000⟩
+private def movedToy : Submission := { toy with layout := movedLayout }
 private def runSmall (image : Image) (state : MachineState := blank) : Execution :=
   evalWithAnswerFn zeroHash (execute 20 image state)
 
@@ -23,7 +25,7 @@ example : rangeValid 0xffffffffffffffff 2 = false := by decide
 example : accessValid 0x100000 8 = true ∧ accessValid 0x1000000 8 = false := by decide
 example : MEMORY_BYTES = 16777216 ∧ MAX_IMAGE_BYTES = 1048576 := by decide
 example (image : Image) (sizes : Sizes) (h : image.byteSize = MAX_IMAGE_BYTES) :
-    ¬ image.Valid sizes := by
+    ¬ image.Valid sizes (standardLayout sizes) := by
   intro valid
   have bound := valid.1
   omega
@@ -31,6 +33,11 @@ example : wordResult .div 0x80000000 0xffffffff = 0x80000000 := by decide
 example : wordResult .div 7 0 = 0xffffffff ∧ wordResult .rem 7 0 = 7 := by decide
 example : wordResult .sll 1 32 = 1 ∧ wordResult .sra 0x80000000 31 = 0xffffffff := by decide
 example : witnessBase ⟨1, 1⟩ = 0x20068 ∧ witnessBase ⟨9, 1⟩ = 0x20070 := by decide
+example : (hashImage 513).Valid ⟨1, 1⟩ movedLayout := by decide
+example : ¬ (hashImage 513).Valid ⟨1, 1⟩
+    { movedLayout with publicKey := movedLayout.message } := by decide
+example : ¬ ({ hashImage 513 with data := List.replicate 32 0 } : Image).Valid ⟨1, 1⟩
+    { standardLayout ⟨1, 1⟩ with witness := MEMORY_BYTES - 16 } := by decide
 
 private def fixedWorld : QueryImpl World Id
   | .inl n => ⟨0, Nat.zero_lt_succ n⟩
@@ -50,6 +57,7 @@ private def signer : Adversary toy.sizes where
 
 private def cacheEcho : Submission where
   sizes := ⟨1, 1⟩
+  layout := standardLayout ⟨1, 1⟩
   image
     | .sign => ⟨(hashImage 513).code.take 5 ++
         [0x00020437, addi 8 8 0x60, 0x06004383, 0x00740023,
@@ -58,6 +66,7 @@ private def cacheEcho : Submission where
 
 private def failedSign : Submission where
   sizes := ⟨1, 1⟩
+  layout := standardLayout ⟨1, 1⟩
   image
     | .sign => ⟨(hashImage 513).code.take 5 ++ [addi 5 0 0, addi 10 0 0, 0x73], []⟩
     | phase => cacheEcho.image phase
@@ -131,6 +140,16 @@ private def check (label : String) (condition : Bool) : IO Unit :=
       state.getByte (BitVec.ofNat 64 (witnessBase toy.sizes)) == 0x78)
     check "undeclared secretKey and cache are zero" (state.getByte 0x20 == 0 && state.getByte 0x60 == 0)
     check "initial registers" (state.pc == 0x1000 && state.getReg .x2 == 0x1000000 && state.getReg .x10 == 0)
+  match initialState movedToy .verify (0x34, 0x56, 0x78) with
+  | none => throw (IO.userError "custom layout rejected by loader")
+  | some state =>
+    check "custom input offsets" (state.getByte movedLayout.message == 0x34 &&
+      state.getByte movedLayout.publicKey == 0x56 && state.getByte movedLayout.witness == 0x78)
+    check "former input offsets stay zero" (state.getByte 0x40 == 0 &&
+      state.getByte (BitVec.ofNat 64 (witnessBase movedToy.sizes)) == 0)
+  let outputState := blank.writeBytesAsWords (BitVec.ofNat 64 movedLayout.signature) [0x5a]
+  let output : BitVec 8 := readOutput movedToy.sizes movedToy.layout .sign outputState
+  check "custom output offset" (output == 0x5a)
   let signed := evalWithAnswerFn zeroHash (cacheEcho.signingOracle 0 0 ⟨7, 0xa5⟩)
   check "attacker cache reaches sign" (signed.value == some (0xa5 : BitVec 8) && signed.finished)
   check "all signing work is charged" (signed.hashCalls == 1 && signed.hashCompressions == 2)

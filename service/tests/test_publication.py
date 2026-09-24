@@ -15,7 +15,9 @@ def pr(number, sha):
 
 
 def result(s, c):
-    return {'status': 'verified', 'claim': {'S': s, 'W': s, 'C': c}}
+    return {'status': 'verified', 'claim': {'S': s, 'W': s, 'C': c,
+            'layout': {'message': 0, 'secret_key': 32, 'public_key': 64,
+                       'cache': 96, 'signature': 131168, 'witness': 131168 + s}}}
 
 
 class FakeGithub:

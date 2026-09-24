@@ -18,11 +18,41 @@ def dataBase (image : Image) : Nat := 16 * ((MEMORY_BYTES - image.data.length) /
 def signatureBase : Nat := 0x20060
 def witnessBase (sizes : Sizes) : Nat := signatureBase + 8 * ((sizes.signature + 7) / 8)
 
-def Image.Valid (image : Image) (sizes : Sizes) : Prop :=
-  image.byteSize < MAX_IMAGE_BYTES ∧ witnessBase sizes + sizes.witness ≤ dataBase image
+def standardLayout (sizes : Sizes) : Layout :=
+  ⟨0, 0x20, 0x40, 0x60, signatureBase, witnessBase sizes⟩
 
-instance (image : Image) (sizes : Sizes) : Decidable (image.Valid sizes) :=
-  inferInstanceAs (Decidable (image.byteSize < MAX_IMAGE_BYTES ∧ witnessBase sizes + sizes.witness ≤ dataBase image))
+def layoutBuffers (layout : Layout) (sizes : Sizes) : List (Nat × Nat) :=
+  [(layout.message, 32), (layout.secretKey, 32), (layout.publicKey, 16),
+   (layout.cache, CACHE_BYTES), (layout.signature, sizes.signature),
+   (layout.witness, sizes.witness)]
+
+def disjointBuffers (left right : Nat × Nat) : Prop :=
+  left.2 = 0 ∨ right.2 = 0 ∨ left.1 + left.2 ≤ right.1 ∨ right.1 + right.2 ≤ left.1
+
+instance (left right : Nat × Nat) : Decidable (disjointBuffers left right) := by
+  unfold disjointBuffers
+  infer_instance
+
+def buffersDisjoint : List (Nat × Nat) → Bool
+  | [] => true
+  | first :: rest =>
+      rest.all (fun second => decide (disjointBuffers first second)) && buffersDisjoint rest
+
+def layoutValid (layout : Layout) (sizes : Sizes) (image : Image) : Prop :=
+  (layoutBuffers layout sizes).all (fun buffer =>
+    decide (buffer.1 % 8 = 0 ∧ buffer.1 + buffer.2 ≤ dataBase image)) = true ∧
+  buffersDisjoint (layoutBuffers layout sizes) = true
+
+instance (layout : Layout) (sizes : Sizes) (image : Image) :
+    Decidable (layoutValid layout sizes image) := by
+  unfold layoutValid
+  infer_instance
+
+def Image.Valid (image : Image) (sizes : Sizes) (layout : Layout) : Prop :=
+  image.byteSize < MAX_IMAGE_BYTES ∧ layoutValid layout sizes image
+
+instance (image : Image) (sizes : Sizes) (layout : Layout) : Decidable (image.Valid sizes layout) :=
+  inferInstanceAs (Decidable (image.byteSize < MAX_IMAGE_BYTES ∧ layoutValid layout sizes image))
 
 def rangeValid (address : BitVec 64) (bytes : Nat) : Bool :=
   decide (address.toNat + bytes ≤ MEMORY_BYTES)

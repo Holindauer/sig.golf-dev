@@ -161,8 +161,12 @@ def _entry(pr: dict, result: dict, contract: str, tree: str) -> dict:
             not isinstance(tree, str) or not SHA.fullmatch(tree) or
             type(number) is not int or number < 1 or
             not isinstance(author, str) or not LOGIN.fullmatch(author) or
-            not isinstance(claim, dict) or set(claim) != {'S', 'W', 'C'} or
-            any(type(claim[k]) is not int or claim[k] < 0 for k in claim)):
+            not isinstance(claim, dict) or set(claim) != {'S', 'W', 'C', 'layout'} or
+            any(type(claim[k]) is not int or claim[k] < 0 for k in ('S', 'W', 'C')) or
+            not isinstance(claim['layout'], dict) or
+            set(claim['layout']) != {'message', 'secret_key', 'public_key', 'cache',
+                                     'signature', 'witness'} or
+            any(type(offset) is not int or offset < 0 for offset in claim['layout'].values())):
         raise GithubError('invalid verified result identity')
     body = pr.get('body') or ''
     match = re.search(r'(?im)^Assisted by:\s*(.{1,80})$', body)

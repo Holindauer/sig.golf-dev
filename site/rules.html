@@ -49,7 +49,8 @@
           <ul>
             <li>Four RISC-V programs: <a href="#keygen"><code>keygen</code></a>, <a href="#sign"><code>sign</code></a>, <a href="#expand"><code>expand</code></a>, and <a href="#verify"><code>verify</code></a>.</li>
             <li>Three integers: <code>S</code> (signature size in bytes), <code>W</code> (witness size in bytes), and <code>C</code> (verification cycles).</li>
-            <li>All Lean 4 proofs required below.</li>
+            <li>Six byte offsets specifying where RISC-V inputs and outputs reside in memory.</li>
+            <li>Lean 4 proofs for every <a href="#proofs">required statement</a>.</li>
           </ul>
           <p>Open a pull request against <a href="https://github.com/leanEthereum/sig.golf-submissions/tree/beta">sig.golf-submissions → beta</a>. Follow its <a href="https://github.com/leanEthereum/sig.golf-submissions/blob/beta/README.md">submission layout</a>.</p>
         </section>
@@ -65,6 +66,7 @@
               <tr><td><math class="rule-math" aria-label="L, signing lifetime" title="LIFETIME"><mi>L</mi></math></td><td>2<sup>32</sup></td><td>Signing lifetime in requests</td></tr>
               <tr><td><math class="rule-math" aria-label="lambda, security bits" title="SECURITY_BITS"><mi>λ</mi></math></td><td>127</td><td>Security level in bits</td></tr>
               <tr><td><math class="rule-math" aria-label="T, cycle limit" title="CYCLE_LIMIT"><mi>T</mi></math></td><td>2<sup>32</sup></td><td>Program cycle limit</td></tr>
+              <tr><td><math class="rule-math" aria-label="I max, program image size limit" title="MAX_IMAGE_BYTES"><msub><mi>I</mi><mtext>max</mtext></msub></math></td><td>2<sup>20</sup></td><td>Program image limit (bytes)</td></tr>
             </tbody></table></div>
             <div class="rule-table-wrap"><table><thead><tr><th>Object</th><th>Size (in Bytes)</th></tr></thead><tbody>
               <tr><td>Message digest</td><td>32</td></tr>
@@ -160,23 +162,16 @@
 
         <section id="interface" class="rule-section">
           <h2>RISC-V interface</h2>
-          <p>Use <a href="https://docs.riscv.org/reference/isa/v20260120/unpriv/rv64.html">RV64I</a> and the <a href="https://docs.riscv.org/reference/isa/v20260120/unpriv/m-st-ext.html">M extension</a>. Each program satisfies <math class="rule-math" aria-label="four times instruction count plus embedded data bytes is less than two to the power twenty"><mn>4</mn><mo>×</mo><mtext>instruction count</mtext><mo>+</mo><mtext>embedded-data bytes</mtext><mo>&lt;</mo><msup><mn>2</mn><mn>20</mn></msup></math>, checked directly at submission.</p>
+          <p>Use <a href="https://docs.riscv.org/reference/isa/v20260120/unpriv/rv64.html">RV64I</a> and the <a href="https://docs.riscv.org/reference/isa/v20260120/unpriv/m-st-ext.html">M extension</a>. Each program satisfies <math class="rule-math" aria-label="four times instruction count plus embedded data bytes is less than I max"><mn>4</mn><mo>×</mo><mtext>instruction count</mtext><mo>+</mo><mtext>embedded-data bytes</mtext><mo>&lt;</mo><msub><mi>I</mi><mtext>max</mtext></msub></math>, checked directly at submission.</p>
 
           <h3>Code and memory</h3>
           <p>Code occupies a separate, immutable instruction address space. Instruction <code>i</code> is at <code>0x1000 + 4 × i</code>. Memory occupies <code>0x000000–0xFFFFFF</code> (16 MiB), including embedded data, inputs, outputs, scratch space, and stack. The verifier enforces this range directly; it is not a separate Lean proof obligation.</p>
-          <p>Initialize memory to zero. Load <code>D</code> embedded bytes at <math class="rule-math" aria-label="data base equals sixteen times the floor of zero x one zero zero zero zero zero zero minus D, divided by sixteen"><mi>data_base</mi><mo>=</mo><mn>16</mn><mo>×</mo><mo>⌊</mo><mfrac><mrow><mn>0x1000000</mn><mo>−</mo><mi>D</mi></mrow><mn>16</mn></mfrac><mo>⌋</mo></math>. Initially, <code>sp = data_base</code> and <code>PC = 0x1000</code>; all other integer registers are zero.</p>
+          <p>Load <code>D</code> embedded bytes at <math class="rule-math" aria-label="data base equals sixteen times the floor of zero x one zero zero zero zero zero zero minus D, divided by sixteen"><mi>data_base</mi><mo>=</mo><mn>16</mn><mo>×</mo><mo>⌊</mo><mfrac><mrow><mn>0x1000000</mn><mo>−</mo><mi>D</mi></mrow><mn>16</mn></mfrac><mo>⌋</mo></math>. Initially, <code>sp = data_base</code> and <code>PC = 0x1000</code>; all other integer registers are zero.</p>
 
           <h3>Inputs and outputs</h3>
-          <p>Inputs and outputs use the same addresses, fixed for each submission:</p>
-          <div class="rule-table-wrap"><table><thead><tr><th>Address</th><th>Buffer</th></tr></thead><tbody>
-            <tr><td><code>0x00</code></td><td>Message</td></tr>
-            <tr><td><code>0x20</code></td><td>Secret key</td></tr>
-            <tr><td><code>0x40</code></td><td>Public key</td></tr>
-            <tr><td><code>0x60</code></td><td>Cache</td></tr>
-            <tr><td><code>0x20060</code></td><td>Signature</td></tr>
-            <tr><td><math class="rule-math" aria-label="hexadecimal two zero zero six zero plus eight times the ceiling of S divided by eight"><mn>0x20060</mn><mo>+</mo><mn>8</mn><mo>×</mo><mo>⌈</mo><mfrac><mi>S</mi><mn>8</mn></mfrac><mo>⌉</mo></math></td><td>Witness</td></tr>
-          </tbody></table></div>
-          <p>Load the inputs and read the outputs listed under Programs at their declared sizes. Other input fields start at zero. HALT ends execution with <code>a0 = 1</code> for success, or <code>a0 = 0</code> for failure. For <code>verify</code>, these mean acceptance and rejection, respectively.</p>
+          <p>Each submission specifies six byte offsets, shared by all four programs: δ<sub>message</sub>, δ<sub>secret key</sub>, δ<sub>public key</sub>, δ<sub>cache</sub>, δ<sub>signature</sub>, δ<sub>witness</sub>. Each gives the memory address where that object is written or read. The buffers have the sizes in <a href="#parameters">Parameters</a>, start at 8-byte-aligned addresses, do not overlap, and end at or below <code>data_base</code> for every program.</p>
+          <p>Before each execution, memory is zero except for embedded data and the inputs listed under <a href="#programs">Programs</a>; unused object buffers remain zero. For example, before <a href="#sign"><code>sign</code></a>, write the secret key, public key, cache, and message at their offsets. On success, read the signature at δ<sub>signature</sub>.</p>
+          <p>HALT ends execution with <code>a0 = 1</code> for success, or <code>a0 = 0</code> for failure. For <a href="#verify"><code>verify</code></a>, these mean acceptance and rejection, respectively.</p>
 
           <h3>System calls</h3>
           <p>ECALL selects one of two services through <code>t0</code>:</p>
@@ -193,12 +188,8 @@
             <div><dt>Registers</dt><dd><code>x0–x31</code> are 64 bits. <code>x0</code> always reads zero and ignores writes. Aliases are <code>sp = x2</code>, <code>t0 = x5</code>, and <code>a0–a2 = x10–x12</code>. PC is separate.</dd></div>
             <div><dt>Memory access</dt><dd>Addresses count bytes; multi-byte integers are little-endian. Loads and stores access only memory, not code. Accesses of 1, 2, 4, or 8 bytes require alignment to their size. Misaligned accesses fail.</dd></div>
             <div><dt>Bounds</dt><dd>Every memory access and buffer must fit completely in memory. For unsigned byte address <code>p</code> and length <code>n</code>, require <math class="rule-math" aria-label="p plus n is at most hexadecimal one zero zero zero zero zero zero"><mi>p</mi><mo>+</mo><mi>n</mi><mo>≤</mo><mn>0x1000000</mn></math>. All size, layout, and bounds calculations use mathematical integers without overflow. Instruction arithmetic and effective-address calculation follow RV64IM.</dd></div>
-            <div><dt>Buffer layout</dt><dd>Cache, signature, and witness occupy separate consecutive areas, with up to seven alignment bytes after the signature. Require <math class="rule-math" aria-label="hexadecimal two zero zero six zero plus eight times the ceiling of S divided by eight plus W is at most data base"><mn>0x20060</mn><mo>+</mo><mn>8</mn><mo>×</mo><mo>⌈</mo><mfrac><mi>S</mi><mn>8</mn></mfrac><mo>⌉</mo><mo>+</mo><mi>W</mi><mo>≤</mo><mi>data_base</mi></math> for each program.</dd></div>
-            <div><dt>Input loading</dt><dd>Reject incorrect sizes or buffers extending beyond <code>data_base</code>. Starting addresses are 8-byte aligned; lengths need not be multiples of eight.</dd></div>
-            <div><dt>Output extraction</dt><dd>Read each output at its declared size from its fixed address in final memory. On failure, ignore output buffers.</dd></div>
             <div><dt>HASH arguments</dt><dd>Addresses and bit length <code>n</code> are unsigned 64-bit values. The input's <math class="rule-math" aria-label="ceiling of n divided by eight"><mo>⌈</mo><mfrac><mi>n</mi><mn>8</mn></mfrac><mo>⌉</mo></math> bytes and the output's 32 bytes must fit entirely in memory; check this before any oracle call or write. Both input and output addresses must be 8-byte aligned.</dd></div>
             <div><dt>HASH execution</dt><dd>Read exactly <code>n</code> bits in increasing byte-address order, least-significant bit first within each byte; ignore unused high bits of the final byte. Read all input before writing the answer, so buffers may overlap. Preserve integer registers and advance PC by 4.</dd></div>
-            <div><dt>Faults</dt><dd>Unknown services, invalid arguments, invalid HALT statuses, invalid instruction encodings, and memory or instruction-fetch faults end the program with failure (<code>verify</code> rejects). Invalid fetches or encodings cost zero cycles; other faults cost one cycle and make no oracle call.</dd></div>
           </dl>
         </section>
 

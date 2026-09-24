@@ -6,21 +6,23 @@ Design a **stateless hash-based signature scheme** minimizing `S × C`: signatur
 
 1. Four RISC-V program images: [keygen](#keygen), [sign](#sign), [expand](#expand), and [verify](#verify), including embedded data.
 2. Nonnegative integers `S`, `W`, and `C`: signature bytes, witness bytes, and verification cycles.
-3. Lean 4 proofs of the statements below for those exact images, sizes, and bound.
+3. Six byte offsets specifying where RISC-V inputs and outputs reside in memory.
+4. Lean 4 proofs of the [required statements](#required-lean-statements) for those exact images, sizes, layout, and bound.
 
 Open a PR against the [submissions repository’s `beta` branch](https://github.com/leanEthereum/sig.golf-submissions/tree/beta); its README gives the required file layout.
 
 ## Parameters
 
-| Constant        |                 Value |
-| --------------- | --------------------: |
-| `BUDGET_KEYGEN` |     2^20 compressions |
-| `BUDGET_SIGN`   |     2^17 compressions |
-| `BUDGET_EXPAND` |     2^20 compressions |
-| `FAILURE`       |                2^-256 |
-| `LIFETIME`      | 2^32 signing requests |
-| `SECURITY_BITS` |                   127 |
-| `CYCLE_LIMIT`   |           2^32 cycles |
+| Constant          |                 Value |
+| ----------------- | --------------------: |
+| `BUDGET_KEYGEN`   |     2^20 compressions |
+| `BUDGET_SIGN`     |     2^17 compressions |
+| `BUDGET_EXPAND`   |     2^20 compressions |
+| `FAILURE`         |                2^-256 |
+| `LIFETIME`        | 2^32 signing requests |
+| `SECURITY_BITS`   |                   127 |
+| `CYCLE_LIMIT`     |           2^32 cycles |
+| `MAX_IMAGE_BYTES` |            2^20 bytes |
 
 Every object has a fixed size in bytes:
 
@@ -130,7 +132,7 @@ The total hash-call count includes key generation, signing, `A`’s queries, and
 
 Use [RV64I](https://docs.riscv.org/reference/isa/v20260120/unpriv/rv64.html) and the [M extension](https://docs.riscv.org/reference/isa/v20260120/unpriv/m-st-ext.html).
 
-Each program satisfies **`4 × instruction count + embedded-data bytes < 2^20`**, checked directly at submission.
+Each program satisfies **`4 × instruction count + embedded-data bytes < MAX_IMAGE_BYTES`**, checked directly at submission.
 
 ### Code and memory
 
@@ -138,24 +140,15 @@ Code occupies a separate, immutable instruction address space. Instruction i is 
 
 Memory occupies `0x000000`–`0xFFFFFF` (16 MiB), including embedded data, inputs, outputs, scratch space, and stack. The verifier enforces this range directly; it is not a separate Lean proof obligation.
 
-Initialize memory to zero. Load D embedded bytes at `data_base = 16 × floor((0x1000000 - D) / 16)`. Initially, `sp = data_base` and `PC = 0x1000`; all other integer registers are zero.
+Load D embedded bytes at `data_base = 16 × floor((0x1000000 - D) / 16)`. Initially, `sp = data_base` and `PC = 0x1000`; all other integer registers are zero.
 
 ### Inputs and outputs
 
-Inputs and outputs use the same addresses, fixed for each submission:
+Each submission specifies six byte offsets, shared by all four programs: δ<sub>message</sub>, δ<sub>secret key</sub>, δ<sub>public key</sub>, δ<sub>cache</sub>, δ<sub>signature</sub>, and δ<sub>witness</sub>. Each gives the memory address where that object is written or read. The buffers have the sizes in [Parameters](#parameters), start at 8-byte-aligned addresses, do not overlap, and end at or below `data_base` for every program.
 
-| Address                     | Buffer     |
-| --------------------------- | ---------- |
-| `0x00`                      | Message    |
-| `0x20`                      | Secret key |
-| `0x40`                      | Public key |
-| `0x60`                      | Cache      |
-| `0x20060`                   | Signature  |
-| `0x20060 + 8 × ceil(S / 8)` | Witness    |
+Before each execution, memory is zero except for embedded data and the inputs listed under [Programs](#programs); unused object buffers remain zero. For example, before [`sign`](#sign), write the secret key, public key, cache, and message at their offsets. On success, read the signature at δ<sub>signature</sub>.
 
-Load the inputs and read the outputs listed under Programs at their declared sizes. Other input fields start at zero.
-
-HALT ends execution with `a0 = 1` for success, or `a0 = 0` for failure. For `verify`, these mean acceptance and rejection, respectively.
+HALT ends execution with `a0 = 1` for success, or `a0 = 0` for failure. For [`verify`](#verify), these mean acceptance and rejection, respectively.
 
 ### System calls
 
@@ -175,12 +168,8 @@ HASH writes H's 32-byte answer at the output address.
 - **Registers:** `x0`–`x31` are 64 bits. `x0` always reads zero and ignores writes. Aliases are `sp = x2`, `t0 = x5`, and `a0`–`a2 = x10`–`x12`. PC is separate.
 - **Memory access:** addresses count bytes; multi-byte integers are little-endian. Loads and stores access only memory, not code. Accesses of 1, 2, 4, or 8 bytes require alignment to their size. Misaligned accesses fail.
 - **Bounds:** every memory access and buffer must fit completely in memory. For unsigned byte address p and length n, require `p + n <= 0x1000000`. All size, layout, and bounds calculations use mathematical integers without overflow. Instruction arithmetic and effective-address calculation follow RV64IM.
-- **Buffer layout:** cache, signature, and witness occupy separate consecutive areas, with up to seven alignment bytes after the signature. Require `0x20060 + 8 × ceil(S / 8) + W <= data_base` for each program.
-- **Input loading:** reject incorrect sizes or buffers extending beyond `data_base`. Starting addresses are 8-byte aligned; lengths need not be multiples of eight.
-- **Output extraction:** read each output at its declared size from its fixed address in final memory. On failure, ignore output buffers.
 - **HASH arguments:** addresses and bit length n are unsigned 64-bit values. The input’s `ceil(n / 8)` bytes and the output’s 32 bytes must fit entirely in memory; check this before any oracle call or write. Both input and output addresses must be 8-byte aligned.
 - **HASH execution:** read exactly n bits in increasing byte-address order, least-significant bit first within each byte; ignore unused high bits of the final byte. Read all input before writing the answer, so buffers may overlap. Preserve integer registers and advance PC by 4.
-- **Faults:** unknown services, invalid arguments, invalid HALT statuses, invalid instruction encodings, and memory or instruction-fetch faults end the program with failure (`verify` rejects). Invalid fetches or encodings cost zero cycles; other faults cost one cycle and make no oracle call.
 
 ## Lean project
 

@@ -13,9 +13,9 @@ theorem loaded_publicKey (pk : PublicKey) (message : Message) (witness : Bytes s
   unfold initialState at loaded
   rw [if_pos (admitted.2 .verify)] at loaded
   cases Option.some.inj loaded
-  dsimp only [inputBuffers, List.foldl_cons, List.foldl_nil]
-  rw [Memory.getByte_setReg]
   dsimp only [submission]
+  dsimp only [inputBuffers, Riscv.standardLayout, Layout.message, Layout.secretKey, Layout.publicKey, Layout.cache, Layout.signature, Layout.witness, List.foldl_cons, List.foldl_nil]
+  rw [Memory.getByte_setReg]
   rw [show witnessBase ⟨signatureBytes, signatureBytes⟩ = 0x3d3b0 by decide]
   rw [Memory.write_preserves_byte _ 0x3d3b0 (bytes witness) 0x40 i (by decide)
     (by rw [Memory.bytes_length (n := signatureBytes)]; decide) (by omega) (by left; omega)]
@@ -28,9 +28,9 @@ theorem loaded_message (pk : PublicKey) (message : Message) (witness : Bytes sig
   unfold initialState at loaded
   rw [if_pos (admitted.2 .verify)] at loaded
   cases Option.some.inj loaded
-  dsimp only [inputBuffers, List.foldl_cons, List.foldl_nil]
-  rw [Memory.getByte_setReg]
   dsimp only [submission]
+  dsimp only [inputBuffers, Riscv.standardLayout, Layout.message, Layout.secretKey, Layout.publicKey, Layout.cache, Layout.signature, Layout.witness, List.foldl_cons, List.foldl_nil]
+  rw [Memory.getByte_setReg]
   rw [show witnessBase ⟨signatureBytes, signatureBytes⟩ = 0x3d3b0 by decide]
   have skipWitness (before : MachineState) := Memory.write_preserves_byte before 0x3d3b0 (bytes witness) 0 i (by decide)
     (by rw [Memory.bytes_length (n := signatureBytes)]; decide) (by omega) (by left; omega)
@@ -49,9 +49,9 @@ theorem loaded_witness (pk : PublicKey) (message : Message) (witness : Bytes sig
   unfold initialState at loaded
   rw [if_pos (admitted.2 .verify)] at loaded
   cases Option.some.inj loaded
-  dsimp only [inputBuffers, List.foldl_cons, List.foldl_nil]
-  rw [Memory.getByte_setReg]
   dsimp only [submission]
+  dsimp only [inputBuffers, Riscv.standardLayout, Layout.message, Layout.secretKey, Layout.publicKey, Layout.cache, Layout.signature, Layout.witness, List.foldl_cons, List.foldl_nil]
+  rw [Memory.getByte_setReg]
   rw [show witnessBase ⟨signatureBytes, signatureBytes⟩ = 0x3d3b0 by decide]
   exact Memory.write_value_byte _ 0x3d3b0 signatureBytes witness i (by decide) (by decide) hi
 

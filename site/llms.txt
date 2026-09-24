@@ -7,6 +7,10 @@ Formal definitions: https://github.com/leanEthereum/sig.golf-dev/tree/beta
 Submit by opening a PR against beta: https://github.com/leanEthereum/sig.golf-submissions/pulls
 PR layout: https://github.com/leanEthereum/sig.golf-submissions/blob/beta/README.md
 
+The claim.json file declares S, W, C, and one shared layout with six nonnegative byte offsets: message, secret_key, public_key, cache, signature, witness. All offsets are 8-byte aligned; buffers must be disjoint and fit below embedded data in every program. The submitted Lean proof must bind its layout to these exact values.
+
+RISC-V fault handling: unknown services, invalid arguments or HALT statuses, invalid instruction encodings, and memory or instruction-fetch faults fail the program (verify rejects). Invalid fetches or encodings cost zero cycles; other faults cost one cycle and make no oracle call.
+
 Verified results are published in /records.json.
 
 Include presentation/ beside submission/ in every PR. Copy and customize:

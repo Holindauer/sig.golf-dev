@@ -59,9 +59,9 @@ theorem loaded_loop_data (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) 
   obtain ⟨initial,ready,loaded,run,pc,index,sp,level,mode,ptr,lo,hi,randomizer,frame⟩ :=
     loaded_loop_entry hash secretKey pk cache message
   have loadedSecretKey := secretKey_words_of_bytes initial 0x20 secretKey (by decide) (by decide)
-    (Loader.sign_secretKey submission (admitted.2 .sign) secretKey pk cache message initial loaded)
+    (Loader.sign_secretKey submission (admitted.2 .sign) (by rfl) secretKey pk cache message initial loaded)
   have loadedPk := digest_words_of_bytes initial 0x40 pk (by decide) (by decide)
-    (Loader.sign_publicKey submission (admitted.2 .sign) secretKey pk cache message initial loaded)
+    (Loader.sign_publicKey submission (admitted.2 .sign) (by rfl) secretKey pk cache message initial loaded)
   refine ⟨initial,ready,loaded,run,pc,?_,randomizer,?_⟩
   · constructor
     · exact sp

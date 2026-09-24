@@ -11,9 +11,9 @@ The four RISC-V images have a complete Lean certificate: `SigGolfCandidate.Hyper
 
 The signer derives a 32-byte randomizer as H(domain 6, secret key, message) and includes it in the signature. The index is the low 160 bits of H(domain 5, public key, message, randomizer). The construction uses two hash-preimage leaves at the bottom and 159 layers of two-leaf Merkle trees with base-8 Winternitz signatures (46 chains, 128-bit values). It has no FORS component. Signing ignores the public cache. Expansion copies the signature.
 
-The certificate establishes all organizer requirements for the exact images in [Images.lean](../../SigGolfCandidate/Hypertree/Images.lean):
+The example uses one shared layout: message `0`, secret key `32`, public key `64`, cache `96`, signature `131168`, and witness `250800`. The certificate establishes all organizer requirements for the exact images in [Images.lean](../../SigGolfCandidate/Hypertree/Images.lean):
 
-- Static admission, including fixed sizes and image limits.
+- Static admission, including sizes, the shared layout, and image limits.
 - Termination below 2^32 cycles for every typed input and every oracle, including adversarial caches, signatures, and witnesses.
 - Honest success for every secret key, message, and oracle, implying the required simultaneous all-message success probability.
 - Exponential compression budgets for an independent uniform message and random oracle.

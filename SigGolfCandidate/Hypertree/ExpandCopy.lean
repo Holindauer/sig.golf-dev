@@ -162,7 +162,7 @@ theorem run_identity (hash : Hash) (input : Input submission.sizes .expand) :
   unfold initialState at loaded
   rw [if_pos (admitted.2 .expand)] at loaded
   cases Option.some.inj loaded
-  dsimp only [inputBuffers, List.foldl_cons, List.foldl_nil]
+  dsimp only [inputBuffers, Riscv.standardLayout, Layout.message, Layout.secretKey, Layout.publicKey, Layout.cache, Layout.signature, Layout.witness, List.foldl_cons, List.foldl_nil]
   rw [Memory.readBuffer_setReg]
   exact Memory.read_write_buffer _ 0x20060 signatureBytes signature (by decide) (by decide)
 

@@ -271,6 +271,7 @@ def verify : Riscv.Image where
 
 def submission : Submission where
   sizes := ⟨signatureBytes, signatureBytes⟩
+  layout := Riscv.standardLayout ⟨signatureBytes, signatureBytes⟩
   image
     | .keygen => keygen
     | .sign => sign

@@ -12,7 +12,9 @@ MAX_FILE_BYTES = 8 * 1024 * 1024
 MAX_TOTAL_BYTES = 16 * 1024 * 1024
 MODULE = re.compile(r"[A-Za-z_][A-Za-z0-9_']*(?:\.[A-Za-z_][A-Za-z0-9_']*)*")
 INTEGER = re.compile(r"0|[1-9][0-9]*")
-CLAIM_KEYS = {"S", "W", "C"}
+MEMORY_BYTES = 1 << 24
+CLAIM_KEYS = {"S", "W", "C", "layout"}
+LAYOUT_KEYS = ("message", "secret_key", "public_key", "cache", "signature", "witness")
 ALLOWED_LIBRARIES = ("Mathlib", "ToMathlib", "VCVio", "RiscvZkvm", "Batteries", "Lean", "Init", "Std")
 ALLOWED_CONTRACT = {"SigGolf", "SigGolf.Parameters", "SigGolf.Oracle", "SigGolf.Riscv",
                     "SigGolf.Programs", "SigGolf.Security", "SigGolf.Statements"}
@@ -64,19 +66,38 @@ def imports(source: str) -> list[str]:
     return found
 
 
-def claim(path: Path) -> dict[str, int]:
+def claim(path: Path) -> dict[str, int | dict[str, int]]:
     raw = path.read_bytes()
-    if len(raw) > 128:
-        raise ValueError("claim.json exceeds 128 bytes")
+    if len(raw) > 512:
+        raise ValueError("claim.json exceeds 512 bytes")
     value = json.loads(raw)
     if not isinstance(value, dict) or set(value) != CLAIM_KEYS:
-        raise ValueError("claim.json must contain exactly S, W, and C")
-    if any(type(value[key]) is not int or not INTEGER.fullmatch(str(value[key])) for key in CLAIM_KEYS):
+        raise ValueError("claim.json must contain exactly S, W, C, and layout")
+    if any(type(value[key]) is not int or not INTEGER.fullmatch(str(value[key]))
+           for key in ("S", "W", "C")):
         raise ValueError("S, W, and C must be nonnegative decimal integers")
     if value["S"] < 1 or value["W"] > 2**17 or value["C"] >= 2**32:
         raise ValueError("S, W, or C is outside the competition bounds")
-    if 0x20060 + 8 * ((value["S"] + 7) // 8) + value["W"] > 0x1000000:
-        raise ValueError("signature and witness exceed the 16 MiB memory layout")
+    layout = value["layout"]
+    if not isinstance(layout, dict) or set(layout) != set(LAYOUT_KEYS):
+        raise ValueError("layout must declare exactly the six buffer offsets")
+    if any(type(layout[key]) is not int or not INTEGER.fullmatch(str(layout[key]))
+           for key in LAYOUT_KEYS):
+        raise ValueError("layout offsets must be nonnegative decimal integers")
+    lengths = {"message": 32, "secret_key": 32, "public_key": 16,
+               "cache": 1 << 17, "signature": value["S"], "witness": value["W"]}
+    for key in LAYOUT_KEYS:
+        start = layout[key]
+        if start % 8:
+            raise ValueError(f"{key} offset is not 8-byte aligned")
+        if start + lengths[key] > MEMORY_BYTES:
+            raise ValueError(f"{key} buffer exceeds 16 MiB memory")
+    for index, left in enumerate(LAYOUT_KEYS):
+        for right in LAYOUT_KEYS[index + 1:]:
+            if lengths[left] and lengths[right] and not (
+                    layout[left] + lengths[left] <= layout[right] or
+                    layout[right] + lengths[right] <= layout[left]):
+                raise ValueError(f"{left} and {right} buffers overlap")
     return value
 
 

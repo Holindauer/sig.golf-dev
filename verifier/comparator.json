@@ -4,6 +4,7 @@
   "theorem_names": [
     "SigGolf.Challenge.signature_bytes",
     "SigGolf.Challenge.witness_bytes",
+    "SigGolf.Challenge.layout_offsets",
     "SigGolf.Challenge.certificate"
   ],
   "definition_names": ["SigGolf.Challenge.submission"],

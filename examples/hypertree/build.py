@@ -223,7 +223,7 @@ def generate():
         lines += ['    ' + ', '.join(f'0x{w:08x}' for w in words[i:i+8]) + (',' if i + 8 < len(words) else ']') for i in range(0, len(words), 8)]
         lines += ['  data := []', '']
         print(f'{phase}: {len(words)} instructions, {len(words)*4} bytes')
-    lines += ['def submission : Submission where', '  sizes := ⟨signatureBytes, signatureBytes⟩', '  image', '    | .keygen => keygen', '    | .sign => sign', '    | .expand => expand', '    | .verify => verify', '', 'end SigGolfCandidate.Hypertree', '']
+    lines += ['def submission : Submission where', '  sizes := ⟨signatureBytes, signatureBytes⟩', '  layout := Riscv.standardLayout ⟨signatureBytes, signatureBytes⟩', '  image', '    | .keygen => keygen', '    | .sign => sign', '    | .expand => expand', '    | .verify => verify', '', 'end SigGolfCandidate.Hypertree', '']
     path.write_text('\n'.join(lines))
 
 if __name__ == '__main__': generate()

@@ -96,7 +96,7 @@ theorem runWith_of_executes (submission : Submission) (hash : Hash) (phase : Pha
     (derivation : Executes hash (submission.image phase) state steps result)
     (limit : steps ≤ CYCLE_LIMIT) :
     submission.runWith hash phase input =
-      ⟨if result.exit = .success then some (readOutput submission.sizes phase result.state) else none,
+      ⟨if result.exit = .success then some (readOutput submission.sizes submission.layout phase result.state) else none,
         result.exit != .unfinished, result.cycles, result.hashCalls, result.hashCompressions⟩ := by
   simp [Submission.runWith, Submission.run, loaded, derivation.sound CYCLE_LIMIT limit]
 
