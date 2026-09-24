@@ -30,8 +30,8 @@ Every object has a fixed size in bytes:
 | Secret key        |                   32 |
 | Public key        |                   16 |
 | Cache             |       2^17 (128 KiB) |
-| Compact signature |              `S` ≥ 1 |
-| Expanded witness  | `W` ≤ 2^17 (128 KiB) |
+| Signature |              `S` ≥ 1 |
+| Witness  | `W` ≤ 2^17 (128 KiB) |
 
 ## Programs
 
