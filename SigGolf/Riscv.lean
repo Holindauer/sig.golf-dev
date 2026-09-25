@@ -18,11 +18,41 @@ def dataBase (image : Image) : Nat := 16 * ((MEMORY_BYTES - image.data.length) /
 def signatureBase : Nat := 0x20060
 def witnessBase (sizes : Sizes) : Nat := signatureBase + 8 * ((sizes.signature + 7) / 8)
 
-def Image.Valid (image : Image) (sizes : Sizes) : Prop :=
-  image.byteSize < MAX_IMAGE_BYTES ∧ witnessBase sizes + sizes.witness ≤ dataBase image
+def standardLayout (sizes : Sizes) : Layout :=
+  ⟨0, 0x20, 0x40, 0x60, signatureBase, witnessBase sizes⟩
 
-instance (image : Image) (sizes : Sizes) : Decidable (image.Valid sizes) :=
-  inferInstanceAs (Decidable (image.byteSize < MAX_IMAGE_BYTES ∧ witnessBase sizes + sizes.witness ≤ dataBase image))
+def layoutBuffers (layout : Layout) (sizes : Sizes) : List (Nat × Nat) :=
+  [(layout.message, 32), (layout.secretKey, 32), (layout.publicKey, 16),
+   (layout.cache, CACHE_BYTES), (layout.signature, sizes.signature),
+   (layout.witness, sizes.witness)]
+
+def disjointBuffers (left right : Nat × Nat) : Prop :=
+  left.2 = 0 ∨ right.2 = 0 ∨ left.1 + left.2 ≤ right.1 ∨ right.1 + right.2 ≤ left.1
+
+instance (left right : Nat × Nat) : Decidable (disjointBuffers left right) := by
+  unfold disjointBuffers
+  infer_instance
+
+def buffersDisjoint : List (Nat × Nat) → Bool
+  | [] => true
+  | first :: rest =>
+      rest.all (fun second => decide (disjointBuffers first second)) && buffersDisjoint rest
+
+def layoutValid (layout : Layout) (sizes : Sizes) (image : Image) : Prop :=
+  (layoutBuffers layout sizes).all (fun buffer =>
+    decide (buffer.1 % 8 = 0 ∧ buffer.1 + buffer.2 ≤ dataBase image)) = true ∧
+  buffersDisjoint (layoutBuffers layout sizes) = true
+
+instance (layout : Layout) (sizes : Sizes) (image : Image) :
+    Decidable (layoutValid layout sizes image) := by
+  unfold layoutValid
+  infer_instance
+
+def Image.Valid (image : Image) (sizes : Sizes) (layout : Layout) : Prop :=
+  image.byteSize < MAX_IMAGE_BYTES ∧ layoutValid layout sizes image
+
+instance (image : Image) (sizes : Sizes) (layout : Layout) : Decidable (image.Valid sizes layout) :=
+  inferInstanceAs (Decidable (image.byteSize < MAX_IMAGE_BYTES ∧ layoutValid layout sizes image))
 
 def rangeValid (address : BitVec 64) (bytes : Nat) : Bool :=
   decide (address.toNat + bytes ≤ MEMORY_BYTES)
@@ -109,20 +139,29 @@ def ordinaryStep (state : MachineState) : Instruction → Option MachineState
       let value := ((state.getReg rs).truncate 32).sshiftRight shift.toNat
       some ((state.setReg rd (value.signExtend 64)).setPC (state.pc + 4))
 
+/-- Multiplication, division, and remainder instructions cost four cycles; every other instruction costs one. -/
+def instructionCycles : Instruction → Nat
+  | .base (.MUL ..) | .base (.MULH ..) | .base (.MULHSU ..) | .base (.MULHU ..)
+  | .base (.DIV ..) | .base (.DIVU ..) | .base (.REM ..) | .base (.REMU ..) => 4
+  | .word .mul .. | .word .div .. | .word .divu .. | .word .rem .. | .word .remu .. => 4
+  | _ => 1
+
 def fetch (image : Image) (state : MachineState) : Option Instruction := do
   if state.pc.toNat < 0x1000 || state.pc.toNat % 4 != 0 then none else
     let word ← image.code[(state.pc.toNat - 0x1000) / 4]?
     decodeInstruction word
 
+/-- HASH reads whole 8-byte words: both addresses are 8-byte aligned and the byte length is a multiple of 8. -/
 def hashArgumentsValid (state : MachineState) : Bool :=
   let source := state.getReg .x10
-  let bits := (state.getReg .x11).toNat
+  let bytes := (state.getReg .x11).toNat
   let destination := state.getReg .x12
-  decide (source.toNat % 8 = 0) && rangeValid source ((bits + 7) / 8) &&
+  decide (source.toNat % 8 = 0) && decide (bytes % 8 = 0) && rangeValid source bytes &&
     accessValid destination 8 && rangeValid destination 32
 
+/-- The oracle input is the bit string of the input bytes, least-significant bit first within each byte. -/
 def hashInput (state : MachineState) : Query :=
-  let n := (state.getReg .x11).toNat
+  let n := 8 * (state.getReg .x11).toNat
   ⟨n, BitVec.ofNat n ((List.range n).foldl (fun acc i =>
     acc + if (state.getByte (state.getReg .x10 + BitVec.ofNat 64 (i / 8))).getLsbD (i % 8)
       then 2 ^ i else 0) 0)⟩
@@ -167,6 +206,7 @@ def execute : Nat → Image → MachineState → OracleComp HashSpec Execution
     | some instruction =>
       match ordinaryStep state instruction with
       | none => pure ⟨.failure, state, 1, 0, 0⟩
-      | some next => (fun result => result.charge 1 0 0) <$> execute fuel image next
+      | some next => (fun result => result.charge (instructionCycles instruction) 0 0) <$>
+          execute fuel image next
 
 end SigGolf.Riscv

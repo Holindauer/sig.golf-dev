@@ -2,8 +2,8 @@
 
 async function loadRecords() {
   const [response, stateResponse] = await Promise.all([
-    fetch('/site/records.json', {cache: 'no-store'}),
-    fetch('/site/state.json', {cache: 'no-store'})
+    fetch('/records.json', {cache: 'no-store'}),
+    fetch('/state.json', {cache: 'no-store'})
   ]);
   if (!response.ok || !stateResponse.ok) throw new Error('Cannot load published records');
   const [registry, state] = await Promise.all([response.json(), stateResponse.json()]);
@@ -28,8 +28,8 @@ async function loadRecords() {
 }
 
 const format = value => value.toLocaleString('en-US');
-const submissionUrl = item => '/site/submission.html?id=' + encodeURIComponent(item.id);
-const solverUrl = profile => '/site/solver.html?user=' + encodeURIComponent(profile.login);
+const submissionUrl = item => '/submission.html?id=' + encodeURIComponent(item.id);
+const solverUrl = profile => '/solver.html?user=' + encodeURIComponent(profile.login);
 function avatar(profile, className = 'lb-avatar') {
   const img = document.createElement('img');
   img.className = className;
@@ -55,6 +55,7 @@ async function renderRecords() {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('id', id);
     svg.setAttribute('class', 'score-plot');
+    svg.setAttribute('width', '100%');
     svg.setAttribute('role', 'img');
     svg.setAttribute('aria-label', section === '.progress' ? 'Verified scores over time' : 'Signature size and verification cycle Pareto frontier');
     placeholder.replaceWith(svg);
@@ -122,10 +123,44 @@ function chartNode(parent, tag, attributes, content) {
   return node;
 }
 function compactScore(value) {
-  if (value === 0) return '0';
-  if (value >= 1000000000) return (value / 1000000000).toFixed(1) + 'B';
-  if (value >= 1000000) return Math.round(value / 1000000) + 'M';
-  return Math.round(value / 1000) + 'k';
+  const [unit, suffix] = [[1e9, 'B'], [1e6, 'M'], [1e3, 'k']].find(([unit]) => value >= unit) || [1, ''];
+  const scaled = value / unit;
+  const digits = [0, 1, 2].find(d => Math.abs(Math.round(scaled * 10 ** d) - scaled * 10 ** d) < 1e-6) ?? 3;
+  return scaled.toFixed(digits) + suffix;
+}
+// Logarithmic axis fitted to the data. Ticks are powers of ten, then 1-2-5 steps, then linear steps for narrow ranges.
+function logScale(values, intervals = 4) {
+  const low = Math.log10(Math.max(1, Math.min(...values)));
+  const high = Math.log10(Math.max(1, Math.max(...values)));
+  const padding = Math.max((high - low) * .08, .02);
+  const min = 10 ** (low - padding);
+  const max = 10 ** (high + padding);
+  const fraction = value => (Math.log10(Math.max(1, value)) - low + padding) / (high - low + 2 * padding);
+  return {fraction, ticks: logTicks(min, max, intervals)};
+}
+function logTicks(min, max, intervals) {
+  const stride = Math.max(1, Math.round(Math.log10(max / min) / intervals));
+  for (const mantissas of [[1], [1, 2, 5], [1, 1.5, 2, 3, 5, 7]]) {
+    const ticks = [];
+    for (let exponent = Math.floor(Math.log10(min)); exponent <= Math.ceil(Math.log10(max));
+      exponent += mantissas.length === 1 ? stride : 1) {
+      for (const mantissa of mantissas) {
+        const value = mantissa * 10 ** exponent;
+        if (value >= min && value <= max) ticks.push(value);
+      }
+    }
+    if (ticks.length >= 3) return ticks;
+  }
+  let ticks = [];
+  for (let exponent = Math.floor(Math.log10(max - min)); ticks.length < 3; exponent--) {
+    for (const mantissa of [5, 2, 1]) {
+      const step = mantissa * 10 ** exponent;
+      ticks = [];
+      for (let index = Math.ceil(min / step); index * step <= max; index++) ticks.push(index * step);
+      if (ticks.length >= 3) break;
+    }
+  }
+  return ticks;
 }
 function renderScoreChart() {
   const chart = document.querySelector('#score-chart');
@@ -138,26 +173,34 @@ function renderScoreChart() {
   const desktop = width > 760;
   const left = desktop ? 58 : 46;
   const top = 36;
-  const bottom = height - 36;
-  const dataRight = width - (desktop ? 205 : 14);
-  const maxScore = Math.max(1, ...scores.map(entry => entry.score));
-  const step = 10 ** Math.floor(Math.log10(maxScore));
-  const axisMax = Math.ceil(maxScore / step) * step;
-  const yFor = score => top + (axisMax - score) / axisMax * (bottom - top);
-  const xFor = index => left + (scores.length === 1 ? .5 : index / (scores.length - 1)) * (dataRight - left);
+  const bottom = height - 58;
+  const dataRight = width - (desktop ? 165 : 14);
+  const scoreScale = logScale(scores.map(entry => entry.score), 5);
+  const yFor = score => bottom - scoreScale.fraction(score) * (bottom - top);
+  const firstTime = scores[0].date.getTime();
+  const lastTime = scores[scores.length - 1].date.getTime();
+  const timeSpan = lastTime - firstTime;
+  const xFor = date => left + (timeSpan ? (date.getTime() - firstTime) / timeSpan : .5) * (dataRight - left);
 
   chartNode(chart, 'text', {
     x: left, y: 15, fill: '#737b80', 'font-size': '12',
     'font-family': 'system-ui, sans-serif'
-  }, 'Score');
+  }, 'Score (log scale)');
 
-  for (let tick = 0; tick <= 4; tick++) {
-    const y = top + tick / 4 * (bottom - top);
+  const firstDay = scores[0].date.toISOString().slice(0, 10);
+  const lastDay = scores[scores.length - 1].date.toISOString().slice(0, 10);
+  const dayLabel = date => date.toLocaleDateString('en-US', {month: 'short', day: 'numeric', timeZone: 'UTC'});
+  chartNode(chart, 'text', {
+    x: dataRight, y: height - 9, 'text-anchor': 'end', fill: '#737b80',
+    'font-size': '11', 'font-family': 'system-ui, sans-serif'
+  }, (firstDay === lastDay ? dayLabel(scores[0].date) :
+    dayLabel(scores[0].date) + '–' + dayLabel(scores[scores.length - 1].date)) + ' · UTC');
+  for (const value of scoreScale.ticks) {
+    const y = yFor(value);
     chartNode(chart, 'line', {
       x1: left, y1: y, x2: dataRight, y2: y,
       stroke: chartGrid, 'stroke-width': '1'
     });
-    const value = axisMax * (1 - tick / 4);
     chartNode(chart, 'text', {
       x: left - 9, y: y + 4, 'text-anchor': 'end',
       fill: '#737b80', 'font-size': '11',
@@ -168,11 +211,15 @@ function renderScoreChart() {
     x1: left, y1: top, x2: left, y2: bottom,
     stroke: chartAxis, 'stroke-width': '1'
   });
+  chartNode(chart, 'line', {
+    x1: left, y1: bottom, x2: dataRight, y2: bottom,
+    stroke: chartAxis, 'stroke-width': '1'
+  });
 
   let best = Infinity;
   let frontier = '';
   scores.forEach((entry, index) => {
-    const x = xFor(index);
+    const x = xFor(entry.date);
     if (index === 0) {
       best = entry.score;
       frontier = 'M' + x.toFixed(1) + ' ' + yFor(best).toFixed(1);
@@ -190,7 +237,7 @@ function renderScoreChart() {
   chartNode(gradient, 'stop', {offset: '0%', 'stop-color': '#cde3f8', 'stop-opacity': '.65'});
   chartNode(gradient, 'stop', {offset: '100%', 'stop-color': '#fff', 'stop-opacity': '0'});
   chartNode(chart, 'path', {
-    d: frontier + ' H' + dataRight + ' V' + bottom + ' H' + left + ' Z',
+    d: frontier + ' H' + dataRight + ' V' + bottom + ' H' + xFor(scores[0].date) + ' Z',
     fill: 'url(#record-fill)'
   });
   chartNode(chart, 'path', {
@@ -207,10 +254,11 @@ function renderScoreChart() {
       'aria-label': entry.name + ', score ' + format(entry.scoreExact) + '. View submission.'
     });
     chartNode(point, 'circle', {
-      class: 'hit-area', cx: xFor(index), cy: yFor(entry.score), r: 12
+      class: 'hit-area', cx: xFor(entry.date), cy: yFor(entry.score), r: 12,
+      fill: 'transparent', stroke: 'none', 'pointer-events': 'all'
     });
     const dot = chartNode(point, 'circle', {
-      cx: xFor(index), cy: yFor(entry.score),
+      cx: xFor(entry.date), cy: yFor(entry.score),
       r: isRecord ? 4.5 : 3.2,
       fill: isRecord ? '#286ec4' : '#5f8fbe',
       stroke: isRecord ? '#fff' : 'none',
@@ -223,15 +271,16 @@ function renderScoreChart() {
       format(entry.cycles) + ' cycles = ' + format(entry.scoreExact));
   });
 
-  for (let tick = 0; tick < (desktop ? 5 : 3); tick++) {
-    const total = desktop ? 4 : 2;
-    const index = Math.round(tick / total * (scores.length - 1));
-    const x = xFor(index);
-    const label = scores[index].date.toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric', timeZone: 'UTC'
-    });
+  const ticks = timeSpan ? (desktop ? 4 : 2) : 0;
+  for (let tick = 0; tick <= ticks; tick++) {
+    const fraction = ticks ? tick / ticks : .5;
+    const date = new Date(firstTime + fraction * timeSpan);
+    const x = left + fraction * (dataRight - left);
+    const label = firstDay === lastDay ? date.toLocaleTimeString('en-GB', {
+      hour: '2-digit', minute: '2-digit', timeZone: 'UTC'
+    }) : dayLabel(date);
     chartNode(chart, 'text', {
-      x, y: height - 9, 'text-anchor': tick === 0 ? 'start' : tick === total ? 'end' : 'middle',
+      x, y: bottom + 24, 'text-anchor': tick === 0 && ticks ? 'start' : tick === ticks && ticks ? 'end' : 'middle',
       fill: '#737b80', 'font-size': '11',
       'font-family': 'system-ui, sans-serif'
     }, label);
@@ -265,42 +314,58 @@ function renderParetoChart() {
   const right = width - 22;
   const top = 34;
   const bottom = height - 58;
-  const maxSignature = Math.ceil(Math.max(...scores.map(x => x.signature)) / 1000) * 1000;
-  const maxCycles = Math.ceil(Math.max(...scores.map(x => x.cycles)) / 20000) * 20000;
-  const xFor = signature => left + signature / maxSignature * (right - left);
-  const yFor = cycles => top + (maxCycles - cycles) / maxCycles * (bottom - top);
+  const signatureScale = logScale(scores.map(x => x.signature));
+  const cycleScale = logScale(scores.map(x => x.cycles));
+  const xFor = signature => left + signatureScale.fraction(signature) * (right - left);
+  const yFor = cycles => bottom - cycleScale.fraction(cycles) * (bottom - top);
 
   chartNode(chart, 'text', {
     x: left, y: 15, fill: '#737b80', 'font-size': '12',
     'font-family': 'system-ui, sans-serif'
-  }, width < 340 ? 'Cycles' : 'Verification cycles');
+  }, width < 340 ? 'Cycles (log)' : 'Verification cycles (log scale)');
   chartNode(chart, 'text', {
     x: (left + right) / 2, y: height - 5, 'text-anchor': 'middle',
     fill: '#737b80', 'font-size': '12', 'font-family': 'system-ui, sans-serif'
-  }, 'Signature size (bytes) →');
-  for (let tick = 0; tick <= 4; tick++) {
-    const y = top + tick / 4 * (bottom - top);
-    const x = left + tick / 4 * (right - left);
+  }, 'Signature size (bytes, log scale) →');
+  if (pareto.length === 1) {
+    const entry = pareto[0];
+    chartNode(chart, 'rect', {
+      x: xFor(entry.signature), y: top, width: right - xFor(entry.signature),
+      height: yFor(entry.cycles) - top, fill: chartLine, opacity: '.045'
+    });
+  }
+  for (const value of cycleScale.ticks) {
+    const y = yFor(value);
     chartNode(chart, 'line', {
       x1: left, y1: y, x2: right, y2: y, stroke: chartGrid, 'stroke-width': '1'
     });
     chartNode(chart, 'text', {
       x: left - 9, y: y + 4, 'text-anchor': 'end', fill: '#737b80',
       'font-size': '11', 'font-family': 'system-ui, sans-serif'
-    }, compactScore(maxCycles * (1 - tick / 4)));
+    }, compactScore(value));
+  }
+  for (const value of signatureScale.ticks) {
+    const x = xFor(value);
+    chartNode(chart, 'line', {
+      x1: x, y1: top, x2: x, y2: bottom, stroke: chartGrid, 'stroke-width': '1'
+    });
     chartNode(chart, 'text', {
-      x, y: bottom + 18, 'text-anchor': tick === 0 ? 'start' : tick === 4 ? 'end' : 'middle',
+      x, y: bottom + 18,
+      'text-anchor': x - left < 24 ? 'start' : right - x < 24 ? 'end' : 'middle',
       fill: '#737b80', 'font-size': '11', 'font-family': 'system-ui, sans-serif'
-    }, format(maxSignature * tick / 4));
+    }, compactScore(value));
   }
   chartNode(chart, 'line', {
     x1: left, y1: top, x2: left, y2: bottom, stroke: chartAxis, 'stroke-width': '1'
+  });
+  chartNode(chart, 'line', {
+    x1: left, y1: bottom, x2: right, y2: bottom, stroke: chartAxis, 'stroke-width': '1'
   });
 
   const frontier = pareto.map((entry, index) =>
     (index ? ' L' : 'M') + xFor(entry.signature).toFixed(1) + ' ' +
     yFor(entry.cycles).toFixed(1)).join('');
-  chartNode(chart, 'path', {
+  if (pareto.length > 1) chartNode(chart, 'path', {
     d: frontier, fill: 'none', stroke: chartLine,
     'stroke-width': '2.5', 'stroke-linejoin': 'round'
   });
@@ -312,19 +377,38 @@ function renderParetoChart() {
         ' verification cycles. View submission.'
     });
     chartNode(point, 'circle', {
-      class: 'hit-area', cx: xFor(entry.signature), cy: yFor(entry.cycles), r: 12
+      class: 'hit-area', cx: xFor(entry.signature), cy: yFor(entry.cycles), r: 12,
+      fill: 'transparent', stroke: 'none', 'pointer-events': 'all'
+    });
+    if (entry.pareto) chartNode(point, 'circle', {
+      cx: xFor(entry.signature), cy: yFor(entry.cycles), r: 11,
+      fill: chartLine, opacity: '.16'
     });
     const dot = chartNode(point, 'circle', {
       cx: xFor(entry.signature), cy: yFor(entry.cycles),
-      r: entry.pareto ? 5 : 3.6, fill: entry.pareto ? '#286ec4' : '#5f8fbe',
-      stroke: entry.pareto ? '#fff' : 'none',
-      'stroke-width': entry.pareto ? '1.8' : '0',
-      opacity: entry.pareto ? '1' : '.88'
+      r: entry.pareto ? 6 : 4, fill: entry.pareto ? '#286ec4' : '#638bb8',
+      stroke: '#fff', 'stroke-width': entry.pareto ? '2' : '1',
+      opacity: entry.pareto ? '1' : '.7'
     });
     chartNode(dot, 'title', {}, entry.name + ' · ' +
       format(entry.signature) + ' B × ' + format(entry.cycles) +
       ' cycles = ' + format(entry.scoreExact) +
       (entry.pareto ? ' · Pareto frontier' : ''));
+  }
+  if (pareto.length === 1) {
+    const entry = pareto[0];
+    const pointX = xFor(entry.signature);
+    const pointY = yFor(entry.cycles);
+    const label = chartNode(chart, 'a', {
+      href: submissionUrl(entry), tabindex: '0',
+      'aria-label': 'Only Pareto frontier point: PR #' + entry.pr
+    });
+    chartNode(label, 'text', {
+      x: pointX + (pointX > right - 160 ? -14 : 14), y: pointY - 12,
+      'text-anchor': pointX > right - 160 ? 'end' : 'start',
+      fill: chartLine, 'font-size': '12', 'font-weight': '700',
+      'font-family': 'system-ui, sans-serif'
+    }, 'Frontier · PR #' + entry.pr);
   }
 }
 renderScoreChart();

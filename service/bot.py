@@ -22,6 +22,7 @@ from pathlib import Path
 from github import BRANCH, REPO, SHA, Github, GithubError, publish_verified, registry_from_branch, write_local_registry
 
 ROOT = Path(__file__).resolve().parent.parent
+TRUSTED = Path(os.environ.get('SIG_TRUSTED_ROOT', str(ROOT))).resolve()
 POLL_SECONDS = 60
 
 
@@ -68,8 +69,8 @@ def run_verifier(pr: dict, contract: str, work_root: Path, secret_dir: Path) -> 
     number = pr['number']
     commit = pr['head']['sha']
     work = work_root / f'{number}-{commit[:12]}-{uuid.uuid4().hex[:8]}'
-    cmd = [sys.executable, str(ROOT / 'verifier' / 'verify.py'), '--repository', REPO,
-           '--pr', str(number), '--commit', commit, '--trusted', str(ROOT), '--work', str(work),
+    cmd = [sys.executable, str(TRUSTED / 'verifier' / 'verify.py'), '--repository', REPO,
+           '--pr', str(number), '--commit', commit, '--trusted', str(TRUSTED), '--work', str(work),
            '--hide', str(secret_dir), '--cleanup']
     verifier_user = os.environ.get('SIG_VERIFIER_USER')
     if verifier_user:
@@ -78,7 +79,7 @@ def run_verifier(pr: dict, contract: str, work_root: Path, secret_dir: Path) -> 
         cmd = ['sudo', '-n', '-H', '-u', verifier_user, '--', *cmd]
     clean = {key: os.environ[key] for key in ('PATH', 'HOME', 'LANG', 'XDG_RUNTIME_DIR',
               'DBUS_SESSION_BUS_ADDRESS') if key in os.environ}
-    proc = subprocess.Popen(cmd, cwd=ROOT, env=clean, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    proc = subprocess.Popen(cmd, cwd=TRUSTED, env=clean, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             text=True, start_new_session=True)
     try:
         output, error = proc.communicate(timeout=4 * 3600 + 900)
@@ -103,7 +104,7 @@ def run_verifier(pr: dict, contract: str, work_root: Path, secret_dir: Path) -> 
 
 
 def once(api: Github, work_root: Path, local_records: Path, state_file: Path, secret_dir: Path) -> int:
-    contract = subprocess.run(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'],
+    contract = subprocess.run(['git', '-C', str(TRUSTED), 'rev-parse', 'HEAD'],
                               check=True, text=True, capture_output=True, timeout=10).stdout.strip()
     if not SHA.fullmatch(contract):
         raise GithubError('invalid contract commit')
@@ -116,11 +117,19 @@ def once(api: Github, work_root: Path, local_records: Path, state_file: Path, se
     login = me.get('login') if isinstance(me, dict) else None
     if not isinstance(login, str):
         raise GithubError('cannot identify bot account')
-    write_local_registry(local_records, registry_from_branch(api))
+    registry = registry_from_branch(api)
+    write_local_registry(local_records, registry)
+    current = {entry['commit'] for entry in registry['submissions']
+               if entry.get('contract_commit') == contract}
+    retired = {entry['commit'] for entry in registry['submissions']
+               if entry.get('contract_commit') != contract} - current
     processed = 0
     for pr in open_prs(api):
         commit = pr.get('head', {}).get('sha')
         if not isinstance(commit, str) or not SHA.fullmatch(commit):
+            continue
+        # A reset requires a new PR head; old verified snapshots remain historical.
+        if commit in retired:
             continue
         if checked_status(api, commit, context, login) in {'success', 'failure'}:
             continue

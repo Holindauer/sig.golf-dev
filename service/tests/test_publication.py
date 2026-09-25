@@ -15,7 +15,9 @@ def pr(number, sha):
 
 
 def result(s, c):
-    return {'status': 'verified', 'claim': {'S': s, 'W': s, 'C': c}}
+    return {'status': 'verified', 'claim': {'S': s, 'W': s, 'C': c,
+            'layout': {'message': 0, 'secret_key': 32, 'public_key': 64,
+                       'cache': 96, 'signature': 131168, 'witness': 131168 + s}}}
 
 
 class FakeGithub:
@@ -26,9 +28,13 @@ class FakeGithub:
         self.blob_content = None
         self.updates = 0
         self.conflict_once = False
+        self.presentation = None
 
     def source_tree(self, commit):
         return '2' * 40
+
+    def presentation_tree(self, commit, claim):
+        return self.presentation
 
     def get(self, path):
         if '/pulls/' in path:
@@ -48,8 +54,11 @@ class FakeGithub:
             self.blob_content = body['content']
             return {'sha': '4' * 40}
         if path.endswith('/git/trees'):
+            if body['base_tree'] == '2' * 40:
+                assert body['tree'] == [{'path': 'presentation', 'mode': '040000', 'type': 'tree', 'sha': self.presentation}]
+                return {'sha': '7' * 40}
             assert body['tree'][1]['path'].startswith('verified/')
-            assert body['tree'][1]['sha'] == '2' * 40
+            assert body['tree'][1]['sha'] == ('7' * 40 if self.presentation else '2' * 40)
             return {'sha': '5' * 40}
         if path.endswith('/git/commits'):
             assert body['parents'] == [self.head]
@@ -91,6 +100,15 @@ class PublicationTests(unittest.TestCase):
         better, _ = publish_verified(api, third, result(80, 200), CONTRACT)
         self.assertTrue(better['record'])
         self.assertEqual(api.updates, 3)
+
+    def test_optional_presentation_is_snapshotted_with_source(self):
+        api = FakeGithub()
+        api.presentation = '8' * 40
+        item = pr(1, 'b' * 40)
+        api.prs[1] = item
+        entry, _ = publish_verified(api, item, result(100, 200), CONTRACT)
+        self.assertTrue(entry['presentation'])
+        self.assertEqual(api.updates, 1)
 
     def test_changed_pr_head_is_not_published(self):
         api = FakeGithub()

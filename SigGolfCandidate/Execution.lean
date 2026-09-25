@@ -13,7 +13,7 @@ inductive Executes (hash : Hash) (image : Image) : MachineState → Nat → Exec
       (hf : fetch image state = some instruction) (he : instruction ≠ .base .ECALL)
       (hs : ordinaryStep state instruction = some next)
       (tail : Executes hash image next steps result) :
-      Executes hash image state (steps + 1) (result.charge 1 0 0)
+      Executes hash image state (steps + 1) (result.charge (instructionCycles instruction) 0 0)
   | hash (state : MachineState) (steps : Nat) (result : Execution)
       (hf : fetch image state = some (.base .ECALL))
       (hs : state.getReg .x5 = 1) (hv : hashArgumentsValid state = true)
@@ -58,6 +58,7 @@ inductive OrdinarySteps (image : Image) : MachineState → Nat → MachineState 
   | step (state next final : MachineState) (instruction : Instruction) (steps : Nat)
       (hf : fetch image state = some instruction)
       (hs : ordinaryStep state instruction = some next)
+      (unitCost : instructionCycles instruction = 1)
       (tail : OrdinarySteps image next steps final) :
       OrdinarySteps image state (steps + 1) final
 
@@ -67,12 +68,12 @@ theorem OrdinarySteps.then_executes {hash : Hash} {image : Image} {state next : 
     Executes hash image state (steps + count) (result.charge count 0 0) := by
   induction block with
   | refl => simpa [Execution.charge] using tail
-  | step state next final instruction count hf hs block ih =>
+  | step state next final instruction count hf hs unitCost block ih =>
     have he : instruction ≠ .base .ECALL := by
       intro h
       simp [h, ordinaryStep] at hs
     have trace := Executes.ordinary state next instruction _ _ hf he hs (ih tail)
-    simpa [Execution.charge, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using trace
+    simpa [unitCost, Execution.charge, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using trace
 
 private theorem load_buffers_pc (buffers : List (Nat × List Byte)) (state : MachineState) :
     (buffers.foldl (fun state buffer => state.writeBytesAsWords (BitVec.ofNat 64 buffer.1) buffer.2) state).pc = state.pc := by
@@ -96,7 +97,7 @@ theorem runWith_of_executes (submission : Submission) (hash : Hash) (phase : Pha
     (derivation : Executes hash (submission.image phase) state steps result)
     (limit : steps ≤ CYCLE_LIMIT) :
     submission.runWith hash phase input =
-      ⟨if result.exit = .success then some (readOutput submission.sizes phase result.state) else none,
+      ⟨if result.exit = .success then some (readOutput submission.sizes submission.layout phase result.state) else none,
         result.exit != .unfinished, result.cycles, result.hashCalls, result.hashCompressions⟩ := by
   simp [Submission.runWith, Submission.run, loaded, derivation.sound CYCLE_LIMIT limit]
 

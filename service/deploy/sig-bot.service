@@ -7,11 +7,12 @@ Wants=network-online.target
 User=sigbot
 Group=sigwork
 UMask=0002
-WorkingDirectory=/srv/sig-golf/repo
+WorkingDirectory=/srv/sig-golf/app
 Environment=PATH=/srv/sig-golf/verify-home/.elan/bin:/usr/local/bin:/usr/bin:/bin
+Environment=SIG_TRUSTED_ROOT=/srv/sig-golf/repo
 Environment=SIG_VERIFIER_USER=sigverify
 Environment=SIG_SHARED_VERIFY_LOCK=/srv/sig-golf/verify.lock
-ExecStart=/usr/bin/python3 /srv/sig-golf/repo/service/bot.py --token-file /etc/sig-golf/github-token --work-root /srv/sig-golf/work --records-file /srv/sig-golf/public/site/records.json --state-file /srv/sig-golf/public/site/state.json
+ExecStart=/usr/bin/python3 /srv/sig-golf/app/service/bot.py --token-file /etc/sig-golf/github-token --work-root /srv/sig-golf/work --records-file /srv/sig-golf/public/site/records.json --state-file /srv/sig-golf/public/site/state.json
 Restart=always
 RestartSec=10
 MemoryMax=2G

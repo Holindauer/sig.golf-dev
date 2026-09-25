@@ -11,13 +11,13 @@ The four RISC-V images have a complete Lean certificate: `SigGolfCandidate.Hyper
 
 The signer derives a 32-byte randomizer as H(domain 6, secret key, message) and includes it in the signature. The index is the low 152 bits of H(domain 5, public key, message, randomizer). The construction uses two hash-preimage leaves at the bottom and 151 layers of two-leaf Merkle trees with base-8 Winternitz signatures (46 chains, 128-bit values). It has no FORS component. Signing ignores the public cache. Expansion copies the signature.
 
-The certificate establishes all organizer requirements for the exact images in [Images.lean](../../SigGolfCandidate/Hypertree/Images.lean):
+The example uses one shared layout: message `0`, secret key `32`, public key `64`, cache `96`, signature `131168`, and witness `250800`. The certificate establishes all organizer requirements for the exact images in [Images.lean](../../SigGolfCandidate/Hypertree/Images.lean):
 
-- Static admission, including fixed sizes and image limits.
+- Static admission, including sizes, the shared layout, and image limits.
 - Termination below 2^32 cycles for every typed input and every oracle, including adversarial caches, signatures, and witnesses.
 - Honest success for every secret key, message, and oracle, implying the required simultaneous all-message success probability.
 - Exponential compression budgets for an independent uniform message and random oracle.
-- Security at every total hash-call budget Q: forgery probability at most Q / 2^127, against adaptive adversaries with up to 2^24 signing requests. Both final-submission forms and all honest and adversarial hash calls are included.
+- Security at every total hash-call budget Q: forgery probability at most Q / 2^127, against adaptive adversaries with up to 2^32 signing requests. Both final-submission forms and all honest and adversarial hash calls are included.
 - The claimed verification cycle bound.
 
 The proof connects the organizer's bytecode security experiment to the reference scheme, then bounds secret key guesses, graph contacts, nonce guesses, and index collisions in one shared simulation. The final certificate's axiom guard permits only `propext`, `Classical.choice`, and `Quot.sound`.

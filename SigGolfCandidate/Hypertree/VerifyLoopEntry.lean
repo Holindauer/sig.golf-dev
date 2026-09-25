@@ -12,9 +12,9 @@ theorem loaded_scratch (pk : PublicKey) (message : Message) (witness : Bytes sig
   unfold initialState at loaded
   rw [if_pos (admitted.2 .verify)] at loaded
   cases Option.some.inj loaded
-  dsimp only [inputBuffers, List.foldl_cons, List.foldl_nil]
-  rw [MachineState.getMem_setReg]
   dsimp only [submission]
+  dsimp only [inputBuffers, Riscv.standardLayout, Layout.message, Layout.secretKey, Layout.publicKey, Layout.cache, Layout.signature, Layout.witness, List.foldl_cons, List.foldl_nil]
+  rw [MachineState.getMem_setReg]
   rw [show witnessBase ⟨signatureBytes, signatureBytes⟩ = 0x3bc30 by decide]
   rw [Memory.write_preserves _ 0x3bc30 (bytes witness) a
     (by rw [Memory.bytes_length (n := signatureBytes)]; decide)

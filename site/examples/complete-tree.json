@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "summary": "A stateless SPHINCS+-style binary hypertree without FORS. A 160-bit hash-derived index selects one leaf at each level. Level 0 reveals a 128-bit preimage; each of the remaining 159 two-leaf trees signs the previous root with 46 base-8 Winternitz chains. Verification rebuilds the final 128-bit public key.",
+  "diagram": true,
+  "facts": [
+    {
+      "label": "Signature layout",
+      "value": "32 B randomizer + 32 B bottom proof + 159 × 752 B upper proofs = 119,632 B"
+    },
+    {
+      "label": "Path selection",
+      "value": "Low 160 bits of H(5, public key, message, randomizer); one bit per level"
+    },
+    {
+      "label": "WOTS encoding",
+      "value": "128-bit root → 43 base-8 digits + 3 checksum digits; 46 chains, 7 steps each"
+    },
+    {
+      "label": "Upper proof",
+      "value": "46 × 16 B chain values + one 16 B Merkle sibling"
+    },
+    {
+      "label": "Expansion",
+      "value": "Copies the signature to the witness; W = S = 119,632 B"
+    },
+    {
+      "label": "Verification sample",
+      "value": "10-run mean: 3,280,058.7 cycles; certified maximum C = 5,883,520"
+    }
+  ],
+  "profile": {
+    "hashes": {
+      "384": 262769,
+      "512": 1600,
+      "6144": 1590,
+      "896": 10
+    },
+    "instructions": {
+      "ADD": 1350046,
+      "ADDI": 12074641,
+      "ANDI": 74740,
+      "BEQ": 342299,
+      "BNE": 1350186,
+      "HALT": 10,
+      "JAL": 270729,
+      "JALR": 4790,
+      "LBU": 73140,
+      "LD": 4205077,
+      "LUI": 6222660,
+      "SB": 73140,
+      "SD": 2998171,
+      "SLLI": 1276916,
+      "SRLI": 146320,
+      "SUB": 68370,
+      "XORI": 1600
+    },
+    "method": "10 accepting RISC-V runs; one fixed secret key, 10 distinct messages, SHA-256 test oracle",
+    "samples": 10
+  }
+}

@@ -25,12 +25,10 @@ theorem weight_le (counts : Counts) : weight counts ≤ (counts.total : ENNReal)
     exact le_add_right le_rfl
   have nonce : (counts.index : ENNReal)/2^256 ≤ (counts.index : ENNReal)/2^128 :=
     ENNReal.div_le_div le_rfl (by norm_num)
-  have index : (counts.index : ENNReal)/2^128 ≤ (counts.index : ENNReal)/2^128 :=
-    ENNReal.div_le_div le_rfl (by norm_num)
   calc
     _ ≤ 2*(counts.secretKey : ENNReal)/2^128 + 2*(counts.graph : ENNReal)/2^128 +
       (counts.index : ENNReal)/2^128 + (counts.index : ENNReal)/2^128 :=
-        add_le_add (add_le_add (add_le_add secretKey le_rfl) nonce) index
+        add_le_add (add_le_add (add_le_add secretKey le_rfl) nonce) le_rfl
     _ = 2*(counts.total : ENNReal)/2^128 := by
       simp only [Counts.total, Nat.cast_add, div_eq_mul_inv]
       ring

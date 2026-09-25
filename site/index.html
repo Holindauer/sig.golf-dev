@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="A proof competition for stateless hash-based signatures. Minimize signature bytes times RISC-V verification cycles.">
   <title>sig.golf — Stateless signatures, proved</title>
-  <link rel="stylesheet" href="/site/style.css">
-  <script src="/site/storm.js" defer></script>
-  <script src="/site/records.js" defer></script>
+  <link rel="stylesheet" href="/style.css?v=wide-charts-1">
+  <script src="/storm.js" defer></script>
+  <script src="/records.js?v=log-charts-2" defer></script>
 </head>
 <body>
   <div class="beta-banner">The competition is live in beta. Expect rules to change every day and submissions to be lost.</div>
@@ -24,16 +24,16 @@
   </svg>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-header wrap">
-    <a class="brand" href="/site/" aria-label="sig.golf home">sig<span>.golf</span></a>
+    <a class="brand" href="/" aria-label="sig.golf home">sig<span>.golf</span></a>
     <nav aria-label="Main navigation">
-      <a href="/site/rules.html">Rules</a>
+      <a href="/rules.html">Rules</a>
     </nav>
   </header>
 
   <main id="main" class="wrap">
     <section class="intro" aria-labelledby="page-title">
       <h1 id="page-title">Zeus seeks the best stateless hash-based signature.</h1>
-      <p class="intro-copy">Build a stateless hash-based signature scheme. Prove its security in Lean. Prove an upper bound on its RISC-V verification cycles. Minimize signature size × verification cycles. For full details, see the <a href="/site/rules.html">rules</a>.</p>
+      <p class="intro-copy">Build a stateless hash-based signature scheme. Prove its security in Lean. Prove an upper bound on its RISC-V verification cycles. Minimize signature size × verification cycles. For full details, see the <a href="/rules.html">rules</a>.</p>
     </section>
 
     <section class="storm-panel" aria-label="Zeus and the XMSS hypertree">
@@ -52,7 +52,7 @@
     <section class="progress" aria-labelledby="progress-title">
       <div class="section-heading"><h2 id="progress-title">Progress over time</h2></div>
       <div class="score-plot empty-plot" role="img" aria-label="No verified submission scores to plot yet"><span class="empty-plot-y">Score</span><span class="empty-plot-message">No verified submissions yet.</span><span class="empty-plot-x">Time →</span></div>
-      <img id="zeus-full" class="zeus-full" src="/site/assets/zeus-full.png" alt="Full-length Zeus statue reaching for lightning, with his feet at the top edge of the score chart">
+      <img id="zeus-full" class="zeus-full" src="/assets/zeus-full.png" alt="Full-length Zeus statue reaching for lightning, with his feet at the top edge of the score chart">
     </section>
 
     <section class="pareto" aria-labelledby="pareto-title">
@@ -61,8 +61,8 @@
     </section>
 
     <section id="leaderboard" class="leaderboard" aria-labelledby="leaderboard-title">
+      <div class="section-heading"><h2 id="leaderboard-title">Leaderboard</h2></div>
       <div class="board-panel">
-        <h2 id="leaderboard-title">Leaderboard</h2>
         <div class="table-wrap" role="region" tabindex="0" aria-labelledby="leaderboard-title">
           <table class="lb-table">
             <thead><tr><th scope="col">Solver</th><th scope="col" class="number">Score</th><th scope="col" class="number">Signature</th><th scope="col" class="number">Cycles</th><th scope="col" class="number">Date</th></tr></thead>
@@ -73,6 +73,6 @@
     </section>
   </main>
 
-  <footer class="site-footer wrap"><span>sig.golf</span><span><a href="/site/llms.txt">llms.tex</a> · <a href="https://github.com/leanEthereum/sig.golf-submissions/tree/beta">Github for submissions</a> · <a href="https://github.com/leanEthereum/sig.golf-dev/tree/beta">Github for Verification</a></span></footer>
+  <footer class="site-footer wrap"><span>sig.golf</span><span><a href="/llms.txt">llms.tex</a> · <a href="https://github.com/leanEthereum/sig.golf-submissions/tree/beta">Github for submissions</a> · <a href="https://github.com/leanEthereum/sig.golf-dev/tree/beta">Github for Verification</a></span></footer>
 </body>
 </html>

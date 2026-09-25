@@ -13,7 +13,7 @@ inductive Trace (hash : Hash) (image : Image) :
       (hf : fetch image state = some instruction)
       (hs : ordinaryStep state instruction = some next)
       (tail : Trace hash image next steps cycles calls blocks final) :
-      Trace hash image state (steps + 1) (cycles + 1) calls blocks final
+      Trace hash image state (steps + 1) (cycles + instructionCycles instruction) calls blocks final
   | hash (state final : MachineState) (steps cycles calls blocks : Nat)
       (hf : fetch image state = some (.base .ECALL))
       (hs : state.getReg .x5 = 1) (hv : hashArgumentsValid state = true)
@@ -44,8 +44,8 @@ theorem OrdinarySteps.trace {hash : Hash} {image : Image} {s t : MachineState} {
     (block : OrdinarySteps image s steps t) : Trace hash image s steps steps 0 0 t := by
   induction block with
   | refl state => exact Trace.refl state
-  | step state next final instruction steps hf hs tail ih =>
-    exact Trace.ordinary state next final instruction steps steps 0 0 hf hs ih
+  | step state next final instruction steps hf hs unitCost tail ih =>
+    simpa only [unitCost] using Trace.ordinary state next final instruction steps steps 0 0 hf hs ih
 
 /-- Any certified prefix followed by a terminating suffix is a certified full execution. -/
 theorem Trace.then_executes {hash : Hash} {image : Image} {s t : MachineState}

@@ -139,31 +139,10 @@ theorem Search.initial_risk_le (search : Search) (space budget : Nat)
   exact (search.risk_le space space valid positive le_rfl (queries.trans withinSpace)).trans
     (div_le_div_of_nonneg_right (by exact_mod_cast queries) (Nat.cast_nonneg _))
 
-/-- The intended reduction's query classes must share one budget. The theorem is
-only arithmetic: it does not assert that the real experiment satisfies these event bounds. -/
-theorem combine_query_classes (secretKeyQueries targetQueries total : ℝ)
-    (hsecretKey : 0 ≤ secretKeyQueries) (htarget : 0 ≤ targetQueries)
-    (hbudget : secretKeyQueries + targetQueries ≤ total) :
-    secretKeyQueries / 2 ^ 128 + targetQueries / 2 ^ 128 +
-      2 * 2 ^ 24 * total / 2 ^ 160 + total / 2 ^ 256 ≤ total / 2 ^ 127 := by
-  have htotal : 0 ≤ total := le_trans (add_nonneg hsecretKey htarget) hbudget
-  have hmain : secretKeyQueries / 2 ^ 128 + targetQueries / 2 ^ 128 ≤ total / 2 ^ 128 := by
-    rw [← add_div]
-    exact div_le_div_of_nonneg_right hbudget (by positivity)
-  calc
-    _ ≤ total / 2 ^ 128 + 2 * 2 ^ 24 * total / 2 ^ 160 + total / 2 ^ 256 := by linarith
-    _ ≤ total / 2 ^ 127 := by norm_num at *; linarith
-
 /-- info: 'SigGolfCandidate.Hypertree.SecurityAccounting.Search.initial_risk_le' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
 #guard_msgs in
 #print axioms Search.initial_risk_le
-
-/-- info: 'SigGolfCandidate.Hypertree.SecurityAccounting.combine_query_classes' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
-#print axioms combine_query_classes
 
 end SigGolfCandidate.Hypertree.SecurityAccounting

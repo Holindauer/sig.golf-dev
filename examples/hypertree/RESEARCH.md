@@ -233,3 +233,42 @@ The initial check installs7 in x7; all chain preparation/HASH/finish blocks pres
 PR11 officially landed at2026-09-23T13:26:23Z under contract7c2d18e4b797e81b312680e18ae119233d325729 with exact5bbb78dd6ad273039482af1a255643a06bdd7aec. Submitted the already validated counter route as PR12, exacte04ef8d0a63b67de9c356ae90865413ff1f32d84, S=W113616,C1690289,score192043875024. Its head must stay fixed until exact official publication.
 
 Next independent route keeps x28 at STEP throughout chain hashing. Prototype/reference/rejection tests pass at1158606samplecycles, and research/PersistentStepBase.lean proves exact initial/recurrent/finish state equivalences with permitted-axiom guards. Initial proof uses a shared24-instruction prefix and shorter tail. See research/persistent-step-base-notes.md for exact executable proof steps, fixed addresses and prospective (uncertified) C1550765.
+
+## 2026-09-25: migration to organizer contract be68468 (in progress)
+
+PR12 authoritative exact SHA is
+`e04ef8d0a63b67de9c356ae90865413ff1f32d84`, official score192043875024,
+S=W113616,C1690289 under contract7c2d18e. Preserved accepted source unchanged.
+The x7 checkpoint9f16f60 is validated ONLY against that old contract; do not submit.
+
+This isolated beta checkout merges organizer be68468c347b0aeb887b1900abcf4214e76c1951
+(the deployed contract revision reported by upstream beta c6b2462). Protected
+SigGolf and dependency files match organizer exactly. Candidate merge conflicts
+resolved for current152-level source; this does NOT certify the new security bound.
+LIFETIME is now2^32, so the old152-bit index collision argument must change;
+restore160 levels using height-change commits36bf323/f0e9307 as a precise guide.
+Do not change organizer definitions or relax the security statement.
+
+Completed migration components:
+- Executes.ordinary charges instructionCycles; Executes.sound passes axiom guard.
+- OrdinarySteps.step now requires unitCost: instructionCycles instruction=1.
+- Trace.ordinary charges instructionCycles; OrdinarySteps.trace uses unitCost.
+- Trace.sound and composition compile with permitted axioms.
+- lake build SigGolfCandidate.Execution:2702jobs pass.
+- lake build SigGolfCandidate.Hypertree.KeygenTrace:2703jobs pass.
+Logs ../research/validation/siggolf-contract-{execution,trace}.log.
+
+Next executable work: migrate OrdinarySteps.step callers with explicit unit-cost
+proofs (or a sound autoParam for concrete unit-cost instructions), then HASH
+setup bytecode/register values from bits to bytes, hashInput proofs preserving
+exact oracle queries. Restore160 levels and recalculate every bound using new
+instruction prices plus ceil(W/256) witness cycles. Update independent Python
+interpreter/reference tests to the official semantics. Add six-offset claim
+layout and exported layout_offsets. Full certificate, exports, source policy,
+protected comparison and reference/rejection tests must pass before submitting.
+Current claim/C/images are stale; there is no newly certified candidate here.
+
+Additional optimization preserved in ../research-persistent-step-base at91adbc2:
+all2772jobs pass for STEP-base initial/core/recurrent/loop components under OLD
+contract; recurrent17cycles, nonempty17*n+36. Integrate after baseline migration.
+Never push this checkout's origin (it points to local research-persistent-limit).

@@ -8,7 +8,7 @@ namespace SigGolf
 def BUDGET_KEYGEN : Nat := 2 ^ 20
 def BUDGET_SIGN : Nat := 2 ^ 17
 def BUDGET_EXPAND : Nat := 2 ^ 20
-def LIFETIME : Nat := 2 ^ 24
+def LIFETIME : Nat := 2 ^ 32
 def SECURITY_BITS : Nat := 127
 def CYCLE_LIMIT : Nat := 2 ^ 32
 def MEMORY_BYTES : Nat := 2 ^ 24
@@ -41,9 +41,22 @@ structure Sizes where
   witness : Nat
   deriving DecidableEq, Repr
 
+/-- One set of byte offsets shared by all four programs. -/
+structure Layout where
+  message : Nat
+  secretKey : Nat
+  publicKey : Nat
+  cache : Nat
+  signature : Nat
+  witness : Nat
+  deriving DecidableEq, Repr
+
 def Sizes.Valid (sizes : Sizes) : Prop :=
   1 ≤ sizes.signature ∧ sizes.witness ≤ MAX_WITNESS_BYTES
 
 def compressions (bits : Nat) : Nat := max 1 ((bits + 511) / 512)
+
+/-- Verification is also charged one cycle per started 256-byte block of witness. -/
+def witnessCycles (bytes : Nat) : Nat := (bytes + 255) / 256
 
 end SigGolf

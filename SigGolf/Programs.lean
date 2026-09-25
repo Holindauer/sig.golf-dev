@@ -6,6 +6,7 @@ open OracleComp OracleSpec RiscvZkvm.Rv64
 /-- Every algorithm is fixed bytecode and embedded public data. -/
 structure Submission where
   sizes : Sizes
+  layout : Layout
   image : Phase → Riscv.Image
 
 def Submission.score (submission : Submission) (cycles : Nat) : Nat :=
@@ -13,7 +14,7 @@ def Submission.score (submission : Submission) (cycles : Nat) : Nat :=
 
 def Input (sizes : Sizes) : Phase → Type
   | .keygen => SecretKey
-  | .sign => SecretKey × PublicKey × Cache × Message
+  | .sign => SecretKey × Cache × Message
   | .expand => Message × PublicKey × Bytes sizes.signature
   | .verify => Message × PublicKey × Bytes sizes.witness
 
@@ -30,33 +31,38 @@ def readBuffer (state : MachineState) (address n : Nat) : Bytes n :=
   BitVec.ofNat (8 * n) ((List.range n).foldl
     (fun acc i => acc + (state.getByte (BitVec.ofNat 64 (address + i))).toNat * 2 ^ (8 * i)) 0)
 
-def inputBuffers (sizes : Sizes) : (phase : Phase) → Input sizes phase → List (Nat × List Byte)
-  | .keygen, secretKey => [(0x20, bytes secretKey)]
-  | .sign, (secretKey, pk, cache, message) =>
-      [(0x20, bytes secretKey), (0x40, bytes pk), (0x60, bytes cache),
-        (0, bytes message)]
+def inputBuffers (sizes : Sizes) (layout : Layout) :
+    (phase : Phase) → Input sizes phase → List (Nat × List Byte)
+  | .keygen, secretKey => [(layout.secretKey, bytes secretKey)]
+  | .sign, (secretKey, cache, message) =>
+      [(layout.secretKey, bytes secretKey), (layout.cache, bytes cache),
+        (layout.message, bytes message)]
   | .expand, (message, pk, signature) =>
-      [(0, bytes message), (0x40, bytes pk), (Riscv.signatureBase, bytes signature)]
+      [(layout.message, bytes message), (layout.publicKey, bytes pk),
+        (layout.signature, bytes signature)]
   | .verify, (message, pk, witness) =>
-      [(0, bytes message), (0x40, bytes pk), (Riscv.witnessBase sizes, bytes witness)]
+      [(layout.message, bytes message), (layout.publicKey, bytes pk),
+        (layout.witness, bytes witness)]
 
 /-- Each execution starts with fresh zeroed memory and registers. Only declared inputs are loaded. -/
 def initialState (submission : Submission) (phase : Phase) (input : Input submission.sizes phase) :
     Option MachineState :=
   let image := submission.image phase
-  if image.Valid submission.sizes then
+  if image.Valid submission.sizes submission.layout then
     let blank : MachineState :=
       { regs := fun _ => 0, mem := fun _ => 0, pc := 0x1000 }
     let withData := blank.writeBytesAsWords (BitVec.ofNat 64 (Riscv.dataBase image)) image.data
-    let loaded := (inputBuffers submission.sizes phase input).foldl
+    let loaded := (inputBuffers submission.sizes submission.layout phase input).foldl
       (fun state buffer => state.writeBytesAsWords (BitVec.ofNat 64 buffer.1) buffer.2) withData
     some (loaded.setReg .x2 (BitVec.ofNat 64 (Riscv.dataBase image)))
   else none
 
-def readOutput (sizes : Sizes) : (phase : Phase) → MachineState → Output sizes phase
-  | .keygen, state => (readBuffer state 0x40 16, readBuffer state 0x60 CACHE_BYTES)
-  | .sign, state => readBuffer state Riscv.signatureBase sizes.signature
-  | .expand, state => readBuffer state (Riscv.witnessBase sizes) sizes.witness
+def readOutput (sizes : Sizes) (layout : Layout) :
+    (phase : Phase) → MachineState → Output sizes phase
+  | .keygen, state =>
+      (readBuffer state layout.publicKey 16, readBuffer state layout.cache CACHE_BYTES)
+  | .sign, state => readBuffer state layout.signature sizes.signature
+  | .expand, state => readBuffer state layout.witness sizes.witness
   | .verify, _ => ()
 
 structure RunResult (α : Type) where
@@ -73,7 +79,7 @@ def Submission.run (submission : Submission) (phase : Phase) (input : Input subm
   | none => return ⟨none, true, 0, 0, 0⟩
   | some state =>
     let execution ← Riscv.execute CYCLE_LIMIT (submission.image phase) state
-    return ⟨if execution.exit = .success then some (readOutput submission.sizes phase execution.state)
+    return ⟨if execution.exit = .success then some (readOutput submission.sizes submission.layout phase execution.state)
       else none, execution.exit != .unfinished, execution.cycles, execution.hashCalls,
       execution.hashCompressions⟩
 
@@ -97,7 +103,7 @@ def Submission.honest (submission : Submission) (secretKey : SecretKey) (message
   let keygen ← submission.run .keygen secretKey
   costs := recordCost costs .keygen keygen.hashCompressions
   let some (pk, cache) := keygen.value | return ⟨false, costs, 0⟩
-  let sign ← submission.run .sign (secretKey, pk, cache, message)
+  let sign ← submission.run .sign (secretKey, cache, message)
   costs := recordCost costs .sign sign.hashCompressions
   let some signature := sign.value | return ⟨false, costs, 0⟩
   let expand ← submission.run .expand (message, pk, signature)
@@ -105,7 +111,7 @@ def Submission.honest (submission : Submission) (secretKey : SecretKey) (message
   let some witness := expand.value | return ⟨false, costs, 0⟩
   let verify ← submission.run .verify (message, pk, witness)
   costs := recordCost costs .verify verify.hashCompressions
-  return ⟨verify.value.isSome, costs, verify.cycles⟩
+  return ⟨verify.value.isSome, costs, verify.cycles + witnessCycles submission.sizes.witness⟩
 
 /-- Benchmark one independent uniform message against one freshly sampled shared random oracle. -/
 noncomputable def Submission.honestWorkload (submission : Submission) (secretKey : SecretKey) :
