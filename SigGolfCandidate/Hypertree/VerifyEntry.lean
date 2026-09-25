@@ -15,7 +15,7 @@ theorem index_refines_frame (hash : Hash) (s : MachineState) (pk : PublicKey) (m
     (pc : s.pc = 0x1024)
     (hpk : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x40 + i)) = pk.extractLsb' (8 * i) 8)
     (hmessage : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8 * i) 8)
-    (hr : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 (0x3bc30 + i)) = r.extractLsb' (8 * i) 8) :
+    (hr : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 (0x3d3b0 + i)) = r.extractLsb' (8 * i) 8) :
     ∃ final, Trace hash verify s 121 136 1 2 final ∧ final.pc = 0x1148 ∧
       StoredIndex final ((Reference.indexOf hash pk message r).zeroExtend 192) ∧
       (∀ a, OutsideIndexPrefix a → final.getMem a = s.getMem a) := by
@@ -34,17 +34,17 @@ theorem entry_index_frame (hash : Hash) (s : MachineState) (pk : PublicKey) (mes
     (pc : s.pc = 0x1000)
     (hpk : ∀ i, i < 16 → s.getByte (BitVec.ofNat 64 (0x40 + i)) = pk.extractLsb' (8 * i) 8)
     (hmessage : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 i) = message.extractLsb' (8 * i) 8)
-    (hr : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 (0x3bc30 + i)) = r.extractLsb' (8 * i) 8) :
+    (hr : ∀ i, i < 32 → s.getByte (BitVec.ofNat 64 (0x3d3b0 + i)) = r.extractLsb' (8 * i) 8) :
     ∃ final, Trace hash verify s 130 145 1 2 final ∧ final.pc = 0x1148 ∧
       StoredIndex final ((Reference.indexOf hash pk message r).zeroExtend 192) ∧
-      final.getMem 0x80440 = 0 ∧ final.getMem 0x80448 = 0x3bc50 ∧
+      final.getMem 0x80440 = 0 ∧ final.getMem 0x80448 = 0x3d3d0 ∧
       (∀ a, OutsideIndexPrefix a → a ≠ 0x80440 → a ≠ 0x80448 → final.getMem a = s.getMem a) := by
   have initpc : (initializeState s).pc = 0x1024 := by simp [initializeState_pc, pc]
   obtain ⟨final, trace, finalpc, index, frame⟩ := index_refines_frame hash (initializeState s) pk message r initpc
     (fun i hi => (initializeState_byte s 0x40 i (by decide) (by omega)).trans (hpk i hi))
     (fun i hi => (by simpa only [Nat.zero_add] using initializeState_byte s 0 i (by decide) (by omega) :
       (initializeState s).getByte (BitVec.ofNat 64 i) = s.getByte (BitVec.ofNat 64 i)).trans (hmessage i hi))
-    (fun i hi => (initializeState_byte s 0x3bc30 i (by decide) (by omega)).trans (hr i hi))
+    (fun i hi => (initializeState_byte s 0x3d3b0 i (by decide) (by omega)).trans (hr i hi))
   refine ⟨final, (initializeState_block s pc).trace.trans trace, finalpc, index, ?_, ?_, ?_⟩
   · rw [frame 0x80440 (by unfold OutsideIndexPrefix; decide), initializeState_mem]; simp
   · rw [frame 0x80448 (by unfold OutsideIndexPrefix; decide), initializeState_mem]; simp

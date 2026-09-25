@@ -19,9 +19,9 @@ theorem advance_low_frame (s : MachineState) : LowFrame s (advanceState s) := by
   rw [advanceState_mem, if_neg level, if_neg pointer]
 
 theorem LoopData.advance (s : MachineState) (level index : Nat) (current : Reference.Digest)
-    (witness : Bytes signatureBytes) (data : LoopData s level index current witness) (small : level < 152) :
+    (witness : Bytes signatureBytes) (data : LoopData s level index current witness) (small : level < 160) :
     LoopData (advanceState s) (level+1) index current witness := by
-  have updated := advanceState_layer s 0x3bc30 level small data.levelEq data.pointerEq
+  have updated := advanceState_layer s 0x3d3b0 level small data.levelEq data.pointerEq
   refine ⟨(advanceState_sp s).trans data.stack, updated.1, ?_, updated.2, ?_, ?_⟩
   · intro i
     rw [advanceState_mem]

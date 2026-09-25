@@ -20,18 +20,18 @@ theorem LowFrame.trans (s middle final : MachineState) (first : LowFrame s middl
 theorem WitnessStored.transfer_words (s final : MachineState) (witness : Bytes signatureBytes)
     (stored : WitnessStored s witness) (frame : LowFrame s final) : WitnessStored final witness := by
   intro i hi
-  rw [getByte_word final 0x3bc30 i (by decide) (by change i < 113616 at hi; omega)]
-  have words := frame (0x3bc30+8*(i/8)) (by omega) (by change i < 113616 at hi; omega)
-  change final.getMem (wordAddress 0x3bc30 (i/8)) = s.getMem (wordAddress 0x3bc30 (i/8)) at words
+  rw [getByte_word final 0x3d3b0 i (by decide) (by change i < 119632 at hi; omega)]
+  have words := frame (0x3d3b0+8*(i/8)) (by omega) (by change i < 119632 at hi; omega)
+  change final.getMem (wordAddress 0x3d3b0 (i/8)) = s.getMem (wordAddress 0x3d3b0 (i/8)) at words
   rw [words]
-  simpa only [getByte_word s 0x3bc30 i (by decide) (by change i < 113616 at hi; omega)] using stored i hi
+  simpa only [getByte_word s 0x3d3b0 i (by decide) (by change i < 119632 at hi; omega)] using stored i hi
 
 structure LoopData (s : MachineState) (level index : Nat) (current : Reference.Digest)
     (witness : Bytes signatureBytes) : Prop where
   stack : s.getReg .x2 = 0x1000000
   levelEq : s.getMem 0x80400 = BitVec.ofNat 64 level
   indexEq : StoredIndex s (BitVec.ofNat 192 index)
-  pointerEq : s.getMem 0x80448 = BitVec.ofNat 64 (0x3bc30+layerOffset level)
+  pointerEq : s.getMem 0x80448 = BitVec.ofNat 64 (0x3d3b0+layerOffset level)
   currentEq : ∀ i : Fin 2, s.getMem (wordAddress 0x80500 i.val) = current.extractLsb' (64*i.val) 64
   witnessEq : WitnessStored s witness
 

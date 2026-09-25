@@ -123,9 +123,9 @@ theorem finish (hash : Hash) (s : MachineState) (pc : s.pc = 0x1030) :
 
 /-- The loop invariant tracks byte addresses and remaining words; it puts no restrictions on their contents. -/
 def Invariant (n : Nat) (s : MachineState) : Prop :=
-  n ≤ 14202 ∧ s.pc = (if n = 0 then 0x1030 else 0x1018) ∧
-  s.getReg .x6 = BitVec.ofNat 64 (0x20060 + 8 * (14202 - n)) ∧
-  s.getReg .x7 = BitVec.ofNat 64 (0x3bc30 + 8 * (14202 - n)) ∧
+  n ≤ 14954 ∧ s.pc = (if n = 0 then 0x1030 else 0x1018) ∧
+  s.getReg .x6 = BitVec.ofNat 64 (0x20060 + 8 * (14954 - n)) ∧
+  s.getReg .x7 = BitVec.ofNat 64 (0x3d3b0 + 8 * (14954 - n)) ∧
   s.getReg .x10 = BitVec.ofNat 64 n
 
 theorem loop_invariant (n : Nat) (s : MachineState) (inv : Invariant (n + 1) s) :
@@ -147,12 +147,12 @@ theorem loop_invariant (n : Nat) (s : MachineState) (inv : Invariant (n + 1) s) 
   · rw [loop_next_pc s hp, count]
     simp only [heq]
   · rw [(loop_next_regs s).1, src]
-    change BitVec.ofNat 64 (0x20060 + 8 * (14202 - (n + 1))) + BitVec.ofNat 64 8 = _
+    change BitVec.ofNat 64 (0x20060 + 8 * (14954 - (n + 1))) + BitVec.ofNat 64 8 = _
     rw [← BitVec.ofNat_add]
     congr 1
     omega
   · rw [(loop_next_regs s).2.1, dst]
-    change BitVec.ofNat 64 (0x3bc30 + 8 * (14202 - (n + 1))) + BitVec.ofNat 64 8 = _
+    change BitVec.ofNat 64 (0x3d3b0 + 8 * (14954 - (n + 1))) + BitVec.ofNat 64 8 = _
     rw [← BitVec.ofNat_add]
     congr 1
     omega
@@ -182,64 +182,64 @@ theorem loop_executes (hash : Hash) (n : Nat) (s : MachineState) (inv : Invarian
 def prefixState (s : MachineState) : MachineState :=
   let s := execInstrBr s (.LUI .x6 0x20)
   let s := execInstrBr s (.ADDI .x6 .x6 0x60)
-  let s := execInstrBr s (.LUI .x7 0x3c)
-  let s := execInstrBr s (.ADDI .x7 .x7 0xc30)
-  let s := execInstrBr s (.LUI .x10 3)
-  execInstrBr s (.ADDI .x10 .x10 0x77a)
+  let s := execInstrBr s (.LUI .x7 0x3d)
+  let s := execInstrBr s (.ADDI .x7 .x7 0x3b0)
+  let s := execInstrBr s (.LUI .x10 4)
+  execInstrBr s (.ADDI .x10 .x10 0xa6a)
 
 theorem prefix_block (s : MachineState) (pc : s.pc = 0x1000) :
     OrdinarySteps expand s 6 (prefixState s) := by
   let s1 := execInstrBr s (.LUI .x6 0x20)
   let s2 := execInstrBr s1 (.ADDI .x6 .x6 0x60)
-  let s3 := execInstrBr s2 (.LUI .x7 0x3c)
-  let s4 := execInstrBr s3 (.ADDI .x7 .x7 0xc30)
-  let s5 := execInstrBr s4 (.LUI .x10 3)
-  let s6 := execInstrBr s5 (.ADDI .x10 .x10 0x77a)
+  let s3 := execInstrBr s2 (.LUI .x7 0x3d)
+  let s4 := execInstrBr s3 (.ADDI .x7 .x7 0x3b0)
+  let s5 := execInstrBr s4 (.LUI .x10 4)
+  let s6 := execInstrBr s5 (.ADDI .x10 .x10 0xa6a)
   apply OrdinarySteps.step s s1 _ (.base (.LUI .x6 0x20)) 5
   · simp only [fetch, pc, expand]; decide
   · rfl
   apply OrdinarySteps.step s1 s2 _ (.base (.ADDI .x6 .x6 0x60)) 4
   · simp only [fetch, s1, execInstrBr, MachineState.setPC, pc, expand]; decide
   · rfl
-  apply OrdinarySteps.step s2 s3 _ (.base (.LUI .x7 0x3c)) 3
+  apply OrdinarySteps.step s2 s3 _ (.base (.LUI .x7 0x3d)) 3
   · simp only [fetch, s1, s2, execInstrBr, MachineState.setPC, pc, expand]; decide
   · rfl
-  apply OrdinarySteps.step s3 s4 _ (.base (.ADDI .x7 .x7 0xc30)) 2
+  apply OrdinarySteps.step s3 s4 _ (.base (.ADDI .x7 .x7 0x3b0)) 2
   · simp only [fetch, s1, s2, s3, execInstrBr, MachineState.setPC, pc, expand]; decide
   · rfl
-  apply OrdinarySteps.step s4 s5 _ (.base (.LUI .x10 3)) 1
+  apply OrdinarySteps.step s4 s5 _ (.base (.LUI .x10 4)) 1
   · simp only [fetch, s1, s2, s3, s4, execInstrBr, MachineState.setPC, pc, expand]; decide
   · rfl
-  apply OrdinarySteps.step s5 s6 _ (.base (.ADDI .x10 .x10 0x77a)) 0
+  apply OrdinarySteps.step s5 s6 _ (.base (.ADDI .x10 .x10 0xa6a)) 0
   · simp only [fetch, s1, s2, s3, s4, s5, execInstrBr, MachineState.setPC, pc, expand]; decide
   · rfl
   exact OrdinarySteps.refl _
 
 theorem prefix_invariant (s : MachineState) (pc : s.pc = 0x1000) :
-    Invariant 14202 (prefixState s) := by
+    Invariant 14954 (prefixState s) := by
   unfold Invariant prefixState
   simp [execInstrBr, MachineState.getReg_setReg_ne, MachineState.getReg_setReg_eq,
     signExtend12, pc]
 
 /-- The actual expansion image succeeds on arbitrary memory contents in exactly 89,733 cycles, without hash calls. -/
 theorem executes (hash : Hash) (s : MachineState) (pc : s.pc = 0x1000) :
-    ∃ final, Executes hash expand s 85221 ⟨.success, final, 85221, 0, 0⟩ := by
-  obtain ⟨final, tail⟩ := loop_executes hash 14202 (prefixState s) (prefix_invariant s pc)
+    ∃ final, Executes hash expand s 89733 ⟨.success, final, 89733, 0, 0⟩ := by
+  obtain ⟨final, tail⟩ := loop_executes hash 14954 (prefixState s) (prefix_invariant s pc)
   refine ⟨final, ?_⟩
-  have hsteps : (6 * 14202 + 3) + 6 = 85221 := by decide
-  have hcycles : 6 + (6 * 14202 + 3) = 85221 := by decide
+  have hsteps : (6 * 14954 + 3) + 6 = 89733 := by decide
+  have hcycles : 6 + (6 * 14954 + 3) = 89733 := by decide
   simpa only [Execution.charge, hsteps, hcycles, Nat.zero_add] using (prefix_block s pc).then_executes tail
 
 /-- Universal expansion resource guarantee through the organizer's loader and output decoder. -/
 theorem run_bound (hash : Hash) (input : Input submission.sizes .expand) :
     let result := submission.runWith hash .expand input
-    result.finished = true ∧ result.value.isSome = true ∧ result.cycles = 85221 ∧
+    result.finished = true ∧ result.value.isSome = true ∧ result.cycles = 89733 ∧
       result.hashCalls = 0 ∧ result.hashCompressions = 0 := by
   obtain ⟨state, loaded, pc⟩ := initialState_exists submission admitted .expand input
   obtain ⟨final, trace⟩ := executes hash state pc
-  have bound : 85221 ≤ CYCLE_LIMIT := by decide
-  have run := runWith_of_executes submission hash .expand input state 85221
-    ⟨.success, final, 85221, 0, 0⟩ loaded trace bound
+  have bound : 89733 ≤ CYCLE_LIMIT := by decide
+  have run := runWith_of_executes submission hash .expand input state 89733
+    ⟨.success, final, 89733, 0, 0⟩ loaded trace bound
   simp [run]
 
 /-- info: 'SigGolfCandidate.Hypertree.Expansion.executes' depends on axioms: [propext, Classical.choice, Quot.sound] -/

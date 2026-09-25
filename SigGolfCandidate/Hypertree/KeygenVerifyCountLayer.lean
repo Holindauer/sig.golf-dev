@@ -7,7 +7,7 @@ set_option maxRecDepth 4096
 
 theorem verify_layer_tree_exact (hash : Hash) (s : MachineState) (level index : Nat) (side : Bool)
     (current : Reference.Digest) (witness : Bytes signatureBytes)
-    (pc : s.pc = 0x11bc) (small : level < 152)
+    (pc : s.pc = 0x11bc) (small : level < 160)
     (data : LoopData s level index current witness)
     (selector : s.getMem 0x80420 = BitVec.ofNat 64 (Reference.sideNumber side)) :
     ∃ final steps cycles calls blocks, Trace hash verify s steps cycles calls blocks final ∧
@@ -17,11 +17,11 @@ theorem verify_layer_tree_exact (hash : Hash) (s : MachineState) (level index : 
       LowFrame s final ∧ calls = SecurityVerifyCost.leafCalls level current+1 := by
   obtain ⟨ready, preSteps, pre, preBound, rpc, rra, rsp, readyData, preFrame⟩ :=
     prepare_tree s level index side current witness pc small data selector
-  have bound := layer_pointer_bound 0x3bc30 level (by decide) small
+  have bound := layer_pointer_bound 0x3d3b0 level (by decide) small
   obtain ⟨final, steps, cycles, calls, blocks, run, hsteps, hcycles, hcalls, hblocks, fpc, fsp, output, frame, countEq⟩ :=
-    recover_tree_call_exact hash ready level index (0x3bc30+layerOffset level) side current (wireLayer witness level)
+    recover_tree_call_exact hash ready level index (0x3d3b0+layerOffset level) side current (wireLayer witness level)
       rpc rsp readyData small (layer_pointer_aligned _ _ (by decide)) bound
-  have finalData := readyData.transfer ready final level index (0x3bc30+layerOffset level) side current
+  have finalData := readyData.transfer ready final level index (0x3d3b0+layerOffset level) side current
     (wireLayer witness level) bound frame
   have treeFrame : LowFrame ready final := by
     intro address _ low
@@ -35,11 +35,11 @@ theorem verify_layer_tree_exact (hash : Hash) (s : MachineState) (level index : 
 
 theorem verify_layer_exact (hash : Hash) (s : MachineState) (level index : Nat)
     (current : Reference.Digest) (witness : Bytes signatureBytes)
-    (pc : s.pc = 0x1148) (small : level < 152) (indexSmall : index < 2^192)
+    (pc : s.pc = 0x1148) (small : level < 160) (indexSmall : index < 2^192)
     (data : LoopData s level index current witness) :
     ∃ final steps cycles calls blocks, Trace hash verify s steps cycles calls blocks final ∧
       steps ≤ 34415 ∧ cycles ≤ 36771 ∧ calls ≤ 324 ∧ blocks ≤ 335 ∧
-      final.pc = (if level+1 = 152 then 0x1220 else 0x1148) ∧
+      final.pc = (if level+1 = 160 then 0x1220 else 0x1148) ∧
       LoopData final (level+1) (index/2)
         (Reference.recoverLayer hash level (index/2) (index%2 == 1) current (wireLayer witness level)) witness ∧
       LowFrame s final ∧ calls = SecurityVerifyCost.leafCalls level current+1 := by

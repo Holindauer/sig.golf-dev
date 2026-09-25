@@ -30,7 +30,7 @@ theorem executes_zero_cache (hash : Hash) (secretKey : SecretKey) :
       readBuffer final 0x60 CACHE_BYTES=zeroCache := by
   obtain ⟨root,treeTrace,treePC,treeSP,words,frame⟩ :=
     KeygenTree.execute_framed hash (prefixState (secretKeyState secretKey)) (prefix_pc _ (secretKey_pc secretKey))
-      (by rw [prefix_sp,secretKey_sp]) 151 0 secretKey (by decide) (prefix_context secretKey)
+      (by rw [prefix_sp,secretKey_sp]) 159 0 secretKey (by decide) (prefix_context secretKey)
   have returned : root.pc=0x1014 := by rw [treePC,prefix_ra _ (secretKey_pc secretKey)]; decide
   refine ⟨Expansion.finishState (outputCopied root),
     executes_of_tree_trace hash (secretKeyState secretKey) root (secretKey_pc secretKey) 77073 82422 739 761 treeTrace returned,?_,?_⟩

@@ -11,7 +11,7 @@ theorem sign_execution (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (c
     ∃ initial final instructions cycles,
       initialState submission .sign (secretKey,pk,cache,message)=some initial ∧
       Executes hash sign initial instructions
-        ⟨if Reference.keygen hash secretKey=pk then .success else .failure,final,cycles,111596,114920⟩ ∧
+        ⟨if Reference.keygen hash secretKey=pk then .success else .failure,final,cycles,117508,121008⟩ ∧
       instructions≤16066973 ∧ cycles≤16922843 ∧
       LayersStored final 0 (Reference.sign hash secretKey pk message).layers ∧
       (∀ i : Fin 4, final.getMem (wordAddress 0x20060 i.val)=
@@ -20,11 +20,11 @@ theorem sign_execution (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (c
   let index := Reference.indexOf hash pk message (Reference.randomizer hash secretKey message)
   have small : index.toNat<2^192 := by have := index.isLt; omega
   obtain ⟨done,n,c,body,nb,cb,donePC,root,stored,frame⟩ :=
-    sign_layers hash secretKey 152 ready 0 index.toNat 0 (by decide) small (by simpa using readyPC) data
+    sign_layers hash secretKey 160 ready 0 index.toNat 0 (by decide) small (by simpa using readyPC) data
   have finalRoot : ∀ i : Fin 2, done.getMem (wordAddress 0x80500 i.val) =
       (Reference.keygen hash secretKey).extractLsb' (64*i.val) 64 := by
     intro i
-    rw [root i,Reference.roots_after_succ hash secretKey 151 0]
+    rw [root i,Reference.roots_after_succ hash secretKey 159 0]
     simp only [Nat.zero_add,Nat.div_eq_of_lt index.isLt]
     rfl
   have finalPk : ∀ i : Fin 2, done.getMem (wordAddress 0x40 i.val)=pk.extractLsb' (64*i.val) 64 := by
@@ -48,8 +48,8 @@ theorem sign_execution (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (c
   obtain ⟨steps,final,stepsBound,footer,footerFrame⟩ := sign_footer_executes hash done donePC
   have all := (pre.trans body).then_executes footer
   have execution : Executes hash sign initial (238+n+steps)
-      ⟨if Reference.keygen hash secretKey=pk then .success else .failure,final,268+c+steps,111596,114920⟩ := by
-    simpa only [Execution.charge,rootMatch,show loopCalls 152 0=111594 by rfl,show loopBlocks 152 0=114916 by rfl,
+      ⟨if Reference.keygen hash secretKey=pk then .success else .failure,final,268+c+steps,117508,121008⟩ := by
+    simpa only [Execution.charge,rootMatch,show loopCalls 160 0=117506 by rfl,show loopBlocks 160 0=121004 by rfl,
       Nat.reduceAdd,Nat.zero_add,Nat.add_zero,Nat.add_assoc,Nat.add_comm,Nat.add_left_comm] using all
   refine ⟨initial,final,238+n+steps,268+c+steps,loaded,execution,by omega,by omega,?_,?_⟩
   · have transport : ∀ (level : Nat) (signatures : List Reference.LayerSignature),

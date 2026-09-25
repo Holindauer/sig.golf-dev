@@ -89,9 +89,9 @@ theorem keygen_tree_enter : EnterCode keygen 0x1048 := by decide
  theorem keygen_leaf_return : ReturnCode keygen 0x1650 := by decide
  theorem keygen_bottom_return : ReturnCode keygen 0x18e4 := by decide
 
-/-- The real keygen entry initializes LEVEL=151 and calls the tree subroutine. -/
+/-- The real keygen entry initializes LEVEL=159 and calls the tree subroutine. -/
 def prefixState (s : MachineState) : MachineState :=
-  let s := execInstrBr s (.ADDI .x6 .x0 151)
+  let s := execInstrBr s (.ADDI .x6 .x0 159)
   let s := execInstrBr s (.LUI .x28 0x80)
   let s := execInstrBr s (.ADDI .x28 .x28 0x400)
   let s := execInstrBr s (.SD .x28 .x6 0)
@@ -99,11 +99,11 @@ def prefixState (s : MachineState) : MachineState :=
 
 theorem prefix_block (s : MachineState) (pc : s.pc = 0x1000) :
     OrdinarySteps keygen s 5 (prefixState s) := by
-  let s1 := execInstrBr s (.ADDI .x6 .x0 151)
+  let s1 := execInstrBr s (.ADDI .x6 .x0 159)
   let s2 := execInstrBr s1 (.LUI .x28 0x80)
   let s3 := execInstrBr s2 (.ADDI .x28 .x28 0x400)
   let s4 := execInstrBr s3 (.SD .x28 .x6 0)
-  apply OrdinarySteps.step s s1 _ (.base (.ADDI .x6 .x0 151)) 4
+  apply OrdinarySteps.step s s1 _ (.base (.ADDI .x6 .x0 159)) 4
   · simp only [fetch, pc, keygen]; decide
   · rfl
   apply OrdinarySteps.step s1 s2 _ (.base (.LUI .x28 0x80)) 3
@@ -133,7 +133,7 @@ theorem prefix_sp (s : MachineState) : (prefixState s).getReg .x2 = s.getReg .x2
   simp [prefixState, execInstrBr, MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne]
 
 theorem prefix_mem (s : MachineState) (a : Word) :
-    (prefixState s).getMem a = if a = 0x80400 then 151 else s.getMem a := by
+    (prefixState s).getMem a = if a = 0x80400 then 159 else s.getMem a := by
   simp [prefixState, execInstrBr, signExtend12, MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne]
 
 end SigGolfCandidate.Hypertree.Keygen

@@ -15,10 +15,10 @@ theorem loaded_scratch (pk : PublicKey) (message : Message) (witness : Bytes sig
   dsimp only [submission]
   dsimp only [inputBuffers, Riscv.standardLayout, Layout.message, Layout.secretKey, Layout.publicKey, Layout.cache, Layout.signature, Layout.witness, List.foldl_cons, List.foldl_nil]
   rw [MachineState.getMem_setReg]
-  rw [show witnessBase ⟨signatureBytes, signatureBytes⟩ = 0x3bc30 by decide]
-  rw [Memory.write_preserves _ 0x3bc30 (bytes witness) a
+  rw [show witnessBase ⟨signatureBytes, signatureBytes⟩ = 0x3d3b0 by decide]
+  rw [Memory.write_preserves _ 0x3d3b0 (bytes witness) a
     (by rw [Memory.bytes_length (n := signatureBytes)]; decide)
-    (by right; rw [Memory.bytes_length (n := signatureBytes)]; change 358400 ≤ a.toNat; omega)]
+    (by right; rw [Memory.bytes_length (n := signatureBytes)]; change 370432 ≤ a.toNat; omega)]
   rw [Memory.write_preserves _ 0x40 (bytes pk) a
     (by rw [Memory.bytes_length]; decide)
     (by right; rw [Memory.bytes_length]; omega)]
@@ -54,14 +54,14 @@ theorem loaded_loop_entry (hash : Hash) (pk : PublicKey) (message : Message) (wi
       Trace hash verify initial 130 145 1 2 final ∧ final.pc = 0x1148 ∧
       StoredIndex final ((Reference.indexOf hash pk message (SignatureEncoding.decode witness).randomizer).zeroExtend 192) ∧
       final.getReg .x2 = 0x1000000 ∧ final.getMem 0x80400 = 0 ∧
-      final.getMem 0x80440 = 0 ∧ final.getMem 0x80448 = 0x3bc50 ∧
+      final.getMem 0x80440 = 0 ∧ final.getMem 0x80448 = 0x3d3d0 ∧
       final.getMem 0x80500 = 0 ∧ final.getMem 0x80508 = 0 ∧
       (∀ a, a.toNat < 0x80000 → final.getMem a = initial.getMem a) := by
   obtain ⟨initial, loaded, pc⟩ := initialState_exists submission admitted .verify (message, pk, witness)
-  have randomizer : ∀ i, i < 32 → initial.getByte (BitVec.ofNat 64 (0x3bc30 + i)) =
+  have randomizer : ∀ i, i < 32 → initial.getByte (BitVec.ofNat 64 (0x3d3b0 + i)) =
       (SignatureEncoding.decode witness).randomizer.extractLsb' (8 * i) 8 := by
     intro i hi
-    rw [loaded_witness pk message witness initial loaded i (by change i < 113616; omega)]
+    rw [loaded_witness pk message witness initial loaded i (by change i < 119632; omega)]
     dsimp only [SignatureEncoding.decode, SignatureEncoding.slice]
     rw [BitVec.extractLsb'_extractLsb'_of_le (by omega)]
   obtain ⟨final, trace, finalpc, index, mode, pointer, frame⟩ := entry_index_frame hash initial pk message

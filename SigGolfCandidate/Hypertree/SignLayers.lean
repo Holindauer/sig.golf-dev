@@ -17,10 +17,10 @@ theorem loopBlocks_succ (count level : Nat) :
   unfold loopBlocks
   by_cases h : level=0 <;> simp [h] <;> omega
 
-/-- The complete 152-layer actual signer loop, including all serialized signature fields. -/
+/-- The complete 160-layer actual signer loop, including all serialized signature fields. -/
 theorem sign_layers (hash : Hash) (secretKey : SecretKey) (count : Nat) :
     ∀ (s : MachineState) (level index : Nat) (current : Reference.Digest),
-    level+count=152 → index<2^192 → s.pc=(if level=152 then 0x12f8 else 0x1220) →
+    level+count=160 → index<2^192 → s.pc=(if level=160 then 0x12f8 else 0x1220) →
     LoopData s secretKey level index current →
     ∃ final instructions cycles, Trace hash sign s instructions cycles (loopCalls count level) (loopBlocks count level) final ∧
       instructions ≤ 100417*count ∧ cycles ≤ 105766*count ∧ final.pc=0x12f8 ∧
@@ -32,15 +32,15 @@ theorem sign_layers (hash : Hash) (secretKey : SecretKey) (count : Nat) :
   induction count with
   | zero =>
     intro s level index current total small pc data
-    have levelEq : level=152 := by omega
+    have levelEq : level=160 := by omega
     refine ⟨s,0,0,?_,by omega,by omega,?_,data.currentWords,True.intro,?_⟩
     · simpa [loopCalls,loopBlocks] using Trace.refl (hash := hash) (image := sign) s
     · simpa [levelEq] using pc
     · intro address low aligned before; rfl
   | succ count ih =>
     intro s level index current total small pc data
-    have bound : level<152 := by omega
-    have startPC : s.pc=0x1220 := by simpa only [if_neg (show level≠152 by omega)] using pc
+    have bound : level<160 := by omega
+    have startPC : s.pc=0x1220 := by simpa only [if_neg (show level≠160 by omega)] using pc
     obtain ⟨next,n,c,run,nb,cb,nextPC,nextData,stored,frame⟩ := sign_layer hash s secretKey level index current startPC bound small data
     obtain ⟨final,ns,cs,rest,nsb,csb,finalPC,root,storedRest,restFrame⟩ :=
       ih next (level+1) (index/2) (Reference.treeRoot hash secretKey level (index/2)) (by omega) (by omega) nextPC nextData

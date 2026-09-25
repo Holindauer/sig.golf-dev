@@ -14,7 +14,7 @@ theorem sibling_source (s : MachineState) (side : Bool)
   rw [siblingSource, selector]
   cases side <;> rfl
 
-theorem sibling_destination (s : MachineState) (level base : Nat) (small : level < 152)
+theorem sibling_destination (s : MachineState) (level base : Nat) (small : level < 160)
     (levelEq : s.getMem 0x80400 = BitVec.ofNat 64 level)
     (pointer : s.getMem 0x80448 = BitVec.ofNat 64 base) :
     siblingDestination s = BitVec.ofNat 64 (base+siblingOffset level) := by
@@ -29,7 +29,7 @@ theorem sibling_destination (s : MachineState) (level base : Nat) (small : level
   split <;> simp only [BitVec.ofNat_add] <;> rfl
 
 theorem sibling_access (s : MachineState) (level base : Nat) (side : Bool)
-    (small : level < 152) (aligned : base % 8 = 0) (bound : base+752 ≤ 0x80000)
+    (small : level < 160) (aligned : base % 8 = 0) (bound : base+752 ≤ 0x80000)
     (levelEq : s.getMem 0x80400 = BitVec.ofNat 64 level)
     (pointer : s.getMem 0x80448 = BitVec.ofNat 64 base)
     (selector : s.getMem 0x80420 = BitVec.ofNat 64 (Reference.sideNumber side)) :
@@ -61,7 +61,7 @@ theorem sibling_loaded_frame (s : MachineState) (side : Bool)
 
 theorem sibling_loaded_children (s : MachineState) (level base : Nat) (side : Bool)
     (current sibling : Reference.Digest)
-    (small : level < 152)
+    (small : level < 160)
     (levelEq : s.getMem 0x80400 = BitVec.ofNat 64 level)
     (pointer : s.getMem 0x80448 = BitVec.ofNat 64 base)
     (selector : s.getMem 0x80420 = BitVec.ofNat 64 (Reference.sideNumber side))

@@ -6,12 +6,12 @@ set_option maxRecDepth 4096
 
 /-- A full actual signing iteration, including the loop's advance and branch. -/
 theorem sign_layer (hash : Hash) (s : MachineState) (secretKey : SecretKey) (level index : Nat)
-    (current : Reference.Digest) (pc : s.pc = 0x1220) (bound : level < 152) (small : index < 2^192)
+    (current : Reference.Digest) (pc : s.pc = 0x1220) (bound : level < 160) (small : index < 2^192)
     (data : LoopData s secretKey level index current) :
     ∃ final instructions cycles, Trace hash sign s instructions cycles
       (if level = 0 then 5 else 739) (if level = 0 then 5 else 761) final ∧
       instructions ≤ (if level = 0 then 588 else 100417) ∧ cycles ≤ (if level = 0 then 623 else 105766) ∧
-      final.pc = (if level+1=152 then 0x12f8 else 0x1220) ∧
+      final.pc = (if level+1=160 then 0x12f8 else 0x1220) ∧
       LoopData final secretKey (level+1) (index/2) (Reference.treeRoot hash secretKey level (index/2)) ∧
       LayerStored final (0x20060+layerOffset level) level
         (Reference.signLayer hash secretKey level (index/2) (index%2==1) current) ∧
@@ -33,7 +33,7 @@ theorem sign_layer (hash : Hash) (s : MachineState) (secretKey : SecretKey) (lev
   have advance := advance_block sign 0x12ac sign_advance_code done atAdvance
   have after := advanceState_layer done 0x20060 level bound counter pointer
   have zero : done.getMem 0x80400 = 0 ↔ level = 0 := by rw [counter]; exact level_word_zero level bound
-  have nextPC : (advanceState done).pc = (if level+1=152 then 0x12f8 else 0x1220) := by
+  have nextPC : (advanceState done).pc = (if level+1=160 then 0x12f8 else 0x1220) := by
     simpa using advanceState_layer_pc done 0x12ac level atAdvance bound counter
   have total := pre.trans (body.trans advance.trace)
   simp only [zero,Nat.zero_add,Nat.add_zero] at total

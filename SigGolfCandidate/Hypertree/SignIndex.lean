@@ -87,8 +87,8 @@ def indexStoreState (s : MachineState) : MachineState :=
   let s := execInstrBr s (.LUI .x28 0x80)
   let s := execInstrBr s (.ADDI .x28 .x28 0x310)
   let s := execInstrBr s (.LD .x6 .x28 0)
-  let s := execInstrBr s (.SLLI .x6 .x6 40)
-  let s := execInstrBr s (.SRLI .x6 .x6 40)
+  let s := execInstrBr s (.SLLI .x6 .x6 32)
+  let s := execInstrBr s (.SRLI .x6 .x6 32)
   let s := execInstrBr s (.LUI .x28 0x80)
   let s := execInstrBr s (.ADDI .x28 .x28 0x418)
   execInstrBr s (.SD .x28 .x6 0)
@@ -98,8 +98,8 @@ theorem indexStoreState_block (s : MachineState) (pc : s.pc = 0x1200) :
   let s1 := execInstrBr s (.LUI .x28 0x80)
   let s2 := execInstrBr s1 (.ADDI .x28 .x28 0x310)
   let s3 := execInstrBr s2 (.LD .x6 .x28 0)
-  let s4 := execInstrBr s3 (.SLLI .x6 .x6 40)
-  let s5 := execInstrBr s4 (.SRLI .x6 .x6 40)
+  let s4 := execInstrBr s3 (.SLLI .x6 .x6 32)
+  let s5 := execInstrBr s4 (.SRLI .x6 .x6 32)
   let s6 := execInstrBr s5 (.LUI .x28 0x80)
   let s7 := execInstrBr s6 (.ADDI .x28 .x28 0x418)
   let s8 := execInstrBr s7 (.SD .x28 .x6 0)
@@ -115,11 +115,11 @@ theorem indexStoreState_block (s : MachineState) (pc : s.pc = 0x1200) :
   · have hp : s2.pc = 0x1208 := by simp [s1, s2, execInstrBr, pc]
     simp only [fetch, hp]; decide
   · simp [s1, s2, s3, ordinaryStep, memoryArgumentsValid, execInstrBr, signExtend12, accessValid, rangeValid, MEMORY_BYTES, MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne]
-  apply OrdinarySteps.step s3 s4 _ (.base (.SLLI .x6 .x6 40)) 4
+  apply OrdinarySteps.step s3 s4 _ (.base (.SLLI .x6 .x6 32)) 4
   · have hp : s3.pc = 0x120c := by simp [s1, s2, s3, execInstrBr, pc]
     simp only [fetch, hp]; decide
   · rfl
-  apply OrdinarySteps.step s4 s5 _ (.base (.SRLI .x6 .x6 40)) 3
+  apply OrdinarySteps.step s4 s5 _ (.base (.SRLI .x6 .x6 32)) 3
   · have hp : s4.pc = 0x1210 := by simp [s1, s2, s3, s4, execInstrBr, pc]
     simp only [fetch, hp]; decide
   · rfl
@@ -156,7 +156,7 @@ theorem indexCopyState_invariant (s : MachineState) (pc : s.pc = 0x11d4) :
 
 theorem indexStoreState_mem (s : MachineState) (a : Word) :
     (indexStoreState s).getMem a =
-      if a = 0x80418 then (s.getMem 0x80310 <<< 40) >>> 40 else s.getMem a := by
+      if a = 0x80418 then (s.getMem 0x80310 <<< 32) >>> 32 else s.getMem a := by
   simp [indexStoreState, execInstrBr, signExtend12, Expansion.mem_setMem,
     MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne]
 
@@ -178,14 +178,14 @@ theorem index_copy (s : MachineState) (pc : s.pc = 0x11d4) :
     intro i hi
     apply outside_copy_word 0x80310 0x80408 2 i (by decide) (by decide) hi (by decide)
 
-/-- The exact index HASH and extraction block stores the low 152 answer bits in
+/-- The exact index HASH and extraction block stores the low 160 answer bits in
 three aligned words, with zeroed upper half of the third word. -/
 theorem index_trace (hash : Hash) (s : MachineState) (pc : s.pc = 0x11b8) :
     ∃ final, Trace hash sign s 32 47 1 2 final ∧ final.pc = 0x1220 ∧
       (∀ i : Fin 2, final.getMem (wordAddress 0x80408 i.val) =
         (hash (hashInput (indexHashState s))).extractLsb' (64 * i.val) 64) ∧
       final.getMem 0x80418 =
-        ((hash (hashInput (indexHashState s))).extractLsb' 128 64 <<< 40) >>> 40 := by
+        ((hash (hashInput (indexHashState s))).extractLsb' 128 64 <<< 32) >>> 32 := by
   let hs := indexHashState s
   have hpc : hs.pc = 0x11d0 := by simp [hs, indexHashState_pc, pc]
   obtain ⟨service, src, len, dst⟩ := indexHashState_regs s

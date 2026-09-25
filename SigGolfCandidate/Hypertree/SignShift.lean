@@ -218,7 +218,7 @@ theorem shifted_high_limb (index : BitVec 192) :
   simp [BitVec.toNat_ushiftRight, BitVec.extractLsb'_toNat, Nat.shiftRight_eq_div_pow]
   omega
 
-/-- The 192-bit scratch representation used for the 152-bit tree index. -/
+/-- The 192-bit scratch representation used for the 160-bit tree index. -/
 def StoredIndex (s : MachineState) (index : BitVec 192) : Prop :=
   ∀ i : Fin 3, s.getMem (wordAddress 0x80408 i.val) = index.extractLsb' (64 * i.val) 64
 
@@ -249,8 +249,8 @@ theorem shiftIndexState_refines (s : MachineState) (index : BitVec 192)
 the repeated shift invariant, including the zero upper 32 bits. -/
 theorem stored_index_of_answer (s : MachineState) (answer : BitVec 256)
     (low : ∀ i : Fin 2, s.getMem (wordAddress 0x80408 i.val) = answer.extractLsb' (64 * i.val) 64)
-    (high : s.getMem 0x80418 = (answer.extractLsb' 128 64 <<< 40) >>> 40) :
-    StoredIndex s ((answer.extractLsb' 0 152).zeroExtend 192) := by
+    (high : s.getMem 0x80418 = (answer.extractLsb' 128 64 <<< 32) >>> 32) :
+    StoredIndex s ((answer.extractLsb' 0 160).zeroExtend 192) := by
   intro i
   fin_cases i
   · rw [show s.getMem (wordAddress 0x80408 0) = answer.extractLsb' 0 64 from low 0]

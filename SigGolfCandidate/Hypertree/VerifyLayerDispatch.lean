@@ -7,12 +7,12 @@ set_option maxRecDepth 4096
 /-- Optional message encoding prepares every input of the complete tree verifier. -/
 theorem prepare_tree (s : MachineState) (level index : Nat) (side : Bool)
     (current : Reference.Digest) (witness : Bytes signatureBytes)
-    (pc : s.pc = 0x11bc) (small : level < 152)
+    (pc : s.pc = 0x11bc) (small : level < 160)
     (data : LoopData s level index current witness)
     (selector : s.getMem 0x80420 = BitVec.ofNat 64 (Reference.sideNumber side)) :
     ∃ ready steps, OrdinarySteps verify s steps ready ∧ steps ≤ (if level = 0 then 5 else 460) ∧
       ready.pc = 0x12f0 ∧ ready.getReg .x1 = 0x11d4 ∧ ready.getReg .x2 = 0x1000000 ∧
-      LayerData ready level index (0x3bc30+layerOffset level) side current (wireLayer witness level) ∧
+      LayerData ready level index (0x3d3b0+layerOffset level) side current (wireLayer witness level) ∧
       LowFrame s ready := by
   obtain ⟨ready, run, readyPC, readyRA, readySP, digits, frame⟩ :=
     dispatch_to_tree verify 0x11bc verify_dispatch_code verify_encode_code (by decide) s current pc

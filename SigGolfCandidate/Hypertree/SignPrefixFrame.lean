@@ -36,7 +36,7 @@ theorem index_trace_full (hash : Hash) (s : MachineState) (pc : s.pc = 0x11b8) :
       (∀ i : Fin 2, final.getMem (wordAddress 0x80408 i.val) =
         (hash (hashInput (indexHashState s))).extractLsb' (64 * i.val) 64) ∧
       final.getMem 0x80418 =
-        ((hash (hashInput (indexHashState s))).extractLsb' 128 64 <<< 40) >>> 40 ∧
+        ((hash (hashInput (indexHashState s))).extractLsb' 128 64 <<< 32) >>> 32 ∧
       (∀ a, (∀ i : Fin 4, a ≠ wordAddress 0x80300 i.val) →
         (∀ i : Fin 3, a ≠ wordAddress 0x80408 i.val) → final.getMem a = s.getMem a) ∧
       final.getReg .x2 = s.getReg .x2 := by

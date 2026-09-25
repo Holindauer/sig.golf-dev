@@ -387,3 +387,31 @@ diffs, then tackle remaining image constants (witness base0x3d3b0 vs0x3bc30,
 159upperlayers vs151). Full certificate build will enumerate residuals.
 Sign loaded-state pk assumptions still need actual derivation; do not fabricate
 a loader pk lemma. Accepted PR12 remains unchanged; no submission this wake.
+
+### 2026-09-25T22:21 restore functional height proofs
+
+Migrated sign/verify index-extraction shifts40→32; exact SignIndex/VerifyIndex
+build passes2723jobs (siggolf-contract-index160b.log).
+Restored38 original height-change patches by individually checking then applying
+`git diff f0e9307^ f0e9307 -- FILE` in reverse. Only cleanly applying candidate
+files were touched; optimizer and organizer API edits outside those hunks remain.
+This restores witness-copy immediates, loop bounds, checkpoint expectations,
+index arithmetic, and functional memory proofs without globally changing PCs.
+
+VerifyLoader/VerifyLoopEntry retain new layout API and now use witness base
+0x3d3b0, pointer0x3d3d0, witness end370432, size119632. Generic index refinement
+reads20bytes. Removed the unused loaded_index_refines signing corollary that
+assumed an externally supplied pk; generic index_refines stays and verifies.
+The real signing pipeline is still obligated to compute pk; no certificate
+obligation was removed. loaded_randomizer_refines now uses actual3-input loader.
+
+Remaining verifier layer bounds restored to160. Proposed execution bound in
+VerifyFunctional is1730845 (10883*160-10595+145+15), excluding468witnesscycles;
+1731313 would be the honest charged bound if the full proof passes. Not yet
+certified. CandidateFields/Certificate/CandidateHonest still contain the old
+claim1643781 and must be migrated only with the honest witness-charge proof.
+Next build VerifyFunctional, fix any residual height/width constants, then
+implement and prove the signer pk prelude and new loader-to-loop interface.
+
+VerifyLoader final result: PASS2736jobs with its permitted-axiom guard,
+log siggolf-contract-verifyloader160b.log. No build process remains running.
