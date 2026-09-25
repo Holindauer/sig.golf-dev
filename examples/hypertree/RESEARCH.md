@@ -476,3 +476,7 @@ proving fetch agreement at every used instruction. Generic suffix theorem
 already supplies this interface; tree code addresses remain unchanged but
 its current proof is specialized to sign and must compile with the final image.
 Verifier certificate component remains valid; full signing certificate pending.
+
+### 2026-09-25 appended prelude setup
+
+Approval-service authentication recovered. Added SignPreludeSetup: generic exact 14-instruction block from 0x1c70, establishing jump to encode at 0x1340, return address 0x1ca8, and stack preservation. Compiles with permitted-axiom guard (2737 jobs); log research/validation/siggolf-contract-prelude-setup.log. This remains conditional on explicit image fetch agreement; concrete 847-word image integration and memory/loader framing are still required. Organizer files unchanged against be68468. Next prove three memory stores preserve root/index/secret words and establish TreeContext159/0, then compose encode and tree call. No new submission.
