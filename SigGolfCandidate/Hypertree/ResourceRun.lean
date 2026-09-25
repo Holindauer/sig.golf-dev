@@ -40,7 +40,7 @@ def stepTransfer (image : Image) (a : AbstractState) : Option Summary := do
     else none
   else
     let next ← ordinaryTransfer a instruction
-    some ⟨next, 1, 0, 0⟩
+    some ⟨next, instructionCycles (.base instruction), 0, 0⟩
 
 theorem stepTransfer_sound {image : Image} {a : AbstractState} {result : Summary}
     (hash : Hash) (s : MachineState) (h : a.Models s)
@@ -73,9 +73,10 @@ theorem stepTransfer_sound {image : Image} {a : AbstractState} {result : Summary
         simp [hi, he, ht] at step
         subst result
         obtain ⟨valid, model⟩ := ordinaryTransfer_sound h instruction ht
-        exact ⟨execInstrBr s instruction,
-          Trace.ordinary s (execInstrBr s instruction) _ (.base instruction)
-            0 0 0 0 hf valid (Trace.refl _), model⟩
+        refine ⟨execInstrBr s instruction, ?_, model⟩
+        simpa only [Nat.zero_add] using
+          (Trace.ordinary (hash := hash) s (execInstrBr s instruction) _ (.base instruction)
+            0 0 0 0 hf valid (Trace.refl _))
 
 /-- A bounded abstract prefix evaluator. Every accepted step has a concrete proof rule. -/
 def runPrefix : Nat → Image → AbstractState → Option Summary

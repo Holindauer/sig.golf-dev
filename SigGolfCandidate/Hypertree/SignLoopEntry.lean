@@ -58,9 +58,9 @@ theorem loaded_loop_entry (hash : Hash) (secretKey : SecretKey) (pk : PublicKey)
         final.getMem a = initial.getMem a) := by
   obtain ⟨initial,loaded,pc⟩ := initialState_exists submission admitted .sign (secretKey,pk,cache,message)
   obtain ⟨final,run,fpc,index,randomizer,mode,pointer,sp,frame⟩ := entry_full hash initial secretKey pk message pc
-    (Loader.sign_secretKey submission (admitted.2 .sign) (by rfl) secretKey pk cache message initial loaded)
+    (Loader.sign_secretKey submission (admitted.2 .sign) (by rfl) secretKey cache message initial loaded)
     (Loader.sign_publicKey submission (admitted.2 .sign) (by rfl) secretKey pk cache message initial loaded)
-    (Loader.sign_message submission (admitted.2 .sign) (by rfl) secretKey pk cache message initial loaded)
+    (Loader.sign_message submission (admitted.2 .sign) (by rfl) secretKey cache message initial loaded)
   refine ⟨initial,final,loaded,run,fpc,index,sp.trans (loaded_stack secretKey pk cache message initial loaded),?_,mode,pointer,?_,?_,randomizer,?_⟩
   · rw [frame _ (by unfold OutsidePrefix OutsideIndexWork; decide)]
     exact loaded_scratch secretKey pk cache message initial loaded _ (by decide)

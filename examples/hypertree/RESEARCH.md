@@ -327,3 +327,36 @@ restore160levels and signing prelude with their bounds. Preserve acceptedPR12.
 Final component result: KeygenLeafQuery, PersistentLimit and SignIndex build
 PASS2756jobs with their axiom guards (siggolf-contract-hash-components3.log).
 No outstanding build process. Full certificate remains unvalidated as above.
+
+### 2026-09-25T22:11 full-certificate dependency audit
+
+Full certificate build reached3071jobs and exposed four failing roots:
+Loader (obsolete public-key sign input), ResourceHash (old bit lengths),
+SecurityBytecodePrograms (signingOracle API), SecurityIndexMonitor (152-bit
+index insufficient for new2^32 lifetime). Full log:
+../research/validation/siggolf-contract-certificate-first.log.
+
+Repaired and validated Loader, ResourceRun, SecurityBytecodePrograms together:
+PASS2759jobs, log siggolf-contract-loader-resource2.log. Loader secret-key/message
+lemmas use actual3-input signer. Removed obsolete sign_publicKey loader lemma;
+it cannot be true under current inputs. Callers requiring pk must receive a
+real public-key derivation trace. No artificial replacement premise or axiom.
+ResourceHash enforces byte-length alignment and compressions(8*bytes);
+ResourceRun charges instructionCycles and its runPrefix_sound guard passes.
+Security interface retains its internal pk parameter but forwards only the
+actual secretKey/request arguments to organizer signingOracle.
+
+Next signing work: SignLoopEntry, SignIndexRefine, SignExecutionSetup, SignRefine
+still have old loaded input tuples and/or removed sign_publicKey references.
+Do not simply erase these: prefix must derive pk. Tested standalone prototype
+already does this. Consider an appended prelude reached by an entry jump to
+preserve existing HASH/loop code addresses; restore the displaced ADDI x6,x0,1
+before jumping back to0x1004. Prove scratch initialization/frame/stack facts
+at the resumed entry. Existing loaded_scratch assumes fresh memory, so replacing
+its initial state requires explicit cleared/touched scratch invariants.
+Alternative is the already tested prepended prelude plus systematically updated
+addresses. No implementation choice made yet; prototype is only sample-tested.
+
+Prioritize restoration of160-level reference/security proof next, using
+height commits36bf323/f0e9307 to avoid confusing numeric code offsets with tree
+height. Universal cycle bound and witness charge remain uncertified.

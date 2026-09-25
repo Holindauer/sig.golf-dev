@@ -80,8 +80,8 @@ theorem loaded_randomizer_refines (hash : Hash) (secretKey : SecretKey) (pk : Pu
       readBuffer final 0x20060 32 = Reference.randomizer hash secretKey message := by
   obtain ⟨initial, loaded, pc⟩ := initialState_exists submission admitted .sign (secretKey, pk, cache, message)
   obtain ⟨final, trace, finalpc, words⟩ := entry_randomizer_refines hash initial secretKey message pc
-    (Loader.sign_secretKey submission (admitted.2 .sign) (by rfl) secretKey pk cache message initial loaded)
-    (Loader.sign_message submission (admitted.2 .sign) (by rfl) secretKey pk cache message initial loaded)
+    (Loader.sign_secretKey submission (admitted.2 .sign) (by rfl) secretKey cache message initial loaded)
+    (Loader.sign_message submission (admitted.2 .sign) (by rfl) secretKey cache message initial loaded)
   refine ⟨initial, final, loaded, trace, finalpc, ?_⟩
   apply Memory.readBuffer_of_bytes
   exact bytes_of_answer_words final 0x20060 (Reference.randomizer hash secretKey message)

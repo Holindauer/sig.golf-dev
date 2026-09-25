@@ -30,7 +30,7 @@ structure Interface where
 
 def actualInterface : Interface where
   keygen secretKey := view <$> submission.run .keygen secretKey
-  sign secretKey pk request := view <$> submission.signingOracle secretKey pk request
+  sign secretKey pk request := view <$> submission.signingOracle secretKey request
   check := submission.checkForgery
 
 def interactWith (scheme : Interface) (adversary : Adversary submission.sizes)
@@ -72,7 +72,7 @@ theorem actual_interact (adversary : Adversary submission.sizes) (secretKey : Se
     case hash input resume => simp only [ih]
     case sign request resume =>
       split
-      · change ((view <$> submission.signingOracle secretKey pk request).liftComp World >>= _) = _
+      · change ((view <$> submission.signingOracle secretKey request).liftComp World >>= _) = _
         rw [OracleComp.liftComp_map,bind_map_left]
         apply bind_congr
         intro result
