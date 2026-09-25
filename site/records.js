@@ -123,24 +123,44 @@ function chartNode(parent, tag, attributes, content) {
   return node;
 }
 function compactScore(value) {
-  if (value === 0) return '0';
-  if (value >= 1e9) return (value / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
-  if (value >= 1e6) return (value / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
-  if (value >= 1e3) return (value / 1e3).toFixed(value < 1e4 ? 1 : 0).replace(/\.0$/, '') + 'k';
-  return format(Math.round(value));
+  const [unit, suffix] = [[1e9, 'B'], [1e6, 'M'], [1e3, 'k']].find(([unit]) => value >= unit) || [1, ''];
+  const scaled = value / unit;
+  const digits = [0, 1, 2].find(d => Math.abs(Math.round(scaled * 10 ** d) - scaled * 10 ** d) < 1e-6) ?? 3;
+  return scaled.toFixed(digits) + suffix;
 }
-function chartDomain(values, intervals = 4, minimumPadding = 1) {
-  const smallest = Math.min(...values);
-  const largest = Math.max(...values);
-  const spread = largest - smallest;
-  const padding = Math.max(spread * .06, minimumPadding, spread === 0 ? largest * .08 : 0);
-  const roughStep = (spread + 2 * padding) / intervals;
-  const magnitude = 10 ** Math.floor(Math.log10(roughStep));
-  const step = ([1, 1.5, 2, 2.5, 5, 10].find(x => x * magnitude >= roughStep) || 10) * magnitude;
-  let min = Math.max(0, Math.floor((smallest - padding) / step) * step);
-  if (min === 0 && smallest > step) min = step;
-  const max = Math.max(min + step, Math.ceil((largest + padding) / step) * step);
-  return {min, max, step};
+// Logarithmic axis fitted to the data. Ticks are powers of ten, then 1-2-5 steps, then linear steps for narrow ranges.
+function logScale(values, intervals = 4) {
+  const low = Math.log10(Math.max(1, Math.min(...values)));
+  const high = Math.log10(Math.max(1, Math.max(...values)));
+  const padding = Math.max((high - low) * .08, .02);
+  const min = 10 ** (low - padding);
+  const max = 10 ** (high + padding);
+  const fraction = value => (Math.log10(Math.max(1, value)) - low + padding) / (high - low + 2 * padding);
+  return {fraction, ticks: logTicks(min, max, intervals)};
+}
+function logTicks(min, max, intervals) {
+  const stride = Math.max(1, Math.round(Math.log10(max / min) / intervals));
+  for (const mantissas of [[1], [1, 2, 5], [1, 1.5, 2, 3, 5, 7]]) {
+    const ticks = [];
+    for (let exponent = Math.floor(Math.log10(min)); exponent <= Math.ceil(Math.log10(max));
+      exponent += mantissas.length === 1 ? stride : 1) {
+      for (const mantissa of mantissas) {
+        const value = mantissa * 10 ** exponent;
+        if (value >= min && value <= max) ticks.push(value);
+      }
+    }
+    if (ticks.length >= 3) return ticks;
+  }
+  let ticks = [];
+  for (let exponent = Math.floor(Math.log10(max - min)); ticks.length < 3; exponent--) {
+    for (const mantissa of [5, 2, 1]) {
+      const step = mantissa * 10 ** exponent;
+      ticks = [];
+      for (let index = Math.ceil(min / step); index * step <= max; index++) ticks.push(index * step);
+      if (ticks.length >= 3) break;
+    }
+  }
+  return ticks;
 }
 function renderScoreChart() {
   const chart = document.querySelector('#score-chart');
@@ -155,8 +175,8 @@ function renderScoreChart() {
   const top = 36;
   const bottom = height - 58;
   const dataRight = width - (desktop ? 165 : 14);
-  const scoreDomain = chartDomain(scores.map(entry => entry.score), 5);
-  const yFor = score => top + (scoreDomain.max - score) / (scoreDomain.max - scoreDomain.min) * (bottom - top);
+  const scoreScale = logScale(scores.map(entry => entry.score), 5);
+  const yFor = score => bottom - scoreScale.fraction(score) * (bottom - top);
   const firstTime = scores[0].date.getTime();
   const lastTime = scores[scores.length - 1].date.getTime();
   const timeSpan = lastTime - firstTime;
@@ -165,7 +185,7 @@ function renderScoreChart() {
   chartNode(chart, 'text', {
     x: left, y: 15, fill: '#737b80', 'font-size': '12',
     'font-family': 'system-ui, sans-serif'
-  }, 'Score');
+  }, 'Score (log scale)');
 
   const firstDay = scores[0].date.toISOString().slice(0, 10);
   const lastDay = scores[scores.length - 1].date.toISOString().slice(0, 10);
@@ -175,7 +195,7 @@ function renderScoreChart() {
     'font-size': '11', 'font-family': 'system-ui, sans-serif'
   }, (firstDay === lastDay ? dayLabel(scores[0].date) :
     dayLabel(scores[0].date) + '–' + dayLabel(scores[scores.length - 1].date)) + ' · UTC');
-  for (let value = scoreDomain.min; value <= scoreDomain.max + scoreDomain.step / 2; value += scoreDomain.step) {
+  for (const value of scoreScale.ticks) {
     const y = yFor(value);
     chartNode(chart, 'line', {
       x1: left, y1: y, x2: dataRight, y2: y,
@@ -290,21 +310,19 @@ function renderParetoChart() {
   const right = width - 22;
   const top = 34;
   const bottom = height - 58;
-  const signatureDomain = chartDomain(scores.map(x => x.signature), 4, 256);
-  const cycleDomain = chartDomain(scores.map(x => x.cycles), 4, 1000);
-  const xFor = signature => left + (signature - signatureDomain.min) /
-    (signatureDomain.max - signatureDomain.min) * (right - left);
-  const yFor = cycles => top + (cycleDomain.max - cycles) /
-    (cycleDomain.max - cycleDomain.min) * (bottom - top);
+  const signatureScale = logScale(scores.map(x => x.signature));
+  const cycleScale = logScale(scores.map(x => x.cycles));
+  const xFor = signature => left + signatureScale.fraction(signature) * (right - left);
+  const yFor = cycles => bottom - cycleScale.fraction(cycles) * (bottom - top);
 
   chartNode(chart, 'text', {
     x: left, y: 15, fill: '#737b80', 'font-size': '12',
     'font-family': 'system-ui, sans-serif'
-  }, width < 340 ? 'Cycles' : 'Verification cycles');
+  }, width < 340 ? 'Cycles (log)' : 'Verification cycles (log scale)');
   chartNode(chart, 'text', {
     x: (left + right) / 2, y: height - 5, 'text-anchor': 'middle',
     fill: '#737b80', 'font-size': '12', 'font-family': 'system-ui, sans-serif'
-  }, 'Signature size (bytes) →');
+  }, 'Signature size (bytes, log scale) →');
   if (pareto.length === 1) {
     const entry = pareto[0];
     chartNode(chart, 'rect', {
@@ -312,7 +330,7 @@ function renderParetoChart() {
       height: yFor(entry.cycles) - top, fill: chartLine, opacity: '.045'
     });
   }
-  for (let value = cycleDomain.min; value <= cycleDomain.max + cycleDomain.step / 2; value += cycleDomain.step) {
+  for (const value of cycleScale.ticks) {
     const y = yFor(value);
     chartNode(chart, 'line', {
       x1: left, y1: y, x2: right, y2: y, stroke: chartGrid, 'stroke-width': '1'
@@ -322,14 +340,14 @@ function renderParetoChart() {
       'font-size': '11', 'font-family': 'system-ui, sans-serif'
     }, compactScore(value));
   }
-  for (let value = signatureDomain.min; value <= signatureDomain.max + signatureDomain.step / 2; value += signatureDomain.step) {
+  for (const value of signatureScale.ticks) {
     const x = xFor(value);
     chartNode(chart, 'line', {
       x1: x, y1: top, x2: x, y2: bottom, stroke: chartGrid, 'stroke-width': '1'
     });
     chartNode(chart, 'text', {
       x, y: bottom + 18,
-      'text-anchor': value === signatureDomain.min ? 'start' : value === signatureDomain.max ? 'end' : 'middle',
+      'text-anchor': x - left < 24 ? 'start' : right - x < 24 ? 'end' : 'middle',
       fill: '#737b80', 'font-size': '11', 'font-family': 'system-ui, sans-serif'
     }, compactScore(value));
   }
