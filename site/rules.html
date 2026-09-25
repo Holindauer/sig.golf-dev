@@ -74,7 +74,7 @@
               <tr><td>Public key</td><td>16</td></tr>
               <tr><td>Cache</td><td>2<sup>17</sup> (128 KiB)</td></tr>
               <tr><td>Signature</td><td><a href="#score-s"><code>S ≥ 1</code></a></td></tr>
-              <tr><td>Witness</td><td><a href="#score-w"><math class="rule-math" aria-label="W at most 2 to the power 17"><mi>W</mi><mo>≤</mo><msup><mn>2</mn><mn>17</mn></msup></math></a> (128 KiB)</td></tr>
+              <tr><td>Witness</td><td><a href="#score-w"><code>W</code></a> (maximum 128 KiB)</td></tr>
             </tbody></table></div>
           </div>
         </section>
@@ -117,12 +117,17 @@
 
         <section id="model" class="rule-section">
           <h2>Model and costs</h2>
-          <p>All programs and the adversary share a <span id="oracle-definition">random oracle <code>H</code></span>. Security counts calls to <code>H</code>. Program budgets and <a href="#system-calls">HASH</a> cycles count compressions: hashing <code>n</code> bits costs <math class="rule-math" aria-label="maximum of 1 and the ceiling of n divided by 512"><mi>max</mi><mo>(</mo><mn>1</mn><mo>,</mo><mo>⌈</mo><mfrac><mi>n</mi><mn>512</mn></mfrac><mo>⌉</mo><mo>)</mo></math> compressions.</p>
+          <h3 id="oracle-definition">Random oracle</h3>
+          <p>All programs share one random oracle <code>H</code> that maps each input to an independent uniform 32-byte answer. The adversary in the <a href="#security">security game</a> queries the same <code>H</code>, and the Lean security proofs are carried out in this model. Security counts calls to <code>H</code>.</p>
+          <h3>RISC-V programs</h3>
+          <p>Each program is an <a href="#interface">RV64IM</a> program with one extra instruction, <code>HASH(input, n, output)</code>, issued as a <a href="#system-calls">system call</a>. It reads <code>n</code> bytes starting at address <code>input</code>, queries <code>H</code> on them, and writes the 32-byte answer at address <code>output</code>. The input and output addresses must both be multiples of 8, and so must <code>n</code>. Hashing <code>n</code> bytes costs <code>max(1, ⌈n / 64⌉)</code> compressions.</p>
           <div class="rule-table-wrap"><table><caption>RISC-V cycle breakdown</caption><thead><tr><th>Operation</th><th>Cost</th></tr></thead><tbody>
             <tr><td>Ordinary instruction</td><td>1 cycle</td></tr>
+            <tr><td>Multiplication or division: <code>MUL</code>, <code>MULH</code>, <code>MULHSU</code>, <code>MULHU</code>, <code>DIV</code>, <code>DIVU</code>, <code>REM</code>, <code>REMU</code>, and their <code>W</code> forms</td><td>4 cycles</td></tr>
             <tr><td>HASH</td><td>8 cycles per compression; no extra instruction charge</td></tr>
             <tr><td>HALT</td><td>1 cycle</td></tr>
           </tbody></table></div>
+          <p id="witness-charge">Verification also pays for its witness: <a href="#score-w"><code>⌈W / 256⌉</code></a> cycles.</p>
         </section>
 
         <section id="proofs" class="rule-section">
@@ -136,10 +141,10 @@
           </ol>
           <p class="fine-print"><math class="rule-math" aria-label="Probability over H"><msub><mi>Pr</mi><mi>H</mi></msub></math> is over <code>H</code>; <math class="rule-math" aria-label="Expectation over H and M"><msub><mi>𝔼</mi><mrow><mi>H</mi><mo>,</mo><mi>M</mi></mrow></msub></math> is over an independently sampled random oracle <code>H</code> and uniform 32-byte message <code>M</code>. Attacker-chosen messages or altered caches/signatures may cost more. <strong class="rule-todo">TODO: Can we improve this?</strong></p>
           <ol class="claim-list" start="3">
-            <li><b>Verification cycles</b><span>For every secret key, message, and oracle, if the experiment succeeds, <a href="#verify"><code>verify</code></a> uses at most <a href="#score-c"><code>C</code></a> cycles.</span></li>
+            <li><b>Verification cycles</b><span>For every secret key, message, and oracle, if the experiment succeeds, <a href="#verify"><code>verify</code></a>'s cycles plus the <a href="#witness-charge">witness charge</a> <a href="#score-w"><code>⌈W / 256⌉</code></a> are at most <a href="#score-c"><code>C</code></a>.</span></li>
           </ol>
 
-          <h3>Security</h3>
+          <h3 id="security">Security</h3>
           <p><strong>Experiment:</strong> Let <code>A</code> be a classical probabilistic adversary with unrestricted computation and an integer hash-call budget <code>Q ≥ 1</code>. Sample <a href="#oracle-definition"><code>H</code></a> and a uniform secret key independently. Initialize an empty transcript <code>T</code> and count every call to <code>H</code> throughout the experiment. Run <a href="#keygen"><code>keygen(secretKey)</code></a>; failure ends the experiment without a win. Otherwise give <code>A</code> the public key and cache.</p>
           <p><code>A</code> may then adaptively query:</p>
           <div class="two-cards">
@@ -177,7 +182,7 @@
           <p>ECALL selects one of two services through <code>t0</code>:</p>
           <div class="rule-table-wrap"><table><thead><tr><th><code>t0</code></th><th>Service</th><th>Arguments</th></tr></thead><tbody>
             <tr><td><code>0</code></td><td>HALT</td><td>Status and outputs above</td></tr>
-            <tr><td><code>1</code></td><td>HASH</td><td><code>a0 = input address</code>, <code>a1 = input length in bits</code>, <code>a2 = output address</code></td></tr>
+            <tr><td><code>1</code></td><td>HASH</td><td><code>a0 = input address</code>, <code>a1 = input length in bytes</code>, <code>a2 = output address</code></td></tr>
           </tbody></table></div>
           <p>HASH writes <code>H</code>'s 32-byte answer at the output address.</p>
 
@@ -188,8 +193,8 @@
             <div><dt>Registers</dt><dd><code>x0–x31</code> are 64 bits. <code>x0</code> always reads zero and ignores writes. Aliases are <code>sp = x2</code>, <code>t0 = x5</code>, and <code>a0–a2 = x10–x12</code>. PC is separate.</dd></div>
             <div><dt>Memory access</dt><dd>Addresses count bytes; multi-byte integers are little-endian. Loads and stores access only memory, not code. Accesses of 1, 2, 4, or 8 bytes require alignment to their size. Misaligned accesses fail.</dd></div>
             <div><dt>Bounds</dt><dd>Every memory access and buffer must fit completely in memory. For unsigned byte address <code>p</code> and length <code>n</code>, require <math class="rule-math" aria-label="p plus n is at most hexadecimal one zero zero zero zero zero zero"><mi>p</mi><mo>+</mo><mi>n</mi><mo>≤</mo><mn>0x1000000</mn></math>. All size, layout, and bounds calculations use mathematical integers without overflow. Instruction arithmetic and effective-address calculation follow RV64IM.</dd></div>
-            <div><dt>HASH arguments</dt><dd>Addresses and bit length <code>n</code> are unsigned 64-bit values. The input's <math class="rule-math" aria-label="ceiling of n divided by eight"><mo>⌈</mo><mfrac><mi>n</mi><mn>8</mn></mfrac><mo>⌉</mo></math> bytes and the output's 32 bytes must fit entirely in memory; check this before any oracle call or write. Both input and output addresses must be 8-byte aligned.</dd></div>
-            <div><dt>HASH execution</dt><dd>Read exactly <code>n</code> bits in increasing byte-address order, least-significant bit first within each byte; ignore unused high bits of the final byte. Read all input before writing the answer, so buffers may overlap. Preserve integer registers and advance PC by 4.</dd></div>
+            <div><dt>HASH arguments</dt><dd>Addresses and byte length <code>n</code> are unsigned 64-bit values. The input and output addresses must both be 8-byte aligned, and <code>n</code> must be a multiple of 8. The input's <code>n</code> bytes and the output's 32 bytes must fit entirely in memory. Check all of this before any oracle call or write.</dd></div>
+            <div><dt>HASH execution</dt><dd>Read the <code>n</code> input bytes in increasing address order; <code>H</code>'s input is their <code>8n</code> bits, least-significant bit first within each byte. Read all input before writing the answer, so buffers may overlap. Preserve integer registers and advance PC by 4.</dd></div>
           </dl>
         </section>
 

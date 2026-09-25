@@ -32,6 +32,8 @@ async function load() {
   if (value.version !== 1 || !Array.isArray(value.submissions)) throw new Error('Invalid records');
   return value.submissions.filter(item => item.contract_commit === state.contract_commit);
 }
+const multiplyDivide = new Set(['MUL', 'MULH', 'MULHSU', 'MULHU', 'MULW', 'DIV', 'DIVU', 'DIVW', 'DIVUW',
+  'REM', 'REMU', 'REMW', 'REMUW']);
 function profileNumber(value) {
   return new Intl.NumberFormat('en-US', {maximumFractionDigits: 2}).format(value);
 }
@@ -73,13 +75,19 @@ async function renderPresentation(entry) {
     Number.isSafeInteger(count) && count >= 0);
   if (!ordinary.some(([name, count]) => name === 'HALT' && count === profile.samples)) return;
   const hashes = Object.entries(profile.hashes).filter(([bits, count]) =>
-    /^(0|[1-9][0-9]*)$/.test(bits) && Number(bits) <= 2 ** 27 &&
+    /^(0|[1-9][0-9]*)$/.test(bits) && Number(bits) <= 2 ** 27 && Number(bits) % 64 === 0 &&
     Number.isSafeInteger(count) && count > 0).sort((a, b) => Number(a[0]) - Number(b[0]));
-  const rows = ordinary.map(([name, total]) => ({name, total, cycles: total}));
+  const rows = ordinary.map(([name, total]) => multiplyDivide.has(name)
+    ? {name: `${name} (4 cycles/instruction)`, total, cycles: 4 * total}
+    : {name, total, cycles: total});
   for (const [bits, total] of hashes) {
     const perHash = 8 * Math.max(1, Math.ceil(Number(bits) / 512));
     rows.push({name: `HASH · ${bits} bits (${perHash} cycles/instruction)`, total,
                cycles: perHash * total});
+  }
+  if (Number.isSafeInteger(entry.W) && entry.W > 0) {
+    rows.push({name: `Witness · ${format(entry.W)} bytes (1 cycle per 256 bytes)`, total: profile.samples,
+               cycles: profile.samples * Math.ceil(entry.W / 256)});
   }
   rows.sort((a, b) => b.cycles - a.cycles || a.name.localeCompare(b.name));
   const body = byId('profile-rows');

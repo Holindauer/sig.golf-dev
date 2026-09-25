@@ -24,14 +24,14 @@ Design a **stateless hash-based signature scheme** minimizing `S × C`: signatur
 
 Every object has a fixed size in bytes:
 
-| Object     |                Bytes |
-| ---------- | -------------------: |
-| Message    |                   32 |
-| Secret key |                   32 |
-| Public key |                   16 |
-| Cache      |       2^17 (128 KiB) |
-| Signature  |              `S` ≥ 1 |
-| Witness    | `W` ≤ 2^17 (128 KiB) |
+| Object     |                 Bytes |
+| ---------- | --------------------: |
+| Message    |                    32 |
+| Secret key |                    32 |
+| Public key |                    16 |
+| Cache      |        2^17 (128 KiB) |
+| Signature  |               `S` ≥ 1 |
+| Witness    | `W` (maximum 128 KiB) |
 
 ## Programs
 
@@ -71,17 +71,22 @@ Checks whether the witness authenticates the message under the public key.
 
 ## Model and costs
 
-All programs and the adversary share a random oracle H.
+### Random oracle
 
-Security counts calls to H. Program budgets and HASH cycles count compressions: hashing n bits costs `max(1, ⌈n / 512⌉)` compressions.
+All programs share one random oracle H that maps each input to an independent uniform 32-byte answer. The adversary in the [security game](#security) queries the same H, and the Lean security proofs are carried out in this model. Security counts calls to H.
 
-RiscV cycle breakdown:
+### RISC-V programs
 
-| Operation            | Cost                                                   |
-| -------------------- | ------------------------------------------------------ |
-| Ordinary instruction | 1 cycle                                                |
-| HASH                 | 8 cycles per compression (no extra instruction charge) |
-| HALT                 | 1 cycle                                                |
+Each program is an [RV64IM](#risc-v-interface) program with one extra instruction, `HASH(input, n, output)`, issued as a [system call](#system-calls). It reads n bytes starting at address `input`, queries H on them, and writes the 32-byte answer at address `output`. The input and output addresses must both be multiples of 8, and so must n. Hashing n bytes costs `max(1, ⌈n / 64⌉)` compressions.
+
+| Operation                                                                                                       | Cost                                                   |
+| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Ordinary instruction                                                                                            | 1 cycle                                                |
+| Multiplication or division: `MUL`, `MULH`, `MULHSU`, `MULHU`, `DIV`, `DIVU`, `REM`, `REMU`, and their `W` forms | 4 cycles                                               |
+| HASH                                                                                                            | 8 cycles per compression (no extra instruction charge) |
+| HALT                                                                                                            | 1 cycle                                                |
+
+Verification also pays for its witness: `⌈W / 256⌉` cycles.
 
 ## Required Lean statements
 
@@ -103,7 +108,7 @@ Stop at the first failure. We say the `experiment succeeds` when all stages succ
 
 `Pr_H` is over H; `E_{H,M}` is over an independently sampled random oracle H and uniform 32-byte message M. Attacker-chosen messages or altered caches/signatures may cost more. TODO: Can we improve this?
 
-3. **Verification cycles:** for every secret key, message and oracle, if the experiment succeeds, [`verify`](#verify) uses at most [`C`](#submission) cycles.
+3. **Verification cycles:** for every secret key, message and oracle, if the experiment succeeds, [`verify`](#verify)'s cycles plus the witness charge `⌈W / 256⌉` are at most [`C`](#submission).
 
 ### Security
 
@@ -152,10 +157,10 @@ HALT ends execution with `a0 = 1` for success, or `a0 = 0` for failure. For [`ve
 
 ECALL selects one of two services through `t0`:
 
-| `t0` | Service | Arguments                                                                |
-| ---: | ------- | ------------------------------------------------------------------------ |
-|    0 | HALT    | Status and outputs above                                                 |
-|    1 | HASH    | `a0 = input address`, `a1 = input length in bits`, `a2 = output address` |
+| `t0` | Service | Arguments                                                                 |
+| ---: | ------- | ------------------------------------------------------------------------- |
+|    0 | HALT    | Status and outputs above                                                  |
+|    1 | HASH    | `a0 = input address`, `a1 = input length in bytes`, `a2 = output address` |
 
 HASH writes H's 32-byte answer at the output address.
 
@@ -166,8 +171,8 @@ HASH writes H's 32-byte answer at the output address.
 - **Registers:** `x0`–`x31` are 64 bits. `x0` always reads zero and ignores writes. Aliases are `sp = x2`, `t0 = x5`, and `a0`–`a2 = x10`–`x12`. PC is separate.
 - **Memory access:** addresses count bytes; multi-byte integers are little-endian. Loads and stores access only memory, not code. Accesses of 1, 2, 4, or 8 bytes require alignment to their size. Misaligned accesses fail.
 - **Bounds:** every memory access and buffer must fit completely in memory. For unsigned byte address p and length n, require `p + n <= 0x1000000`. All size, layout, and bounds calculations use mathematical integers without overflow. Instruction arithmetic and effective-address calculation follow RV64IM.
-- **HASH arguments:** addresses and bit length n are unsigned 64-bit values. The input’s `ceil(n / 8)` bytes and the output’s 32 bytes must fit entirely in memory; check this before any oracle call or write. Both input and output addresses must be 8-byte aligned.
-- **HASH execution:** read exactly n bits in increasing byte-address order, least-significant bit first within each byte; ignore unused high bits of the final byte. Read all input before writing the answer, so buffers may overlap. Preserve integer registers and advance PC by 4.
+- **HASH arguments:** addresses and byte length n are unsigned 64-bit values. The input and output addresses must both be 8-byte aligned, and n must be a multiple of 8. The input’s n bytes and the output’s 32 bytes must fit entirely in memory. Check all of this before any oracle call or write.
+- **HASH execution:** read the n input bytes in increasing address order; H’s input is their `8n` bits, least-significant bit first within each byte. Read all input before writing the answer, so buffers may overlap. Preserve integer registers and advance PC by 4.
 
 ## Lean project
 

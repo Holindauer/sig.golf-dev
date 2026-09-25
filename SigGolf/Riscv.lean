@@ -139,20 +139,29 @@ def ordinaryStep (state : MachineState) : Instruction → Option MachineState
       let value := ((state.getReg rs).truncate 32).sshiftRight shift.toNat
       some ((state.setReg rd (value.signExtend 64)).setPC (state.pc + 4))
 
+/-- Multiplication, division, and remainder instructions cost four cycles; every other instruction costs one. -/
+def instructionCycles : Instruction → Nat
+  | .base (.MUL ..) | .base (.MULH ..) | .base (.MULHSU ..) | .base (.MULHU ..)
+  | .base (.DIV ..) | .base (.DIVU ..) | .base (.REM ..) | .base (.REMU ..) => 4
+  | .word .mul .. | .word .div .. | .word .divu .. | .word .rem .. | .word .remu .. => 4
+  | _ => 1
+
 def fetch (image : Image) (state : MachineState) : Option Instruction := do
   if state.pc.toNat < 0x1000 || state.pc.toNat % 4 != 0 then none else
     let word ← image.code[(state.pc.toNat - 0x1000) / 4]?
     decodeInstruction word
 
+/-- HASH reads whole 8-byte words: both addresses are 8-byte aligned and the byte length is a multiple of 8. -/
 def hashArgumentsValid (state : MachineState) : Bool :=
   let source := state.getReg .x10
-  let bits := (state.getReg .x11).toNat
+  let bytes := (state.getReg .x11).toNat
   let destination := state.getReg .x12
-  decide (source.toNat % 8 = 0) && rangeValid source ((bits + 7) / 8) &&
+  decide (source.toNat % 8 = 0) && decide (bytes % 8 = 0) && rangeValid source bytes &&
     accessValid destination 8 && rangeValid destination 32
 
+/-- The oracle input is the bit string of the input bytes, least-significant bit first within each byte. -/
 def hashInput (state : MachineState) : Query :=
-  let n := (state.getReg .x11).toNat
+  let n := 8 * (state.getReg .x11).toNat
   ⟨n, BitVec.ofNat n ((List.range n).foldl (fun acc i =>
     acc + if (state.getByte (state.getReg .x10 + BitVec.ofNat 64 (i / 8))).getLsbD (i % 8)
       then 2 ^ i else 0) 0)⟩
@@ -197,6 +206,7 @@ def execute : Nat → Image → MachineState → OracleComp HashSpec Execution
     | some instruction =>
       match ordinaryStep state instruction with
       | none => pure ⟨.failure, state, 1, 0, 0⟩
-      | some next => (fun result => result.charge 1 0 0) <$> execute fuel image next
+      | some next => (fun result => result.charge (instructionCycles instruction) 0 0) <$>
+          execute fuel image next
 
 end SigGolf.Riscv

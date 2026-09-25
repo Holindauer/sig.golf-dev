@@ -16,6 +16,8 @@ SVG_ATTRIBUTES = {'xmlns', 'viewBox', 'width', 'height', 'x', 'y', 'x1', 'x2', '
                   'text-anchor', 'font-weight', 'id', 'offset', 'stop-color', 'stop-opacity',
                   'gradientUnits', 'gradientTransform', 'fx', 'fy'}
 MNEMONIC = re.compile(r'[A-Z][A-Z0-9.]{1,11}\Z')
+MULTIPLY_DIVIDE = {'MUL', 'MULH', 'MULHSU', 'MULHU', 'MULW', 'DIV', 'DIVU', 'DIVW', 'DIVUW',
+                   'REM', 'REMU', 'REMW', 'REMUW'}
 INTEGER = re.compile(r'0|[1-9][0-9]*\Z')
 
 
@@ -65,11 +67,12 @@ def validate_json(raw: bytes, claim: dict) -> dict:
         if counts['HALT'] != samples:
             raise PresentationError('each accepting run must execute one HALT')
         if any(not isinstance(bits, str) or not INTEGER.fullmatch(bits) or len(bits) > 9 or int(bits) > 2**27 or
-               type(count) is not int or count < 1 or count > claim['C'] * samples
+               int(bits) % 64 or type(count) is not int or count < 1 or count > claim['C'] * samples
                for bits, count in hashes.items()):
-            raise PresentationError('HASH counts must be grouped by input bit length')
+            raise PresentationError('HASH counts must be grouped by input bit length, a multiple of 64')
         blocks = sum(count * max(1, (int(bits) + 511) // 512) for bits, count in hashes.items())
-        cycles = sum(counts.values()) + 8 * blocks
+        instructions = sum(count * (4 if key in MULTIPLY_DIVIDE else 1) for key, count in counts.items())
+        cycles = instructions + 8 * blocks + samples * ((claim['W'] + 255) // 256)
         if cycles > claim['C'] * samples:
             raise PresentationError('reported average cycles exceed the certified bound')
     return value

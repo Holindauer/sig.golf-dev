@@ -111,7 +111,7 @@ def Submission.honest (submission : Submission) (secretKey : SecretKey) (message
   let some witness := expand.value | return ⟨false, costs, 0⟩
   let verify ← submission.run .verify (message, pk, witness)
   costs := recordCost costs .verify verify.hashCompressions
-  return ⟨verify.value.isSome, costs, verify.cycles⟩
+  return ⟨verify.value.isSome, costs, verify.cycles + witnessCycles submission.sizes.witness⟩
 
 /-- Benchmark one independent uniform message against one freshly sampled shared random oracle. -/
 noncomputable def Submission.honestWorkload (submission : Submission) (secretKey : SecretKey) :

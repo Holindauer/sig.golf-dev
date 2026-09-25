@@ -34,12 +34,22 @@ class PresentationTests(unittest.TestCase):
         value = {'version': 1, 'summary': 'A small forest.',
                  'profile': {'samples': 1, 'method': 'One accepting run',
                              'instructions': {'HALT': 1}, 'hashes': {'192': 1, '768': 1}}}
-        self.assertEqual(validate_json(encoded(value), {'C': 25}), value)
+        self.assertEqual(validate_json(encoded(value), {'C': 25, 'W': 0}), value)
         with self.assertRaisesRegex(PresentationError, 'exceed'):
-            validate_json(encoded(value), {'C': 24})
-        value['profile']['hashes'] = {'0192': 1}
-        with self.assertRaisesRegex(PresentationError, 'bit length'):
-            validate_json(encoded(value), {'C': 25})
+            validate_json(encoded(value), {'C': 24, 'W': 0})
+        for bits in ('0192', '520'):
+            value['profile']['hashes'] = {bits: 1}
+            with self.assertRaisesRegex(PresentationError, 'bit length'):
+                validate_json(encoded(value), {'C': 25, 'W': 0})
+
+    def test_multiplication_division_and_witness_are_charged(self):
+        value = {'version': 1, 'summary': 'A small forest.',
+                 'profile': {'samples': 1, 'method': 'One accepting run',
+                             'instructions': {'MUL': 1, 'REMUW': 1, 'ADD': 1, 'HALT': 1},
+                             'hashes': {'512': 1}}}
+        self.assertEqual(validate_json(encoded(value), {'C': 20, 'W': 257}), value)
+        with self.assertRaisesRegex(PresentationError, 'exceed'):
+            validate_json(encoded(value), {'C': 19, 'W': 257})
 
     def test_malformed_metadata_is_a_presentation_error(self):
         with self.assertRaises(PresentationError):

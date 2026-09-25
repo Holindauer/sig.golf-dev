@@ -8,10 +8,10 @@ private def zeroHash : Hash := fun _ => 0
 private def addi (rd rs : Nat) (immediate : Nat) : BitVec 32 :=
   BitVec.ofNat 32 ((immediate % 4096) * 2 ^ 20 + rs * 2 ^ 15 + rd * 2 ^ 7 + 0x13)
 private def acceptImage : Image := ⟨[addi 10 0 1, 0x73], []⟩
-private def hashImage (bits : Nat) : Image :=
-  ⟨[addi 5 0 1, addi 10 0 0, addi 11 0 bits, addi 12 0 0, 0x73,
+private def hashImage (bytes : Nat) : Image :=
+  ⟨[addi 5 0 1, addi 10 0 0, addi 11 0 bytes, addi 12 0 0, 0x73,
     addi 5 0 0, addi 10 0 1, 0x73], []⟩
-private def toy : Submission := ⟨⟨1, 1⟩, standardLayout ⟨1, 1⟩, fun _ => hashImage 513⟩
+private def toy : Submission := ⟨⟨1, 1⟩, standardLayout ⟨1, 1⟩, fun _ => hashImage 72⟩
 private def movedLayout : Layout := ⟨0x40000, 0x40020, 0x40040, 0x50000, 0x80000, 0x81000⟩
 private def movedToy : Submission := { toy with layout := movedLayout }
 private def runSmall (image : Image) (state : MachineState := blank) : Execution :=
@@ -19,6 +19,7 @@ private def runSmall (image : Image) (state : MachineState := blank) : Execution
 
 -- Kernel-checked boundary cases, independent of the compiled evaluator.
 example : compressions 0 = 1 ∧ compressions 512 = 1 ∧ compressions 513 = 2 := by decide
+example : witnessCycles 0 = 0 ∧ witnessCycles 1 = 1 ∧ witnessCycles 256 = 1 ∧ witnessCycles 257 = 2 := by decide
 example : accessValid 0 8 = true ∧ accessValid 1 8 = false := by decide
 example : rangeValid 0xfffff8 8 = true ∧ rangeValid 0xfffff8 9 = false := by decide
 example : rangeValid 0xffffffffffffffff 2 = false := by decide
@@ -33,10 +34,10 @@ example : wordResult .div 0x80000000 0xffffffff = 0x80000000 := by decide
 example : wordResult .div 7 0 = 0xffffffff ∧ wordResult .rem 7 0 = 7 := by decide
 example : wordResult .sll 1 32 = 1 ∧ wordResult .sra 0x80000000 31 = 0xffffffff := by decide
 example : witnessBase ⟨1, 1⟩ = 0x20068 ∧ witnessBase ⟨9, 1⟩ = 0x20070 := by decide
-example : (hashImage 513).Valid ⟨1, 1⟩ movedLayout := by decide
-example : ¬ (hashImage 513).Valid ⟨1, 1⟩
+example : (hashImage 72).Valid ⟨1, 1⟩ movedLayout := by decide
+example : ¬ (hashImage 72).Valid ⟨1, 1⟩
     { movedLayout with publicKey := movedLayout.message } := by decide
-example : ¬ ({ hashImage 513 with data := List.replicate 32 0 } : Image).Valid ⟨1, 1⟩
+example : ¬ ({ hashImage 72 with data := List.replicate 32 0 } : Image).Valid ⟨1, 1⟩
     { standardLayout ⟨1, 1⟩ with witness := MEMORY_BYTES - 16 } := by decide
 
 private def fixedWorld : QueryImpl World Id
@@ -59,7 +60,7 @@ private def cacheEcho : Submission where
   sizes := ⟨1, 1⟩
   layout := standardLayout ⟨1, 1⟩
   image
-    | .sign => ⟨(hashImage 513).code.take 5 ++
+    | .sign => ⟨(hashImage 72).code.take 5 ++
         [0x00020437, addi 8 8 0x60, 0x06004383, 0x00740023,
           addi 5 0 0, addi 10 0 1, 0x73], []⟩
     | _ => acceptImage
@@ -68,7 +69,7 @@ private def failedSign : Submission where
   sizes := ⟨1, 1⟩
   layout := standardLayout ⟨1, 1⟩
   image
-    | .sign => ⟨(hashImage 513).code.take 5 ++ [addi 5 0 0, addi 10 0 0, 0x73], []⟩
+    | .sign => ⟨(hashImage 72).code.take 5 ++ [addi 5 0 0, addi 10 0 0, 0x73], []⟩
     | phase => cacheEcho.image phase
 
 private def check (label : String) (condition : Bool) : IO Unit :=
@@ -78,9 +79,13 @@ private def check (label : String) (condition : Bool) : IO Unit :=
 #eval do
   let halted := runSmall acceptImage
   check "HALT is charged" (halted.exit == Exit.success && halted.cycles == 2)
-  let one := runSmall (hashImage 512)
-  let two := runSmall (hashImage 513)
+  let one := runSmall (hashImage 64)
+  let two := runSmall (hashImage 72)
   check "HASH has no extra ECALL charge" (one.cycles == 15 && two.cycles == 23)
+  let partialWord := runSmall (hashImage 65)
+  check "HASH rejects partial words" (partialWord.exit == Exit.failure && partialWord.hashCalls == 0)
+  check "multiplication and division cost four cycles"
+    ((runSmall ⟨[0x020000b3, 0x020040b3, 0x020070bb, 0x000000b3, addi 10 0 1, 0x73], []⟩).cycles == 15)
   check "hash calls differ from compressions" (two.hashCalls == 1 && two.hashCompressions == 2)
   let emptyHash := runSmall (hashImage 0)
   check "empty HASH still costs one compression" (emptyHash.hashCompressions == 1)
@@ -96,16 +101,19 @@ private def check (label : String) (condition : Bool) : IO Unit :=
     ([0x007302bb, 0x407302bb, 0x007312bb, 0x007352bb, 0x407352bb,
       0x027302bb, 0x027342bb, 0x027352bb, 0x027362bb, 0x027372bb,
       0x0013129b, 0x0013529b, 0x4013529b].all (fun w => (decodeInstruction w).isSome))
-  let state := ((blank.setReg .x10 0).setReg .x11 9).setReg .x12 0
+  let state := ((blank.setReg .x10 0).setReg .x11 8).setReg .x12 0
   let state := (state.setByte 0 0xa5).setByte 1 0xff
-  check "HASH masks final unused bits" ((hashInput state).1 == 9 && (hashInput state).2.toNat == 0x1a5)
+  check "HASH reads little-endian bytes" ((hashInput state).1 == 64 && (hashInput state).2.toNat == 0xffa5)
   let written := writeHash state 0x1234
   check "HASH writes little-endian and preserves registers"
-    (written.getByte 0 == 0x34 && written.getByte 1 == 0x12 && written.getReg .x11 == 9 && written.pc == 0x1004)
+    (written.getByte 0 == 0x34 && written.getByte 1 == 0x12 && written.getReg .x11 == 8 && written.pc == 0x1004)
   check "HASH rejects unaligned input" (!hashArgumentsValid (state.setReg .x10 1))
+  check "HASH rejects unaligned output" (!hashArgumentsValid (state.setReg .x12 4))
   check "HASH rejects output crossing memory end" (!hashArgumentsValid (state.setReg .x12 0xfffff8))
+  check "HASH rejects lengths that are not whole words" (!hashArgumentsValid (state.setReg .x11 9))
+  check "HASH accepts a final in-bounds word" (hashArgumentsValid (state.setReg .x10 0xfffff8))
   check "HASH rejects input crossing memory end"
-    (!hashArgumentsValid ((state.setReg .x10 0xfffff8).setReg .x11 65))
+    (!hashArgumentsValid ((state.setReg .x10 0xfffff8).setReg .x11 16))
   let faulty := runSmall ⟨[0x73], []⟩ ((state.setReg .x5 1).setReg .x12 0xfffff8)
   check "invalid HASH makes no oracle call" (faulty.exit == Exit.failure && faulty.hashCalls == 0)
   check "load at address zero is valid" (memoryArgumentsValid blank (.LD .x1 .x0 0))

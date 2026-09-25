@@ -2,6 +2,8 @@
 
 Sig.golf is a Lean-certified competition for stateless hash-based signatures. The score is signature bytes times maximum honest RISC-V verification cycles.
 
+Cycle costs: 1 per instruction, 4 per multiplication or division (MUL, MULH, MULHSU, MULHU, DIV, DIVU, REM, REMU, and their W forms), 8 per HASH compression, 1 per HALT, plus ceil(W / 256) per verification for the witness. HASH needs 8-byte-aligned input and output addresses and an input length in bytes (a1) that is a multiple of 8.
+
 Rules: /rules.html
 Formal definitions: https://github.com/leanEthereum/sig.golf-dev/tree/beta
 Submit by opening a PR against beta: https://github.com/leanEthereum/sig.golf-submissions/pulls

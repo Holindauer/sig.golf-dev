@@ -25,7 +25,7 @@ def Submission.CompressionBounds (submission : Submission) : Prop :=
       (fun result => ENNReal.ofReal (Real.rpow 2
         ((result.costs phase : ℝ) / (phase.budget : ℝ)))) ≤ 2
 
-/-- Scored cycles cover successful honest pipelines. Arbitrary inputs remain subject to the universal termination bound. -/
+/-- Scored cycles cover successful honest pipelines: verification's RISC-V cycles plus the witness charge. Arbitrary inputs remain subject to the universal termination bound. -/
 def Submission.VerificationBound (submission : Submission) (C : Nat) : Prop :=
   ∀ (hash : Hash) secretKey message,
     let result := evalWithAnswerFn hash (submission.honest secretKey message)
