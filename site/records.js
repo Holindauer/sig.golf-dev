@@ -211,6 +211,10 @@ function renderScoreChart() {
     x1: left, y1: top, x2: left, y2: bottom,
     stroke: chartAxis, 'stroke-width': '1'
   });
+  chartNode(chart, 'line', {
+    x1: left, y1: bottom, x2: dataRight, y2: bottom,
+    stroke: chartAxis, 'stroke-width': '1'
+  });
 
   let best = Infinity;
   let frontier = '';
