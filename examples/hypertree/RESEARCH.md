@@ -447,3 +447,32 @@ encoded CURRENT0; prove secret/message/stack preservation and required cleared
 scratch facts. Rebuild signer loader-to-loop proofs with computedpk and new
 resource counts. Existing sign image in actual candidate still lacksprelude.
 Then assemble honest witness-charge theorem, export/layout/policy/full checks.
+
+### 2026-09-25T22:32 signer prelude proof components
+
+New SignResume and SignDeriveRoot modules PASS2829jobs, including axiom guards;
+log siggolf-contract-sign-components.log.
+SignResume.initializeTail_block proves the12instructions at0x1004..0x1030 for
+ANY image agreeing with those body instructions. initializeTail_equiv proves
+its state equals original initialization from the virtual previous PC provided
+incomingx6=1; restored_entry explicitly proves the displaced ADDI roundtrip.
+No instruction at0x1000 is assumed by the suffix theorem.
+
+SignDeriveRoot.derive_root instantiates the already-certified enabled sign_tree
+at159/tree0, temporary pointer0x20080, selectorfalse, with encoded zero-message
+digits. Universally returns Reference.keygen with739calls/761compressions,
+instructions<=99910,cycles<=105259, restores stack and preserves every memory
+word below0x20080. Requires the documented TreeContext/digit/mode/pointer
+invariants; establishing those from the official initial state remains work.
+
+Next: prove appended prelude setup/encode/root-copy/cleanup blocks and compose
+with these components. The prototype remains separate; actual sign image is
+still796words. Integration replaces entry instruction0x1000, so old
+SignPrepare.initializeState_block and the117-instruction randomizer-entry
+wrappers cannot be retained unchanged. Refactor callers to the12-instruction
+suffix at0x1004 and its incomingx6=1/memory invariants, then add prelude trace.
+Do not claim code-image transport from oldsign to new847-word image without
+proving fetch agreement at every used instruction. Generic suffix theorem
+already supplies this interface; tree code addresses remain unchanged but
+its current proof is specialized to sign and must compile with the final image.
+Verifier certificate component remains valid; full signing certificate pending.
