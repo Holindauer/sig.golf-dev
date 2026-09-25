@@ -23,7 +23,7 @@ private theorem nodeChoice (level tree : Nat) (side : Bool) (sibling current : D
         else SecurityReference.node level tree current sibling) := by
   cases side <;> exact node _ _ _ _
 
-theorem signLayerWithRoot (level : Fin 152) (tree : BitVec 192) (side : Bool) (message : Digest) :
+theorem signLayerWithRoot (level : Fin 160) (tree : BitVec 192) (side : Bool) (message : Digest) :
     Safe allowed (SecurityIdealSign.signLayerWithRoot level tree side message) := by
   unfold SecurityIdealSign.signLayerWithRoot
   split
@@ -40,7 +40,7 @@ theorem signLayerWithRoot (level : Fin 152) (tree : BitVec 192) (side : Bool) (m
             (publicCall (nodeChoice level.val tree.toNat side sibling current)).map
               (fun root => ((⟨fun i => (chains i).1, sibling⟩ : LayerSignature), root)))))
 
-theorem signUpper (count level index : Nat) (hl : count + level ≤ 152) (hi : index < 2 ^ 192)
+theorem signUpper (count level index : Nat) (hl : count + level ≤ 160) (hi : index < 2 ^ 192)
     (message : Digest) : Safe allowed (SecurityIdealSign.signUpper count level index hl hi message) := by
   induction count generalizing level index message with
   | zero => exact Safe.pure _
@@ -61,13 +61,13 @@ theorem randomizedIndex (pk : PublicKey) (message : Message) :
       (publicCall (Safe.ask (spec := HashSpec) (fun query => ¬SecretKeyEligible query)
         (SecurityRandomOracle.indexInput pk message nonce)
         (SecurityDomains.not_secretKeyEligible_addressedInput 5 0 0 0 0 0 _ (by decide) (by decide)))).map
-        (fun answer => (nonce, answer.extractLsb' 0 152)))
+        (fun answer => (nonce, answer.extractLsb' 0 160)))
 
 theorem signCompact (pk : PublicKey) (message : Message) : Safe allowed (SecurityIdealSign.signCompact pk message) := by
   unfold SecurityIdealSign.signCompact
   exact (randomizedIndex pk message).bind _ (fun ri =>
     (signLayerWithRoot ⟨0,by decide⟩ _ _ _).bind _ (fun bottom =>
-      (signUpper 151 1 (ri.2.toNat / 2) _ _ bottom.2).bind _ (fun _ => Safe.pure _)))
+      (signUpper 159 1 (ri.2.toNat / 2) _ _ bottom.2).bind _ (fun _ => Safe.pure _)))
 
 theorem signWire (pk : PublicKey) (message : Message) : Safe allowed (SecurityExperiment.signWire pk message) :=
   (signCompact pk message).map SecurityExperiment.serialize

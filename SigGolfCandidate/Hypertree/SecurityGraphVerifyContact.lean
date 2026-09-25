@@ -35,8 +35,8 @@ theorem mem_verify_index (hash : Hash) (pk : PublicKey) (message : Message) (sig
   rw [SecurityVerify.verifyCompact, queries_bind]
   exact List.mem_append_left _ (by simp [indexInput])
 
-theorem layer_bad_logged (factors : Factors) (signed : Finset (BitVec 152)) (base : Hash)
-    (level : Fin 152) (index : Nat) (bound : index < 2 ^ 192) (message : Digest) (signature : LayerSignature)
+theorem layer_bad_logged (factors : Factors) (signed : Finset (BitVec 160)) (base : Hash)
+    (level : Fin 160) (index : Nat) (bound : index < 2 ^ 192) (message : Digest) (signature : LayerSignature)
     (bad : LayerBad factors signed base level index message signature) :
     ∃ query ∈ queries (programmed (privateTable factors) (labels factors) base)
       (SecurityVerify.recoverLayer level.val (index / 2) (index % 2 == 1) message signature),
@@ -53,7 +53,7 @@ theorem layer_bad_logged (factors : Factors) (signed : Finset (BitVec 152)) (bas
 
 /-- A bad path necessarily contains a concrete logged public call, even when its
 location and all intermediate verifier messages depend on earlier hash answers. -/
-theorem path_bad_logged (factors : Factors) (signed : Finset (BitVec 152)) (base : Hash)
+theorem path_bad_logged (factors : Factors) (signed : Finset (BitVec 160)) (base : Hash)
     (level index : Nat) (message : Digest) (signatures : List LayerSignature) (bound : index < 2 ^ 192)
     (bad : PathBad factors signed base level index message signatures) :
     ∃ query ∈ queries (programmed (privateTable factors) (labels factors) base)

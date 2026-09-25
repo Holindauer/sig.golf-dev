@@ -46,22 +46,22 @@ theorem ResidualSafe.cacheQuery (factors : Factors) (cache : QueryCache HashSpec
     exact safe other value present position located
 
 /-- Only authorized graph coordinates may be exposed on a contact-free run. -/
-def ExposedSafe (metadata : MetadataTable) (signed : Finset (BitVec 152))
+def ExposedSafe (metadata : MetadataTable) (signed : Finset (BitVec 160))
     (cache : QueryCache PointSpec) : Prop :=
   ∀ point value, cache point = some value → Authorized metadata signed point
 
-@[simp] theorem exposedSafe_empty (metadata : MetadataTable) (signed : Finset (BitVec 152)) :
+@[simp] theorem exposedSafe_empty (metadata : MetadataTable) (signed : Finset (BitVec 160)) :
     ExposedSafe metadata signed ∅ := by
   intro point value present
   cases present
 
-theorem ExposedSafe.mono (metadata : MetadataTable) {first second : Finset (BitVec 152)}
+theorem ExposedSafe.mono (metadata : MetadataTable) {first second : Finset (BitVec 160)}
     (subset : first ⊆ second) (cache : QueryCache PointSpec) (safe : ExposedSafe metadata first cache) :
     ExposedSafe metadata second cache := by
   intro point value present
   exact authorized_mono metadata subset (safe point value present)
 
-theorem ExposedSafe.cacheQuery (metadata : MetadataTable) (signed : Finset (BitVec 152))
+theorem ExposedSafe.cacheQuery (metadata : MetadataTable) (signed : Finset (BitVec 160))
     (cache : QueryCache PointSpec) (safe : ExposedSafe metadata signed cache)
     (point : Point) (value : BitVec 256) (authorized : Authorized metadata signed point) :
     ExposedSafe metadata signed (cache.cacheQuery point value) := by
@@ -73,7 +73,7 @@ theorem ExposedSafe.cacheQuery (metadata : MetadataTable) (signed : Finset (BitV
 
 /-- A canonical chain step starting at an authorized predecessor exposes only
 another authorized point. This also covers all bottom non-source points. -/
-theorem authorized_successor (metadata : MetadataTable) (signed : Finset (BitVec 152))
+theorem authorized_successor (metadata : MetadataTable) (signed : Finset (BitVec 160))
     (address : ChainAddress) (step : Fin 7)
     (known : Authorized metadata signed (predecessor address step)) :
     Authorized metadata signed (successor address step) := by
@@ -83,14 +83,14 @@ theorem authorized_successor (metadata : MetadataTable) (signed : Finset (BitVec
   · simp only [Authorized, predecessor, successor, bottom, if_false] at *
     exact Nat.le_trans known (by omega)
 
-theorem ExposedSafe.hidden (metadata : MetadataTable) (signed : Finset (BitVec 152))
+theorem ExposedSafe.hidden (metadata : MetadataTable) (signed : Finset (BitVec 160))
     (cache : QueryCache PointSpec) (safe : ExposedSafe metadata signed cache)
     (point : Point) (unauthorized : ¬Authorized metadata signed point) : cache point = none := by
   cases present : cache point with
   | none => rfl
   | some value => exact False.elim (unauthorized (safe point value present))
 
-theorem ExposedSafe.revealCache (metadata : MetadataTable) (signed : Finset (BitVec 152))
+theorem ExposedSafe.revealCache (metadata : MetadataTable) (signed : Finset (BitVec 160))
     (table : PointTable) (points : List Point) (cache : QueryCache PointSpec)
     (safe : ExposedSafe metadata signed cache)
     (authorized : ∀ point ∈ points, Authorized metadata signed point) :

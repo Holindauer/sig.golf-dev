@@ -27,7 +27,7 @@ set_option maxRecDepth 4096
  theorem parsed_trace_fresh (history : History) (query : Query) (pair : Message × Bytes 32)
     (secretKey : Bool) (answer : BitVec 256) :
     (recordParsed history query (some pair) secretKey false answer).indexTrace =
-      history.indexTrace ++ [(false, answer.extractLsb' 0 152)] := by cases pair; rfl
+      history.indexTrace ++ [(false, answer.extractLsb' 0 160)] := by cases pair; rfl
 
 attribute [local irreducible] recordParsed indexInput
 
@@ -55,11 +55,11 @@ theorem cache_fill_preserves (cache : QueryCache HashSpec) (query : Query) (answ
 
 theorem cached_fill {pk : PublicKey} {cache : QueryCache HashSpec} {draws : List Draw}
     (old : ∀ m r value, cache (indexInput pk m r) = some value →
-      ∃ mark, (indexInput pk m r, (mark, value.extractLsb' 0 152)) ∈ draws)
+      ∃ mark, (indexInput pk m r, (mark, value.extractLsb' 0 160)) ∈ draws)
     (query : Query) (answer : BitVec 256) (flag : Bool) :
     ∀ m r value, (cache.cacheQuery query answer) (indexInput pk m r) = some value →
-      ∃ mark, (indexInput pk m r, (mark, value.extractLsb' 0 152)) ∈
-        draws ++ [(query,(flag,answer.extractLsb' 0 152))] := by
+      ∃ mark, (indexInput pk m r, (mark, value.extractLsb' 0 160)) ∈
+        draws ++ [(query,(flag,answer.extractLsb' 0 160))] := by
   intro m r value present
   by_cases same : indexInput pk m r = query
   · rw [same, QueryCache.cacheQuery_self] at present
@@ -75,7 +75,7 @@ theorem cached_fill {pk : PublicKey} {cache : QueryCache HashSpec} {draws : List
     (miss : cache query = none) (message : Message) (nonce : Bytes 32)
     (parsed : parse pk query = some (message,nonce)) :
     Provenance nonces pk (cache.cacheQuery query answer) (recordPublic pk history query false answer)
-      (draws ++ [(query,(false,answer.extractLsb' 0 152))]) := by
+      (draws ++ [(query,(false,answer.extractLsb' 0 160))]) := by
   constructor
   · change _ = (recordParsed history query (parse pk query) (decide _) false answer).indexTrace
     rw [parsed, parsed_trace_fresh, List.map_append, p.trace]
@@ -145,10 +145,10 @@ theorem Provenance.sign_hit {nonces : Message → Bytes 32} {pk : PublicKey}
     (fresh : message ∉ history.signedMessages) :
     Provenance nonces pk (cache.cacheQuery (indexInput pk message (nonces message)) answer)
       (recordSign history message false answer)
-      (draws ++ [(indexInput pk message (nonces message), (true, answer.extractLsb' 0 152))]) := by
+      (draws ++ [(indexInput pk message (nonces message), (true, answer.extractLsb' 0 160))]) := by
   constructor
-  · change (draws ++ [(indexInput pk message (nonces message), (true, answer.extractLsb' 0 152))]).map Prod.snd =
-      history.indexTrace ++ [(decide (message ∉ history.signedMessages), answer.extractLsb' 0 152)]
+  · change (draws ++ [(indexInput pk message (nonces message), (true, answer.extractLsb' 0 160))]).map Prod.snd =
+      history.indexTrace ++ [(decide (message ∉ history.signedMessages), answer.extractLsb' 0 160)]
     rw [List.map_append, p.trace]
     simp only [List.map_cons, List.map_nil, decide_eq_true fresh]
   · exact @cached_fill pk cache draws p.cached (indexInput pk message (nonces message)) answer true

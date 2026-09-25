@@ -107,7 +107,7 @@ theorem sequenceFin {α : Type} (n : Nat) (body : Fin n → OracleComp SplitWorl
   (secret address).bind _ (fun value => publicCall
     (walk _ 0 7 value (chainHash address.level.val address.tree.toNat address.side address.chain)))
 
-theorem leafRoot (level : Fin 152) (tree : BitVec 192) (side : Bool) :
+theorem leafRoot (level : Fin 160) (tree : BitVec 192) (side : Bool) :
     Safe allowed (SecurityIdealKeygen.leafRoot level tree side) := by
   unfold SecurityIdealKeygen.leafRoot
   split
@@ -115,10 +115,10 @@ theorem leafRoot (level : Fin 152) (tree : BitVec 192) (side : Bool) :
   · exact (sequenceFin 46 _ (fun chain => endpoint ⟨level,tree,side,chain⟩)).bind _
       (fun values => publicCall (compressLeaf _ _ _ values))
 
-theorem treeRoot (level : Fin 152) (tree : BitVec 192) : Safe allowed (SecurityIdealKeygen.treeRoot level tree) :=
+theorem treeRoot (level : Fin 160) (tree : BitVec 192) : Safe allowed (SecurityIdealKeygen.treeRoot level tree) :=
   (leafRoot level tree false).bind _ (fun left =>
     (leafRoot level tree true).bind _ (fun right => publicCall (node level.val tree.toNat left right)))
 
-theorem keygen : Safe allowed SecurityIdealKeygen.keygen := treeRoot ⟨151, by decide⟩ 0
+theorem keygen : Safe allowed SecurityIdealKeygen.keygen := treeRoot ⟨159, by decide⟩ 0
 
 end SigGolfCandidate.Hypertree.SecuritySecretKeyHonest

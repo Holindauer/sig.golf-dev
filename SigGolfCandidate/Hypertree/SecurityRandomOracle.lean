@@ -62,10 +62,10 @@ theorem randomizerInput_secretKey_injective (message : Message) :
 
 /-- Oracle computation for the exact randomized-index prefix of reference signing. -/
 def randomizedIndex (secretKey : SecretKey) (pk : PublicKey) (message : Message) :
-    OracleComp HashSpec (Bytes 32 × BitVec 152) := do
+    OracleComp HashSpec (Bytes 32 × BitVec 160) := do
   let r ← HashSpec.query (randomizerInput secretKey message)
   let answer ← HashSpec.query (indexInput pk message r)
-  return (r, answer.extractLsb' 0 152)
+  return (r, answer.extractLsb' 0 160)
 
 theorem eval_randomizedIndex (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (message : Message) :
     evalWithAnswerFn hash (randomizedIndex secretKey pk message) =
@@ -81,7 +81,7 @@ theorem run_randomizedIndex_fresh_randomizer (secretKey : SecretKey) (pk : Publi
         let r ← $ᵗ BitVec 256
         let result ← (randomOracle (spec := HashSpec) (indexInput pk message r)).run
           (cache.cacheQuery (randomizerInput secretKey message) r)
-        return ((r, result.1.extractLsb' 0 152), result.2) := by
+        return ((r, result.1.extractLsb' 0 160), result.2) := by
   simp only [randomizedIndex, simulateQ_bind, simulateQ_query, simulateQ_pure,
     OracleQuery.input_query, OracleQuery.cont_query, id_map,
     StateT.run_bind, StateT.run_pure]
@@ -104,7 +104,7 @@ theorem run_randomizedIndex_fresh (secretKey : SecretKey) (pk : PublicKey) (mess
       (randomizedIndex secretKey pk message)).run cache = do
         let r ← $ᵗ BitVec 256
         let answer ← $ᵗ BitVec 256
-        return ((r, answer.extractLsb' 0 152),
+        return ((r, answer.extractLsb' 0 160),
           (cache.cacheQuery (randomizerInput secretKey message) r).cacheQuery
             (indexInput pk message r) answer) := by
   rw [run_randomizedIndex_fresh_randomizer secretKey pk message cache fresh]
@@ -121,7 +121,7 @@ theorem run'_randomizedIndex_fresh (secretKey : SecretKey) (pk : PublicKey) (mes
       (randomizedIndex secretKey pk message)).run' cache = do
         let r ← $ᵗ BitVec 256
         let answer ← $ᵗ BitVec 256
-        return (r, answer.extractLsb' 0 152) := by
+        return (r, answer.extractLsb' 0 160) := by
   rw [StateT.run'_eq, run_randomizedIndex_fresh secretKey pk message cache fresh indexFresh]
   simp [map_bind]
 
@@ -133,32 +133,32 @@ def prequeriedRandomizers (cache : QueryCache HashSpec) (pk : PublicKey) (messag
 
 /-- Concrete local reduction for the actual randomized-index computation. With a
 fresh secret-randomizer input, its index hits prior targets only by guessing one
-of the prequeried nonces or by a fresh 152-bit target hit. The starting cache is
+of the prequeried nonces or by a fresh 160-bit target hit. The starting cache is
 arbitrary and the result retains the cache state. -/
 theorem prob_index_mem_le (secretKey : SecretKey) (pk : PublicKey) (message : Message)
     (cache : QueryCache HashSpec) (fresh : cache (randomizerInput secretKey message) = none)
-    (targets : Finset (BitVec 152)) :
+    (targets : Finset (BitVec 160)) :
     Pr[fun result => result.1.2 ∈ targets |
       (simulateQ (randomOracle : QueryImpl HashSpec (StateT (QueryCache HashSpec) ProbComp))
         (randomizedIndex secretKey pk message)).run cache] ≤
       ((prequeriedRandomizers cache pk message).card : ENNReal) / 2 ^ 256 +
-        (targets.card : ENNReal) / 2 ^ 152 := by
+        (targets.card : ENNReal) / 2 ^ 160 := by
   rw [run_randomizedIndex_fresh_randomizer secretKey pk message cache fresh]
   have bound := probEvent_bind_le_probEvent_add
     (mx := ($ᵗ BitVec 256))
     (my := fun r => do
       let result ← (randomOracle (spec := HashSpec) (indexInput pk message r)).run
         (cache.cacheQuery (randomizerInput secretKey message) r)
-      return ((r, result.1.extractLsb' 0 152), result.2))
+      return ((r, result.1.extractLsb' 0 160), result.2))
     (q := fun result => result.1.2 ∈ targets)
     (p := fun r => r ∈ prequeriedRandomizers cache pk message)
-    (ε := (targets.card : ENNReal) / 2 ^ 152) (by
+    (ε := (targets.card : ENNReal) / 2 ^ 160) (by
       intro r _ notQueried
       have indexFresh : cache (indexInput pk message r) = none := by
         simpa [prequeriedRandomizers] using notQueried
       rw [randomOracle.run_eq, index_cache_after_randomizer, indexFresh]
       simpa only [bind_assoc, pure_bind, ← map_eq_pure_bind, probEvent_map,
-        Function.comp_def] using (SecurityUniform.prob_extract_mem 104 152 targets).le)
+        Function.comp_def] using (SecurityUniform.prob_extract_mem 96 160 targets).le)
   rw [SecurityUniform.prob_randomizer_mem] at bound
   exact bound
 
@@ -181,11 +181,11 @@ honest program calls; no adversary-only counting convention is used. -/
 theorem prob_index_mem_le_queries (secretKey : SecretKey) (pk : PublicKey) (message : Message)
     (cache : QueryCache HashSpec) (fresh : cache (randomizerInput secretKey message) = none)
     (inputs : Finset Query) (covered : ∀ input, cache input ≠ none → input ∈ inputs)
-    (targets : Finset (BitVec 152)) :
+    (targets : Finset (BitVec 160)) :
     Pr[fun result => result.1.2 ∈ targets |
       (simulateQ (randomOracle : QueryImpl HashSpec (StateT (QueryCache HashSpec) ProbComp))
         (randomizedIndex secretKey pk message)).run cache] ≤
-      (inputs.card : ENNReal) / 2 ^ 256 + (targets.card : ENNReal) / 2 ^ 152 := by
+      (inputs.card : ENNReal) / 2 ^ 256 + (targets.card : ENNReal) / 2 ^ 160 := by
   apply (prob_index_mem_le secretKey pk message cache fresh targets).trans
   have hcard := prequeriedRandomizers_card_le cache pk message inputs covered
   gcongr

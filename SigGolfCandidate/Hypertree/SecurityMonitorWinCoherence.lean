@@ -58,14 +58,14 @@ theorem Coherent.public {factors : Factors} {cache : QueryCache HashSpec} {histo
     exact (QueryCache.agreesWithFn_cacheQuery_iff cache query answer base present).mp agree
 
  theorem upperLayers_length (privateAnswers : SecurityGraphIdeal.PrivateTable) (labels : SecurityGraph.Labels)
-    (count level index : Nat) (hl : count + level ≤ 152) (hi : index < 2 ^ 192) (message : Digest) :
+    (count level index : Nat) (hl : count + level ≤ 160) (hi : index < 2 ^ 192) (message : Digest) :
     (upperLayers privateAnswers labels count level index hl hi message).length = count := by
   induction count generalizing level index message with
   | zero => rfl
   | succ count ih => simp only [upperLayers, List.length_cons, ih]
 
  theorem signature_valid (privateAnswers : SecurityGraphIdeal.PrivateTable) (labels : SecurityGraph.Labels)
-    (nonce : Bytes 32) (index : BitVec 152) : (signature privateAnswers labels nonce index).Valid :=
+    (nonce : Bytes 32) (index : BitVec 160) : (signature privateAnswers labels nonce index).Valid :=
   by
     apply upperLayers_length
 
@@ -77,7 +77,7 @@ theorem Coherent.public {factors : Factors} {cache : QueryCache HashSpec} {histo
     Coherent factors residual
       (recordSign history message (cache (SecurityRandomOracle.indexInput (publicKey factors) message (factors.2.1 message))).isSome answer)
       (SecurityExperimentAtomic.afterSign transcript message (SecurityExperiment.serialize
-        (signature (privateTable factors) (labels factors) (factors.2.1 message) (answer.extractLsb' 0 152)))) := by
+        (signature (privateTable factors) (labels factors) (factors.2.1 message) (answer.extractLsb' 0 160)))) := by
   rw [Coherent, responses_after_valid _ _ _ (signature_valid _ _ _ _)]
   constructor
   · intro entry present
@@ -89,7 +89,7 @@ theorem Coherent.public {factors : Factors} {cache : QueryCache HashSpec} {histo
     have old := coherent.2 base replay.1
     have nonce : privateTable factors (.randomizer message) = factors.2.1 message := rfl
     have indexEq : indexOf (programmed (privateTable factors) (labels factors) base)
-        (publicKey factors) message (factors.2.1 message) = answer.extractLsb' 0 152 := by
+        (publicKey factors) message (factors.2.1 message) = answer.extractLsb' 0 160 := by
       rw [index_residual, replay.2]
     constructor
     · intro entry present
@@ -97,11 +97,11 @@ theorem Coherent.public {factors : Factors} {cache : QueryCache HashSpec} {histo
       · subst entry
         simp only [nonce, indexEq]
       · exact old.1 entry present
-    · change insert (answer.extractLsb' 0 152) history.signedIndices = _
+    · change insert (answer.extractLsb' 0 160) history.signedIndices = _
       rw [old.2]
       simp only [Signed, List.map_cons, List.toFinset_cons]
       congr 1
-      change answer.extractLsb' 0 152 = indexOf _ _ message (factors.2.1 message)
+      change answer.extractLsb' 0 160 = indexOf _ _ message (factors.2.1 message)
       exact indexEq.symm
 
 end SigGolfCandidate.Hypertree.SecurityMonitorWin

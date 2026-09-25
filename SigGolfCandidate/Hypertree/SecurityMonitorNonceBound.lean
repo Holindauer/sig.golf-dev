@@ -15,7 +15,7 @@ noncomputable def joint (publicCache : SigGolf.Cache) (adversary : Adversary sub
   let nonces ← $ᵗ NonceTable
   let metadata ← $ᵗ MetadataTable
   let points ← $ᵗ PointTable
-  let pk := truncate (metadata (.node 151 0))
+  let pk := truncate (metadata (.node 159 0))
   let outcome ← SecurityGraphMonitorProgram.run points ∅
     (SecurityMonitorGraphView.start nonces metadata pk
       (ofInteract adversary pk rounds (adversary.initial pk publicCache) {}) budget)
@@ -40,7 +40,7 @@ noncomputable def nonceExperiment (publicCache : SigGolf.Cache) (adversary : Adv
     (rounds budget : Nat) : ProbComp (NO (Result SecurityExperiment.Result)) := do
   let metadata ← $ᵗ MetadataTable
   let points ← $ᵗ PointTable
-  let pk := truncate (metadata (.node 151 0))
+  let pk := truncate (metadata (.node 159 0))
   SecurityNonceProgram.execute
     (start points metadata pk (ofInteract adversary pk rounds (adversary.initial pk publicCache) {}) budget) ∅
 
@@ -68,9 +68,9 @@ theorem joint_annotation (publicCache : SigGolf.Cache) (adversary : Adversary su
   exact nonce_swap (fun nonces metadata points =>
     (jointAnnotation ∘ (fun outcome => (nonces, outcome))) <$>
       SecurityGraphMonitorProgram.run points ∅ (SecurityMonitorGraphView.start nonces metadata
-        (truncate (metadata (.node 151 0)))
-        (ofInteract adversary (truncate (metadata (.node 151 0))) rounds
-          (adversary.initial (truncate (metadata (.node 151 0))) publicCache) {}) budget))
+        (truncate (metadata (.node 159 0)))
+        (ofInteract adversary (truncate (metadata (.node 159 0))) rounds
+          (adversary.initial (truncate (metadata (.node 159 0))) publicCache) {}) budget))
 
 theorem nonceExperiment_bound (publicCache : SigGolf.Cache) (adversary : Adversary submission.sizes)
     (rounds budget : Nat) :
@@ -79,7 +79,7 @@ theorem nonceExperiment_bound (publicCache : SigGolf.Cache) (adversary : Adversa
         (fun result => (result.guesses : ENNReal)) / (2 : ENNReal)^256 := by
   have bound := SecurityNonceProgram.mixed_prob_bad_le_expected
     (do let metadata ← $ᵗ MetadataTable; let points ← $ᵗ PointTable; pure (metadata, points))
-    (fun pair => let pk := truncate (pair.1 (.node 151 0))
+    (fun pair => let pk := truncate (pair.1 (.node 159 0))
       start pair.2 pair.1 pk (ofInteract adversary pk rounds (adversary.initial pk publicCache) {}) budget)
     (fun _ => ∅)
   simpa only [nonceExperiment, bind_assoc, pure_bind] using bound

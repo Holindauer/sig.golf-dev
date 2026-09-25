@@ -17,7 +17,7 @@ noncomputable def joint (publicCache : Cache) (adversary : Adversary submission.
   let nonces ← $ᵗ NonceTable
   let metadata ← $ᵗ MetadataTable
   let points ← $ᵗ PointTable
-  let pk := truncate (metadata (.node 151 0))
+  let pk := truncate (metadata (.node 159 0))
   let result ← SecurityMonitorGraphCoupling.start (points, (nonces, metadata)) pk
     (ofInteract adversary pk rounds (adversary.initial pk publicCache) {}) budget
   pure (nonces, result)

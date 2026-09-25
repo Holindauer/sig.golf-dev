@@ -166,9 +166,9 @@ theorem experiment_bad_le (publicCache : Cache) (adversary : Adversary submissio
   calc
     _ ≤ expectedValue ($ᵗ NonceTable) (fun nonces => expectedValue ($ᵗ MetadataTable) (fun metadata =>
       2 * expectedValue (SecurityGraphMonitorProgram.experiment
-        (start nonces metadata (truncate (metadata (.node 151 0)))
-          (ofInteract adversary (truncate (metadata (.node 151 0))) rounds
-            (adversary.initial (truncate (metadata (.node 151 0))) publicCache) {}) budget) ∅)
+        (start nonces metadata (truncate (metadata (.node 159 0)))
+          (ofInteract adversary (truncate (metadata (.node 159 0))) rounds
+            (adversary.initial (truncate (metadata (.node 159 0))) publicCache) {}) budget) ∅)
         (fun result => (result.value.history.counts.graph : ENNReal)) / 2 ^ 128)) := by
       apply expectedValue_mono
       intro nonces

@@ -4,7 +4,7 @@ namespace SigGolfCandidate.Hypertree.SecurityIndexTrace
 open SigGolf OracleComp OracleSpec SecurityIndexMonitor
 set_option backward.isDefEq.respectTransparency false
 
-abbrev Entry := Bool × BitVec 152
+abbrev Entry := Bool × BitVec 160
 
 def marks : List Entry → Nat
   | [] => 0
@@ -15,19 +15,19 @@ noncomputable def trace : Strategy → ProbComp (List Entry)
   | .done => pure []
   | .draw mark next => do
       let answer ← $ᵗ BitVec 256
-      (fun tail => (mark,answer.extractLsb' 0 152)::tail) <$> trace (next answer)
+      (fun tail => (mark,answer.extractLsb' 0 160)::tail) <$> trace (next answer)
   | .coin n next => do
       let answer ← $ᵗ Fin (n+1)
       trace (next answer)
 
-def replay : List Entry → Finset (BitVec 152) → Finset (BitVec 152) → Nat → Bool
+def replay : List Entry → Finset (BitVec 160) → Finset (BitVec 160) → Nat → Bool
   | [], _, _, _ => false
   | (mark,index)::tail, seen, marked, remaining =>
       if mark = true ∧ 0 < remaining then
         decide (index ∈ seen) || replay tail (insert index seen) (insert index marked) (remaining-1)
       else decide (index ∈ marked) || replay tail (insert index seen) marked remaining
 
-theorem play_eq_trace (strategy : Strategy) (seen marked : Finset (BitVec 152)) (remaining : Nat) :
+theorem play_eq_trace (strategy : Strategy) (seen marked : Finset (BitVec 160)) (remaining : Nat) :
     play strategy seen marked remaining =
       (fun entries => replay entries seen marked remaining) <$> trace strategy := by
   induction strategy generalizing seen marked remaining with
@@ -47,13 +47,13 @@ def Conflict : List Entry → Prop
   | entry :: tail =>
       (∃ other ∈ tail, entry.2 = other.2 ∧ (entry.1 = true ∨ other.1 = true)) ∨ Conflict tail
 
-def Safe : Finset (BitVec 152) → Finset (BitVec 152) → List Entry → Prop
+def Safe : Finset (BitVec 160) → Finset (BitVec 160) → List Entry → Prop
   | _, _, [] => True
   | seen, marked, (mark,index)::tail =>
       index ∉ marked ∧ (mark = true → index ∉ seen) ∧
         Safe (insert index seen) (if mark then insert index marked else marked) tail
 
-theorem replay_safe (entries : List Entry) (seen marked : Finset (BitVec 152)) (remaining : Nat)
+theorem replay_safe (entries : List Entry) (seen marked : Finset (BitVec 160)) (remaining : Nat)
     (included : marked ⊆ seen) (budget : marks entries ≤ remaining)
     (noHit : replay entries seen marked remaining = false) : Safe seen marked entries := by
   induction entries generalizing seen marked remaining with
@@ -75,8 +75,8 @@ theorem replay_safe (entries : List Entry) (seen marked : Finset (BitVec 152)) (
       exact ⟨fun present => noHit.1 (included present), fun _ => noHit.1,
         ih _ _ (remaining-1) (Finset.insert_subset_insert _ included) tailBudget noHit.2⟩
 
-theorem safe_marked_excludes (entries : List Entry) (seen marked : Finset (BitVec 152))
-    (safe : Safe seen marked entries) (index : BitVec 152) (known : index ∈ marked) :
+theorem safe_marked_excludes (entries : List Entry) (seen marked : Finset (BitVec 160))
+    (safe : Safe seen marked entries) (index : BitVec 160) (known : index ∈ marked) :
     ∀ entry ∈ entries, entry.2 ≠ index := by
   induction entries generalizing seen marked with
   | nil => simp
@@ -90,8 +90,8 @@ theorem safe_marked_excludes (entries : List Entry) (seen marked : Finset (BitVe
     · apply ih _ _ safe.2.2 ?_ other later
       cases mark <;> simp_all
 
-theorem safe_seen_excludes (entries : List Entry) (seen marked : Finset (BitVec 152))
-    (safe : Safe seen marked entries) (index : BitVec 152) (known : index ∈ seen) :
+theorem safe_seen_excludes (entries : List Entry) (seen marked : Finset (BitVec 160))
+    (safe : Safe seen marked entries) (index : BitVec 160) (known : index ∈ seen) :
     ∀ entry ∈ entries, entry.1 = true → entry.2 ≠ index := by
   induction entries generalizing seen marked with
   | nil => simp
@@ -104,7 +104,7 @@ theorem safe_seen_excludes (entries : List Entry) (seen marked : Finset (BitVec 
       exact safe.2.1 markedEntry (by change value = index at same; exact same.symm ▸ known)
     · exact ih _ _ safe.2.2 (Finset.mem_insert_of_mem known) other later markedEntry
 
-theorem safe_no_conflict (entries : List Entry) (seen marked : Finset (BitVec 152))
+theorem safe_no_conflict (entries : List Entry) (seen marked : Finset (BitVec 160))
     (safe : Safe seen marked entries) : ¬Conflict entries := by
   induction entries generalizing seen marked with
   | nil => simp [Conflict]
@@ -139,7 +139,7 @@ theorem trace_length (strategy : Strategy) : List.length <$> trace strategy = dr
 that signing draw came before or after the other query. -/
 theorem prob_conflict_le (strategy : Strategy) (limit : Nat) :
     Pr[fun entries => Conflict entries ∧ marks entries ≤ limit | trace strategy] ≤
-      (limit : ENNReal)/2^152 * cost strategy := by
+      (limit : ENNReal)/2^160 * cost strategy := by
   have bound := prob_empty_le strategy limit
   rw [play_eq_trace, probEvent_map] at bound
   apply le_trans _ bound

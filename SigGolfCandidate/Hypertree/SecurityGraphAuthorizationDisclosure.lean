@@ -7,7 +7,7 @@ set_option backward.isDefEq.respectTransparency false
 set_option maxRecDepth 4096
 
 /-- Public bottom-chain outputs require no signing response to be disclosed. -/
-theorem bottom_positive_authorized (metadata : MetadataTable) (signed : Finset (BitVec 152))
+theorem bottom_positive_authorized (metadata : MetadataTable) (signed : Finset (BitVec 160))
     (address : ChainAddress) (point : Fin 8) (bottom : address.level.val = 0)
     (positive : 0 < point.val) : Authorized metadata signed (address, point) := by
   simp only [Authorized, bottom, if_true]
@@ -15,8 +15,8 @@ theorem bottom_positive_authorized (metadata : MetadataTable) (signed : Finset (
 
 /-- Every upper layer of an honest signature reveals only its globally authorized
 canonical digit. Subsequent layers' messages are the appropriate public node labels. -/
-theorem upperPoints_authorized (factors : Factors) (signed : Finset (BitVec 152))
-    (count level index : Nat) (levels : count + level ≤ 152) (bound : index < 2 ^ 192)
+theorem upperPoints_authorized (factors : Factors) (signed : Finset (BitVec 160))
+    (count level index : Nat) (levels : count + level ≤ 160) (bound : index < 2 ^ 192)
     (positive : 0 < level) (message : Digest)
     (canonical : message = truncate (factors.2.2
       (.node ⟨level - 1, by omega⟩ (BitVec.ofNat 192 index)))) :
@@ -44,9 +44,9 @@ theorem upperPoints_authorized (factors : Factors) (signed : Finset (BitVec 152)
       simp only [labels_node, Nat.add_sub_cancel]
 
 /-- Whole-signature disclosure is covered by the conservative frontier after
-inserting its actual index. This includes all 151 upper WOTS digit vectors. -/
-theorem signaturePoints_authorized (factors : Factors) (signed : Finset (BitVec 152))
-    (index : BitVec 152) (member : index ∈ signed) :
+inserting its actual index. This includes all 159 upper WOTS digit vectors. -/
+theorem signaturePoints_authorized (factors : Factors) (signed : Finset (BitVec 160))
+    (index : BitVec 160) (member : index ∈ signed) :
     ∀ point ∈ signaturePoints (labels factors) index, Authorized factors.2.2 signed point := by
   have bound : index.toNat < 2 ^ 192 := lt_of_lt_of_le index.isLt
     (Nat.pow_le_pow_right (by decide) (by decide))
@@ -57,7 +57,7 @@ theorem signaturePoints_authorized (factors : Factors) (signed : Finset (BitVec 
     change Authorized factors.2.2 signed (pathAddress 0 index.toNat 0, 0)
     simp only [Authorized, pathAddress, Fin.val_zero, if_true, Nat.lt_irrefl, false_or]
     exact ⟨index, member, childIndex_pathAddress 0 index.toNat 0 bound⟩
-  · exact upperPoints_authorized factors signed 151 1 (index.toNat / 2) (by decide)
+  · exact upperPoints_authorized factors signed 159 1 (index.toNat / 2) (by decide)
       (lt_of_le_of_lt (Nat.div_le_self ..) bound) (by decide) _ rfl point rest
 
 /-- info: 'SigGolfCandidate.Hypertree.SecurityGraphAuthorization.signaturePoints_authorized' depends on axioms: [propext,

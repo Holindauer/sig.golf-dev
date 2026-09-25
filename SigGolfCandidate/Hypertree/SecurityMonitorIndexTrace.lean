@@ -29,7 +29,7 @@ theorem aligned_coin {α : Type} (n : Nat) (next : Fin (n+1) → SecurityIndexPr
 
 theorem aligned_draw {α : Type} (mark : Bool) (next : BitVec 256 → SecurityIndexProgram.Program α)
     (traceOf : α → List Entry) (before : List Entry)
-    (aligned : ∀ answer, Aligned (next answer) traceOf (before ++ [(mark,answer.extractLsb' 0 152)])) :
+    (aligned : ∀ answer, Aligned (next answer) traceOf (before ++ [(mark,answer.extractLsb' 0 160)])) :
     Aligned (.draw mark next) traceOf before := by
   intro result member
   simp only [SecurityIndexProgram.execute, mem_support_bind_iff] at member
@@ -64,7 +64,7 @@ theorem public_trace_none (pk : PublicKey) (history : History) (query : Query) (
 theorem public_trace_some (pk : PublicKey) (history : History) (query : Query) (cached : Bool) (answer : BitVec 256)
     (present : (SecurityIndexQuery.parse pk query).isSome = true) :
     (recordPublic pk history query cached answer).indexTrace =
-      if cached then history.indexTrace else history.indexTrace ++ [(false,answer.extractLsb' 0 152)] := by
+      if cached then history.indexTrace else history.indexTrace ++ [(false,answer.extractLsb' 0 160)] := by
   change (recordParsed history query _ _ cached answer).indexTrace = _
   cases parsed : SecurityIndexQuery.parse pk query with
   | none => simp only [parsed, Option.isSome_none, Bool.false_eq_true] at present

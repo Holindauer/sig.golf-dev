@@ -99,7 +99,7 @@ theorem sequenceFin {α : Type} (n cost : Nat) (body : Fin n → OracleComp Spli
   (secret address).bind _ (fun value => publicCall
     (walk _ 0 7 value (chainHash address.level.val address.tree.toNat address.side address.chain)))
 
-theorem leafRoot (level : Fin 152) (tree : BitVec 192) (side : Bool) :
+theorem leafRoot (level : Fin 160) (tree : BitVec 192) (side : Bool) :
     Queries (SecurityIdealKeygen.leafRoot level tree side) (if level.val = 0 then 2 else 369) := by
   by_cases bottom : level.val = 0
   · simp only [SecurityIdealKeygen.leafRoot, if_pos bottom]
@@ -108,7 +108,7 @@ theorem leafRoot (level : Fin 152) (tree : BitVec 192) (side : Bool) :
     exact (sequenceFin 46 8 _ (fun chain => endpoint ⟨level, tree, side, chain⟩)).bind _
       (fun values => publicCall (compressLeaf _ _ _ values))
 
-theorem treeRoot (level : Fin 152) (tree : BitVec 192) :
+theorem treeRoot (level : Fin 160) (tree : BitVec 192) :
     Queries (SecurityIdealKeygen.treeRoot level tree) (if level.val = 0 then 5 else 739) := by
   have all := (leafRoot level tree false).bind _ (fun left =>
     (leafRoot level tree true).bind _ (fun right => publicCall (node level.val tree.toNat left right)))
@@ -118,6 +118,6 @@ theorem treeRoot (level : Fin 152) (tree : BitVec 192) :
 
 /-- Actual ideal keygen's charge is fixed on every oracle-answer history. -/
 theorem keygen : FixedCost (SecurityIdealKeygen.keygen.liftComp GameWorld) 739 :=
-  (treeRoot 151 0).fixedCost
+  (treeRoot 159 0).fixedCost
 
 end SigGolfCandidate.Hypertree.SecurityAtomicCounts

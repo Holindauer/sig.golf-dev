@@ -107,8 +107,8 @@ theorem experiment_history (publicCache : Cache) (adversary : Adversary submissi
   rw [SecurityGraphMonitorProgram.experiment, mem_support_bind_iff] at member
   obtain ⟨table, _, member⟩ := member
   refine ⟨run_returns _ _ (start_wellCounted nonces metadata _ _ budget) _ _ result member, ?_⟩
-  have within := ofInteract_withinSigns adversary (truncate (metadata (.node 151 0))) rounds
-    (adversary.initial (truncate (metadata (.node 151 0))) publicCache) {}
+  have within := ofInteract_withinSigns adversary (truncate (metadata (.node 159 0))) rounds
+    (adversary.initial (truncate (metadata (.node 159 0))) publicCache) {}
   change WithinSigns LIFETIME _ at within
   exact run_returns _ _ (start_signed_card nonces metadata _ _ LIFETIME within budget) _ _ result member
 

@@ -11,7 +11,7 @@ set_option maxRecDepth 4096
 /-- Public bookkeeping; private nonce values are supplied only when signing. -/
 structure History where
   signedMessages : Finset Message := ∅
-  signedIndices : Finset (BitVec 152) := ∅
+  signedIndices : Finset (BitVec 160) := ∅
   indexTrace : List Entry := []
   nonceGuesses : List (Message × Bytes 32) := []
   secretKeyInputs : List Query := []
@@ -24,7 +24,7 @@ noncomputable def recordParsed (history : History) (query : Query) (parsed : Opt
   match parsed with
   | some (message,r) => { history with
       nonceGuesses := if message ∈ history.signedMessages then history.nonceGuesses else (message,r)::history.nonceGuesses
-      indexTrace := if cached then history.indexTrace else history.indexTrace ++ [(false,answer.extractLsb' 0 152)]
+      indexTrace := if cached then history.indexTrace else history.indexTrace ++ [(false,answer.extractLsb' 0 160)]
       counts := {history.counts with index := history.counts.index+1} }
   | none => if secretKeyEligible then { history with
       secretKeyInputs := query::history.secretKeyInputs
@@ -39,9 +39,9 @@ noncomputable def recordPublic (pk : PublicKey) (history : History) (query : Que
 noncomputable def recordSign (history : History) (message : Message) (cached : Bool) (answer : BitVec 256) : History :=
   { history with
     signedMessages := insert message history.signedMessages
-    signedIndices := insert (answer.extractLsb' 0 152) history.signedIndices
+    signedIndices := insert (answer.extractLsb' 0 160) history.signedIndices
     indexTrace := if cached then history.indexTrace else
-      history.indexTrace ++ [(decide (message ∉ history.signedMessages),answer.extractLsb' 0 152)]
+      history.indexTrace ++ [(decide (message ∉ history.signedMessages),answer.extractLsb' 0 160)]
     counts := {history.counts with graph := history.counts.graph+111595, index := history.counts.index+1} }
 
 def recordKeygen (history : History) : History :=

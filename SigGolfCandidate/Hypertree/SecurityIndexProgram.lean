@@ -19,7 +19,7 @@ noncomputable def execute {α : Type} : Program α → ProbComp (α × List Entr
   | .pure value => pure (value,[])
   | .draw mark next => do
       let answer ← $ᵗ BitVec 256
-      (fun result => (result.1,(mark,answer.extractLsb' 0 152)::result.2)) <$> execute (next answer)
+      (fun result => (result.1,(mark,answer.extractLsb' 0 160)::result.2)) <$> execute (next answer)
   | .coin n next => do
       let answer ← $ᵗ Fin (n+1)
       execute (next answer)
@@ -41,7 +41,7 @@ theorem counter_projection {α : Type} (program : Program α) :
 
 theorem prob_conflict_le {α : Type} (program : Program α) (limit : Nat) :
     Pr[fun result => Conflict result.2 ∧ marks result.2 ≤ limit | execute program] ≤
-      (limit : ENNReal)/2^152 * expectedValue (execute program) (fun result => (result.2.length : ENNReal)) := by
+      (limit : ENNReal)/2^160 * expectedValue (execute program) (fun result => (result.2.length : ENNReal)) := by
   have bound := SecurityIndexTrace.prob_conflict_le (erase program) limit
   rw [← trace_projection, probEvent_map, SecurityIndexMonitor.cost_eq_expected,
     ← counter_projection, expectedValue_map] at bound

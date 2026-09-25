@@ -37,7 +37,7 @@ noncomputable def compile {α : Type} (nonces : NonceTable) (metadata : Metadata
         let nonce := nonces message
         let input := SecurityRandomOracle.indexInput signPk message nonce
         indexStep residual input (fun answer cache =>
-          let index := answer.extractLsb' 0 152
+          let index := answer.extractLsb' 0 160
           SecurityGraphMonitorOracle.disclose (needed metadata exposed index) exposed (fun opened =>
             let factors := viewFactors opened metadata
             let signature := SecurityGraphSigner.signature (privateTable factors) (labels factors) nonce index
@@ -60,7 +60,7 @@ noncomputable def experiment (publicCache : Cache) (adversary : Adversary submis
     (rounds budget : Nat) : ProbComp (Outcome (Result SecurityExperiment.Result)) := do
   let nonces ← $ᵗ NonceTable
   let metadata ← $ᵗ MetadataTable
-  let pk := truncate (metadata (.node 151 0))
+  let pk := truncate (metadata (.node 159 0))
   SecurityGraphMonitorProgram.experiment
     (start nonces metadata pk (ofInteract adversary pk rounds (adversary.initial pk publicCache) {}) budget) ∅
 

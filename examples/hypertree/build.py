@@ -1,7 +1,7 @@
 """Generate a deterministic binary hypertree candidate. No security certificate is claimed."""
 from pathlib import Path
 
-HEIGHT = 152
+HEIGHT = 160
 CHAINS = 46
 RANDOMIZER_BYTES = 32
 SIGNATURE_BYTES = RANDOMIZER_BYTES + 32 + (HEIGHT - 1) * (16 * CHAINS + 16)
@@ -205,7 +205,7 @@ def message_index(a, verifying):
     a.copy(randomizer, HASH + 80, RANDOMIZER_BYTES)
     a.hash(5, 112, message=True)
     a.copy(ANSWER, INDEX0, 16)
-    a.load(6, ANSWER + 16); a.shift(6, 6, 40); a.shift(6, 6, 40, True); a.save(6, INDEX2)
+    a.load(6, ANSWER + 16); a.shift(6, 6, 32); a.shift(6, 6, 32, True); a.save(6, INDEX2)
 
 def shift_index(a):
     a.load(6, INDEX0); a.load(7, INDEX1); a.load(10, INDEX2)

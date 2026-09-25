@@ -57,7 +57,7 @@ theorem calls_randomizedIndex (hash : Hash) (secretKey : SecretKey) (pk : Public
 theorem calls_signCompact (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (message : Message) :
     calls hash (SecurityReference.signCompact secretKey pk message)=111596 := by
   simp only [SecurityReference.signCompact,calls_bind,calls_randomizedIndex,calls_signLayerWithRoot,
-    calls_signUpper hash secretKey 151 1 _ _ (by decide),calls_pure]
+    calls_signUpper hash secretKey 159 1 _ _ (by decide),calls_pure]
   rfl
 
 /-- info: 'SigGolfCandidate.Hypertree.SecurityBytecodeCounts.calls_signCompact' depends on axioms: [propext,

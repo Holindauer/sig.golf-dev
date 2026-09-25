@@ -4,7 +4,7 @@ import Mathlib.Data.List.Sort
 namespace SigGolfCandidate.Hypertree.SecurityGraphOrder
 open SigGolf Reference SecurityDerivation SecurityGraph SecurityGraphCausality
 
-private def chainCoordinates (address : ChainAddress) : Fin 152 × BitVec 192 × Bool × Chain :=
+private def chainCoordinates (address : ChainAddress) : Fin 160 × BitVec 192 × Bool × Chain :=
   (address.level, address.tree, address.side, address.chain)
 
 private theorem chainCoordinates_injective : Function.Injective chainCoordinates := by
@@ -18,7 +18,7 @@ private theorem chainCoordinates_injective : Function.Injective chainCoordinates
 instance : Finite ChainAddress := Finite.of_injective chainCoordinates chainCoordinates_injective
 
 private def positionCoordinates : Position →
-    (ChainAddress × Fin 7) ⊕ ((Fin 152 × BitVec 192 × Bool) ⊕ (Fin 152 × BitVec 192))
+    (ChainAddress × Fin 7) ⊕ ((Fin 160 × BitVec 192 × Bool) ⊕ (Fin 160 × BitVec 192))
   | .chain address step => .inl (address, step)
   | .leaf level tree side => .inr (.inl (level, tree, side))
   | .node level tree => .inr (.inr (level, tree))

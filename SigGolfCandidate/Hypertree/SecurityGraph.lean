@@ -75,11 +75,11 @@ theorem Address.eq_of_input_eq {first second : Address} {payload payload' : List
 binary node compression. Bottom leaves use chain step zero directly. -/
 inductive Position where
   | chain (address : ChainAddress) (step : Fin 7)
-  | leaf (level : Fin 152) (tree : BitVec 192) (side : Bool)
-  | node (level : Fin 152) (tree : BitVec 192)
+  | leaf (level : Fin 160) (tree : BitVec 192) (side : Bool)
+  | node (level : Fin 160) (tree : BitVec 192)
   deriving DecidableEq
 
-private def levelByte (level : Fin 152) : Fin 256 := ⟨level.val, by omega⟩
+private def levelByte (level : Fin 160) : Fin 256 := ⟨level.val, by omega⟩
 private def sideByte (side : Bool) : Fin 256 := ⟨sideNumber side, by cases side <;> decide⟩
 private def chainByte (chain : Chain) : Fin 256 := ⟨chain.val, by omega⟩
 private def stepByte (step : Fin 7) : Fin 256 := ⟨step.val, by omega⟩

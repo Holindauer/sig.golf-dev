@@ -30,7 +30,7 @@ noncomputable def execute {α : Type} (factors : Factors) (pk : PublicKey) :
       if 111596 ≤ remaining then do
         let result ← (randomOracle (spec := HashSpec)
           (SecurityRandomOracle.indexInput signPk message (factors.2.1 message))).run cache
-        let index := result.1.extractLsb' 0 152
+        let index := result.1.extractLsb' 0 160
         let response := SecurityExperiment.serialize
           (SecurityGraphSigner.signature (privateTable factors) (labels factors) (factors.2.1 message) index)
         let opened := revealCache factors.1 (needed factors.2.2 exposed index) exposed

@@ -136,10 +136,10 @@ theorem roots_after_succ (hash : Hash) (secretKey : SecretKey) (count level inde
 def randomizer (hash : Hash) (secretKey : SecretKey) (message : Message) : Bytes 32 :=
   query hash 6 0 0 0 0 0 (bytes secretKey ++ bytes message)
 
-def indexOf (hash : Hash) (pk : PublicKey) (message : Message) (r : Bytes 32) : BitVec 152 :=
-  (query hash 5 0 0 0 0 0 (bytes pk ++ bytes message ++ bytes r)).extractLsb' 0 152
+def indexOf (hash : Hash) (pk : PublicKey) (message : Message) (r : Bytes 32) : BitVec 160 :=
+  (query hash 5 0 0 0 0 0 (bytes pk ++ bytes message ++ bytes r)).extractLsb' 0 160
 
-def keygen (hash : Hash) (secretKey : SecretKey) : PublicKey := treeRoot hash secretKey 151 0
+def keygen (hash : Hash) (secretKey : SecretKey) : PublicKey := treeRoot hash secretKey 159 0
 
 structure Signature where
   randomizer : Bytes 32
@@ -147,10 +147,10 @@ structure Signature where
 
 def sign (hash : Hash) (secretKey : SecretKey) (pk : PublicKey) (message : Message) : Signature :=
   let r := randomizer hash secretKey message
-  ⟨r, signLayers hash secretKey 152 0 (indexOf hash pk message r).toNat 0⟩
+  ⟨r, signLayers hash secretKey 160 0 (indexOf hash pk message r).toNat 0⟩
 
 def verify (hash : Hash) (pk : PublicKey) (message : Message) (signature : Signature) : Prop :=
-  signature.layers.length = 152 ∧
+  signature.layers.length = 160 ∧
     recoverLayers hash 0 (indexOf hash pk message signature.randomizer).toNat 0 signature.layers = pk
 
 theorem sign_layers_length (hash : Hash) (secretKey : SecretKey) (count level index : Nat) (message : Digest) :
@@ -165,8 +165,8 @@ theorem correct (hash : Hash) (secretKey : SecretKey) (message : Message) :
   constructor
   · exact sign_layers_length _ _ _ _ _ _
   · change recoverLayers hash 0 (indexOf hash (keygen hash secretKey) message (randomizer hash secretKey message)).toNat 0
-      (signLayers hash secretKey 152 0 (indexOf hash (keygen hash secretKey) message (randomizer hash secretKey message)).toNat 0) = _
-    rw [recover_sign_layers, roots_after_succ hash secretKey 151 0]
+      (signLayers hash secretKey 160 0 (indexOf hash (keygen hash secretKey) message (randomizer hash secretKey message)).toNat 0) = _
+    rw [recover_sign_layers, roots_after_succ hash secretKey 159 0]
     have hidx := (indexOf hash (keygen hash secretKey) message (randomizer hash secretKey message)).isLt
     simp only [Nat.zero_add, Nat.div_eq_of_lt hidx]
     rfl

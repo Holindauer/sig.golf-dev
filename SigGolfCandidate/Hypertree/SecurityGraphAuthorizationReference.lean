@@ -8,7 +8,7 @@ set_option maxRecDepth 4096
 
 /-- The graph factorization of the canonical chain walk used in extraction. -/
 theorem programmed_path_walk (residual : Hash) (secretKey : SecretKey) (graph : Labels)
-    (level : Fin 152) (index : Nat) (chain : Chain) (point : Fin 8)
+    (level : Fin 160) (index : Nat) (chain : Chain) (point : Fin 8)
     (bound : index < 2 ^ 192) :
     walk (chainHash (programmed (derived residual secretKey) graph residual)
       level.val (index / 2) (index % 2 == 1) chain) 0 point.val
@@ -22,7 +22,7 @@ theorem programmed_path_walk (residual : Hash) (secretKey : SecretKey) (graph : 
   simpa only [pathAddress, BitVec.toNat_ofNat, Nat.mod_eq_of_lt half, factor] using step
 
 theorem programmed_canonical_child (residual : Hash) (secretKey : SecretKey) (graph : Labels)
-    (level : Fin 152) (index : Nat) (bound : index < 2 ^ 192) :
+    (level : Fin 160) (index : Nat) (bound : index < 2 ^ 192) :
     SecurityPath.canonicalChild (programmed (derived residual secretKey) graph residual) secretKey
       level.val index =
       truncate ((factor (derived residual secretKey, graph)).2.2
@@ -35,7 +35,7 @@ theorem programmed_canonical_child (residual : Hash) (secretKey : SecretKey) (gr
 /-- Concrete canonical-graph instantiation of the extracted earlier-point event.
 The output is an actual forged fragment equal to an unauthorized sampled point. -/
 theorem programmed_earlier_point (residual : Hash) (secretKey : SecretKey) (graph : Labels)
-    (signed : Finset (BitVec 152)) (level : Fin 152) (index : Nat)
+    (signed : Finset (BitVec 160)) (level : Fin 160) (index : Nat)
     (bound : index < 2 ^ 192) (upper : 0 < level.val)
     (message : Digest) (signature : LayerSignature)
     (exposure : SecurityPath.EarlierPointExposure
@@ -52,7 +52,7 @@ theorem programmed_earlier_point (residual : Hash) (secretKey : SecretKey) (grap
 
 /-- Only indices occurring in actual signing responses open bottom sources. -/
 def signedIndices (hash : Hash) (secretKey : SecretKey) (history : SecurityForgery.History) :
-    Finset (BitVec 152) :=
+    Finset (BitVec 160) :=
   (history.map fun entry => SecurityForgery.index hash secretKey entry.1 entry.2).toFinset
 
 theorem fresh_index_not_signed (hash : Hash) (secretKey : SecretKey) (history : SecurityForgery.History)
@@ -65,7 +65,7 @@ theorem fresh_index_not_signed (hash : Hash) (secretKey : SecretKey) (history : 
   exact fresh entry member same
 
 /-- The bottom alternative of strong-forgery extraction produces the unopened
-source point at exactly the forged message's actual 152-bit index. -/
+source point at exactly the forged message's actual 160-bit index. -/
 theorem programmed_new_bottom (residual : Hash) (secretKey : SecretKey) (graph : Labels)
     (history : SecurityForgery.History) (message : Message) (signature : SignatureEncoding.Compact)
     (exposure : SecurityForgery.NewBottomExposure

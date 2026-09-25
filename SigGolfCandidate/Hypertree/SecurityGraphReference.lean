@@ -98,14 +98,14 @@ theorem programmed_endpoint (residual : Hash) (secretKey : SecretKey) (labels : 
       address.tree.toNat address.side address.chain = truncate (labels (.chain address 6)) := by
   exact programmed_walk residual secretKey labels address 7 (by decide)
 
-def leafLabel (labels : Labels) (level : Fin 152) (tree : BitVec 192) (side : Bool) : Digest :=
+def leafLabel (labels : Labels) (level : Fin 160) (tree : BitVec 192) (side : Bool) : Digest :=
   if level.val = 0 then truncate (labels (.chain ⟨level, tree, side, 0⟩ 0))
   else truncate (labels (.leaf level tree side))
 
 /-- Actual binary-tree leaves recover the sampled graph labels at both the
 bottom preimage layer and all upper WOTS layers. -/
 theorem programmed_leafRoot (residual : Hash) (secretKey : SecretKey) (labels : Labels)
-    (level : Fin 152) (tree : BitVec 192) (side : Bool) :
+    (level : Fin 160) (tree : BitVec 192) (side : Bool) :
     leafRoot (programmed (derived residual secretKey) labels residual) secretKey level.val tree.toNat side =
       leafLabel labels level tree side := by
   by_cases bottom : level.val = 0
@@ -126,7 +126,7 @@ theorem programmed_leafRoot (residual : Hash) (secretKey : SecretKey) (labels : 
 node labels. The probability proof can therefore identify their independence from
 WOTS interior points without treating reference hashing as an independent oracle. -/
 theorem programmed_treeRoot (residual : Hash) (secretKey : SecretKey) (labels : Labels)
-    (level : Fin 152) (tree : BitVec 192) :
+    (level : Fin 160) (tree : BitVec 192) :
     treeRoot (programmed (derived residual secretKey) labels residual) secretKey level.val tree.toNat =
       truncate (labels (.node level tree)) := by
   rw [treeRoot, programmed_leafRoot, programmed_leafRoot]
@@ -136,7 +136,7 @@ theorem programmed_treeRoot (residual : Hash) (secretKey : SecretKey) (labels : 
 
 /-- Signing reveals exactly the canonical point selected by each WOTS digit. -/
 theorem programmed_sign_fragment (residual : Hash) (secretKey : SecretKey) (labels : Labels)
-    (level : Fin 152) (tree : BitVec 192) (side : Bool) (message : Digest) (chain : Chain) :
+    (level : Fin 160) (tree : BitVec 192) (side : Bool) (message : Digest) (chain : Chain) :
     (signLayer (programmed (derived residual secretKey) labels residual) secretKey level.val tree.toNat side message).values chain =
       if level.val = 0 then chainPoint (derived residual secretKey) labels ⟨level, tree, side, chain⟩ 0
       else chainPoint (derived residual secretKey) labels ⟨level, tree, side, chain⟩ (digit message chain) := by

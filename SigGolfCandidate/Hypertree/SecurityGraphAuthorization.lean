@@ -18,12 +18,12 @@ def threshold (metadata : MetadataTable) (address : ChainAddress) : Fin 8 :=
 
 /-- A conservative public frontier: every upper canonical suffix is available
 from setup; bottom sources become available only for actually signed indices. -/
-def Authorized (metadata : MetadataTable) (signed : Finset (BitVec 152)) (point : Point) : Prop :=
+def Authorized (metadata : MetadataTable) (signed : Finset (BitVec 160)) (point : Point) : Prop :=
   if point.1.level.val = 0 then
     0 < point.2.val ∨ ∃ index ∈ signed, childIndex point.1 = index.toNat
   else (threshold metadata point.1).val ≤ point.2.val
 
-theorem authorized_mono (metadata : MetadataTable) {first second : Finset (BitVec 152)}
+theorem authorized_mono (metadata : MetadataTable) {first second : Finset (BitVec 160)}
     (subset : first ⊆ second) {point : Point} (known : Authorized metadata first point) :
     Authorized metadata second point := by
   by_cases bottom : point.1.level.val = 0
@@ -33,14 +33,14 @@ theorem authorized_mono (metadata : MetadataTable) {first second : Finset (BitVe
     · exact Or.inr ⟨index, subset member, same⟩
   · simpa only [Authorized, bottom, if_false] using known
 
-theorem endpoint_authorized (metadata : MetadataTable) (signed : Finset (BitVec 152))
+theorem endpoint_authorized (metadata : MetadataTable) (signed : Finset (BitVec 160))
     (address : ChainAddress) : Authorized metadata signed (address, 7) := by
   unfold Authorized
   split
   · exact Or.inl (by change 0 < 7; omega)
   · exact Nat.le_of_lt_succ (threshold metadata address).isLt
 
-theorem below_threshold_unauthorized (metadata : MetadataTable) (signed : Finset (BitVec 152))
+theorem below_threshold_unauthorized (metadata : MetadataTable) (signed : Finset (BitVec 160))
     (address : ChainAddress) (point : Fin 8) (upper : 0 < address.level.val)
     (earlier : point.val < (threshold metadata address).val) :
     ¬Authorized metadata signed (address, point) := by
@@ -52,16 +52,16 @@ theorem div_side (index : Nat) : 2 * (index / 2) + sideNumber (index % 2 == 1) =
   have decomposition := Nat.mod_add_div index 2
   by_cases side : index % 2 = 1 <;> simp [sideNumber, side] <;> omega
 
-/-- No address wrapping occurs anywhere on a 152-layer authentication path. -/
-def pathAddress (level : Fin 152) (index : Nat) (chain : Chain) : ChainAddress :=
+/-- No address wrapping occurs anywhere on a 160-layer authentication path. -/
+def pathAddress (level : Fin 160) (index : Nat) (chain : Chain) : ChainAddress :=
   ⟨level, BitVec.ofNat 192 (index / 2), index % 2 == 1, chain⟩
 
-theorem childIndex_pathAddress (level : Fin 152) (index : Nat) (chain : Chain)
+theorem childIndex_pathAddress (level : Fin 160) (index : Nat) (chain : Chain)
     (bound : index < 2 ^ 192) : childIndex (pathAddress level index chain) = index := by
   have half : index / 2 < 2 ^ 192 := lt_of_le_of_lt (Nat.div_le_self ..) bound
   simpa only [childIndex, pathAddress, BitVec.toNat_ofNat, Nat.mod_eq_of_lt half] using div_side index
 
-theorem threshold_pathAddress (metadata : MetadataTable) (level : Fin 152)
+theorem threshold_pathAddress (metadata : MetadataTable) (level : Fin 160)
     (index : Nat) (chain : Chain) (bound : index < 2 ^ 192) :
     threshold metadata (pathAddress level index chain) =
       digit (truncate (metadata (.node ⟨level.val - 1, by omega⟩ (BitVec.ofNat 192 index)))) chain := by
@@ -69,8 +69,8 @@ theorem threshold_pathAddress (metadata : MetadataTable) (level : Fin 152)
   rw [childIndex_pathAddress level index chain bound]
   rfl
 
-theorem bottom_source_unauthorized (metadata : MetadataTable) (signed : Finset (BitVec 152))
-    (index : BitVec 152) (fresh : index ∉ signed) :
+theorem bottom_source_unauthorized (metadata : MetadataTable) (signed : Finset (BitVec 160))
+    (index : BitVec 160) (fresh : index ∉ signed) :
     ¬Authorized metadata signed (pathAddress 0 index.toNat 0, 0) := by
   have bound : index.toNat < 2 ^ 192 := lt_of_lt_of_le index.isLt
     (Nat.pow_le_pow_right (by decide) (by decide))
@@ -84,7 +84,7 @@ theorem bottom_source_unauthorized (metadata : MetadataTable) (signed : Finset (
 /-- Reference extraction identifies a genuinely unopened graph coordinate once
 its canonical child and chain point have been related to the sampled graph. -/
 theorem earlier_point_unauthorized (hash : Hash) (secretKey : SecretKey) (factors : Factors)
-    (signed : Finset (BitVec 152)) (level : Fin 152) (index : Nat)
+    (signed : Finset (BitVec 160)) (level : Fin 160) (index : Nat)
     (bound : index < 2 ^ 192) (upper : 0 < level.val)
     (message : Digest) (signature : LayerSignature)
     (child : SecurityPath.canonicalChild hash secretKey level.val index =

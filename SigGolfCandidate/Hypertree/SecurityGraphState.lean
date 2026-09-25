@@ -121,7 +121,7 @@ theorem execute_sequenceFin {α : Type} (privateAnswers : PrivateTable) (labels 
     exact Fin.cases rfl (fun _ => rfl) i
 
 theorem compress_leaf (privateAnswers : PrivateTable) (labels : Labels)
-    (level : Fin 152) (tree : BitVec 192) (side : Bool) :
+    (level : Fin 160) (tree : BitVec 192) (side : Bool) :
     publicExecute privateAnswers labels (SecurityReference.compressLeaf level.val tree.toNat side
       (fun chain => truncate (labels (.chain ⟨level, tree, side, chain⟩ 6)))) =
       pure (truncate (labels (.leaf level tree side))) := by
@@ -131,7 +131,7 @@ theorem compress_leaf (privateAnswers : PrivateTable) (labels : Labels)
   rw [publicExecute_graph, map_pure]
 
 theorem node_label (privateAnswers : PrivateTable) (labels : Labels)
-    (level : Fin 152) (tree : BitVec 192) :
+    (level : Fin 160) (tree : BitVec 192) :
     publicExecute privateAnswers labels (SecurityReference.node level.val tree.toNat
       (leafLabel labels level tree false) (leafLabel labels level tree true)) =
       pure (truncate (labels (.node level tree))) := by
@@ -141,7 +141,7 @@ theorem node_label (privateAnswers : PrivateTable) (labels : Labels)
   rw [publicExecute_graph, map_pure]
 
 @[simp] theorem execute_leafRoot (privateAnswers : PrivateTable) (labels : Labels)
-    (level : Fin 152) (tree : BitVec 192) (side : Bool) :
+    (level : Fin 160) (tree : BitVec 192) (side : Bool) :
     execute privateAnswers labels (SecurityIdealKeygen.leafRoot level tree side) =
       pure (leafLabel labels level tree side) := by
   by_cases bottom : level.val = 0
@@ -156,7 +156,7 @@ theorem node_label (privateAnswers : PrivateTable) (labels : Labels)
     simp only [leafLabel, if_neg bottom]
 
 @[simp] theorem execute_treeRoot (privateAnswers : PrivateTable) (labels : Labels)
-    (level : Fin 152) (tree : BitVec 192) :
+    (level : Fin 160) (tree : BitVec 192) :
     execute privateAnswers labels (SecurityIdealKeygen.treeRoot level tree) =
       pure (truncate (labels (.node level tree))) := by
   simp only [SecurityIdealKeygen.treeRoot, execute_bind, execute_leafRoot, pure_bind,
@@ -165,7 +165,7 @@ theorem node_label (privateAnswers : PrivateTable) (labels : Labels)
 /-- Actual key generation returns the planted root and leaves any residual cache unchanged. -/
 theorem keygen_run (privateAnswers : PrivateTable) (labels : Labels) (cache : QueryCache HashSpec) :
     (execute privateAnswers labels SecurityIdealKeygen.keygen).run cache =
-      pure (truncate (labels (.node 151 0)), cache) := by
+      pure (truncate (labels (.node 159 0)), cache) := by
   rw [SecurityIdealKeygen.keygen, execute_treeRoot]
   rfl
 

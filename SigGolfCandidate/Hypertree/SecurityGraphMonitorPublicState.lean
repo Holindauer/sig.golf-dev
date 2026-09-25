@@ -11,7 +11,7 @@ set_option backward.isDefEq.respectTransparency false
 set_option maxRecDepth 4096
 open scoped Classical
 
-theorem required_authorized (metadata : MetadataTable) (signed : Finset (BitVec 152))
+theorem required_authorized (metadata : MetadataTable) (signed : Finset (BitVec 160))
     (position : Position) : ∀ point ∈ required position, Authorized metadata signed point := by
   cases position with
   | chain address step => simp only [required, List.not_mem_nil, false_implies, implies_true]
@@ -28,7 +28,7 @@ theorem required_authorized (metadata : MetadataTable) (signed : Finset (BitVec 
         exact bottom_positive_authorized metadata signed _ 1 bottom (by decide)
     · simp only [required, if_neg bottom, List.not_mem_nil, false_implies, implies_true]
 
-theorem metadata_state_safe (factors : Factors) (signed : Finset (BitVec 152))
+theorem metadata_state_safe (factors : Factors) (signed : Finset (BitVec 160))
     (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) (initial : Safe factors signed exposed cache)
     (position : Position) :
     Safe factors signed (revealCache factors.1 (required position) exposed) cache :=
@@ -37,7 +37,7 @@ theorem metadata_state_safe (factors : Factors) (signed : Finset (BitVec 152))
 
 /-- Every normally completed metadata query preserves the actual exposure and
 residual-cache invariants and cannot be a wrong-input target collision. -/
-theorem nonchain_read_safe (factors : Factors) (signed : Finset (BitVec 152))
+theorem nonchain_read_safe (factors : Factors) (signed : Finset (BitVec 160))
     (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) (initial : Safe factors signed exposed cache)
     (position : Position) (query : Query) (located : locate query = some position)
     (nonchain : ∀ address step, position ≠ Position.chain address step) (result : Answer)
@@ -63,7 +63,7 @@ theorem nonchain_read_safe (factors : Factors) (signed : Finset (BitVec 152))
     exact ⟨safe.1, fun _ => safe.2⟩
 
 /-- Inputs outside graph addresses cannot affect any graph target invariant. -/
-theorem outside_read_safe (factors : Factors) (signed : Finset (BitVec 152))
+theorem outside_read_safe (factors : Factors) (signed : Finset (BitVec 160))
     (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) (initial : Safe factors signed exposed cache)
     (query : Query) (located : locate query = none) (result : Answer)
     (member : some result ∈ support (stopped factors.1 exposed
@@ -90,7 +90,7 @@ theorem outside_read_safe (factors : Factors) (signed : Finset (BitVec 152))
 
 /-- The state invariant holds after every public query, for every malformed input
 and every cache state reachable before contact. -/
-theorem public_read_safe (factors : Factors) (signed : Finset (BitVec 152))
+theorem public_read_safe (factors : Factors) (signed : Finset (BitVec 160))
     (exposed : QueryCache PointSpec) (cache : QueryCache HashSpec) (initial : Safe factors signed exposed cache)
     (query : Query) (result : Answer)
     (member : some result ∈ support (stopped factors.1 exposed

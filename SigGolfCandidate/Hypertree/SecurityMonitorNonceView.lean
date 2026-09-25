@@ -44,7 +44,7 @@ noncomputable def compile {α : Type} (points : PointTable) (metadata : Metadata
         let input := SecurityRandomOracle.indexInput signPk message nonce
         liftValue points exposed (indexStep residual input (fun answer cache => .done (answer, cache)))
           (fun result =>
-            let index := result.1.extractLsb' 0 152
+            let index := result.1.extractLsb' 0 160
             liftValue points exposed (SecurityGraphMonitorOracle.disclose (needed metadata exposed index) exposed .done)
               (fun opened =>
                 let factors := viewFactors opened metadata

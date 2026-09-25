@@ -83,7 +83,7 @@ theorem eval_signChain (privateAnswers : PrivateTable) (labels : Labels) (residu
 
 /-- The signer needs only public endpoint/leaf labels for the sibling subtree. -/
 theorem eval_leafRoot (privateAnswers : PrivateTable) (labels : Labels) (residual : Hash)
-    (level : Fin 152) (tree : BitVec 192) (side : Bool) :
+    (level : Fin 160) (tree : BitVec 192) (side : Bool) :
     evalWithAnswerFn (answers privateAnswers (programmed privateAnswers labels residual))
       (SecurityIdealKeygen.leafRoot level tree side) = leafLabel labels level tree side := by
   by_cases bottom : level.val = 0
@@ -99,7 +99,7 @@ theorem eval_leafRoot (privateAnswers : PrivateTable) (labels : Labels) (residua
 
 /-- All canonical tree roots are designated independent node labels. -/
 theorem eval_treeRoot (privateAnswers : PrivateTable) (labels : Labels) (residual : Hash)
-    (level : Fin 152) (tree : BitVec 192) :
+    (level : Fin 160) (tree : BitVec 192) :
     evalWithAnswerFn (answers privateAnswers (programmed privateAnswers labels residual))
       (SecurityIdealKeygen.treeRoot level tree) = truncate (labels (.node level tree)) := by
   simp only [SecurityIdealKeygen.treeRoot, evalWithAnswerFn_bind, eval_leafRoot,
@@ -110,12 +110,12 @@ theorem eval_treeRoot (privateAnswers : PrivateTable) (labels : Labels) (residua
 
 theorem eval_keygen (privateAnswers : PrivateTable) (labels : Labels) (residual : Hash) :
     evalWithAnswerFn (answers privateAnswers (programmed privateAnswers labels residual))
-      SecurityIdealKeygen.keygen = truncate (labels (.node 151 0)) :=
-  eval_treeRoot privateAnswers labels residual 151 0
+      SecurityIdealKeygen.keygen = truncate (labels (.node 159 0)) :=
+  eval_treeRoot privateAnswers labels residual 159 0
 
 /-- The exact fields revealed by an actual ideal layer signature. At the bottom
 only chain zero is serialized; an upper layer reveals its digit-selected points. -/
-def layer (privateAnswers : PrivateTable) (labels : Labels) (level : Fin 152)
+def layer (privateAnswers : PrivateTable) (labels : Labels) (level : Fin 160)
     (tree : BitVec 192) (side : Bool) (message : Digest) : LayerSignature :=
   ⟨if level.val = 0 then
       fun i => if i = 0 then chainPoint privateAnswers labels ⟨level, tree, side, 0⟩ 0 else 0
@@ -123,7 +123,7 @@ def layer (privateAnswers : PrivateTable) (labels : Labels) (level : Fin 152)
     leafLabel labels level tree (!side)⟩
 
 theorem compress_leaf (privateAnswers : PrivateTable) (labels : Labels) (residual : Hash)
-    (level : Fin 152) (tree : BitVec 192) (side : Bool) :
+    (level : Fin 160) (tree : BitVec 192) (side : Bool) :
     compressLeaf (programmed privateAnswers labels residual) level.val tree.toNat side
       (fun chain => truncate (labels (.chain ⟨level, tree, side, chain⟩ 6))) =
       truncate (labels (.leaf level tree side)) := by
@@ -132,7 +132,7 @@ theorem compress_leaf (privateAnswers : PrivateTable) (labels : Labels) (residua
   rw [programmed_graph]
 
 theorem node_label (privateAnswers : PrivateTable) (labels : Labels) (residual : Hash)
-    (level : Fin 152) (tree : BitVec 192) :
+    (level : Fin 160) (tree : BitVec 192) :
     node (programmed privateAnswers labels residual) level.val tree.toNat
       (leafLabel labels level tree false) (leafLabel labels level tree true) =
       truncate (labels (.node level tree)) := by
@@ -143,7 +143,7 @@ theorem node_label (privateAnswers : PrivateTable) (labels : Labels) (residual :
 /-- Exact whole-layer signing, including the child-root message passed upward.
 This is the actual monadic signer, not an abstract signature interface. -/
 theorem eval_signLayer (privateAnswers : PrivateTable) (labels : Labels) (residual : Hash)
-    (level : Fin 152) (tree : BitVec 192) (side : Bool) (message : Digest) :
+    (level : Fin 160) (tree : BitVec 192) (side : Bool) (message : Digest) :
     evalWithAnswerFn (answers privateAnswers (programmed privateAnswers labels residual))
       (SecurityIdealSign.signLayerWithRoot level tree side message) =
       (layer privateAnswers labels level tree side message, truncate (labels (.node level tree))) := by
@@ -191,31 +191,31 @@ theorem eval_randomizedIndex (privateAnswers : PrivateTable) (labels : Labels) (
     evalWithAnswerFn (answers privateAnswers (programmed privateAnswers labels residual))
       (SecurityIdealSign.randomizedIndex pk message) =
       (privateAnswers (.randomizer message),
-        (residual (SecurityRandomOracle.indexInput pk message (privateAnswers (.randomizer message)))).extractLsb' 0 152) := by
+        (residual (SecurityRandomOracle.indexInput pk message (privateAnswers (.randomizer message)))).extractLsb' 0 160) := by
   have nonce : evalWithAnswerFn (answers privateAnswers (programmed privateAnswers labels residual))
       (SecurityIdealSign.randomizer message) = privateAnswers (.randomizer message) := rfl
   simp only [SecurityIdealSign.randomizedIndex, evalWithAnswerFn_bind, evalWithAnswerFn_pure,
     nonce, eval_public]
   change (privateAnswers (.randomizer message),
     (programmed privateAnswers labels residual (SecurityRandomOracle.indexInput pk message
-      (privateAnswers (.randomizer message)))).extractLsb' 0 152) = _
+      (privateAnswers (.randomizer message)))).extractLsb' 0 160) = _
   rw [programmed_index]
 
 /-- Canonical upper signatures as direct graph-coordinate reads. After the first
 layer, every WOTS message is a public node label independent of interior points. -/
 def upperLayers (privateAnswers : PrivateTable) (labels : Labels) :
-    (count level index : Nat) → count + level ≤ 152 → index < 2 ^ 192 →
+    (count level index : Nat) → count + level ≤ 160 → index < 2 ^ 192 →
       Digest → List LayerSignature
   | 0, _, _, _, _, _ => []
   | count + 1, level, index, hl, hi, message =>
-      let atLevel : Fin 152 := ⟨level, by omega⟩
+      let atLevel : Fin 160 := ⟨level, by omega⟩
       let tree := BitVec.ofNat 192 (index / 2)
       layer privateAnswers labels atLevel tree (index % 2 == 1) message ::
         upperLayers privateAnswers labels count (level + 1) (index / 2) (by omega)
           (lt_of_le_of_lt (Nat.div_le_self ..) hi) (truncate (labels (.node atLevel tree)))
 
 theorem eval_signUpper (privateAnswers : PrivateTable) (labels : Labels) (residual : Hash)
-    (count level index : Nat) (hl : count + level ≤ 152) (hi : index < 2 ^ 192) (message : Digest) :
+    (count level index : Nat) (hl : count + level ≤ 160) (hi : index < 2 ^ 192) (message : Digest) :
     evalWithAnswerFn (answers privateAnswers (programmed privateAnswers labels residual))
       (SecurityIdealSign.signUpper count level index hl hi message) =
       upperLayers privateAnswers labels count level index hl hi message := by
@@ -225,18 +225,18 @@ theorem eval_signUpper (privateAnswers : PrivateTable) (labels : Labels) (residu
     simp only [SecurityIdealSign.signUpper, evalWithAnswerFn_bind, evalWithAnswerFn_pure,
       eval_signLayer, ih, upperLayers]
 
-private theorem index_bound (index : BitVec 152) : index.toNat / 2 < 2 ^ 192 := by
-  have bound : (2 : Nat) ^ 152 ≤ 2 ^ 192 := Nat.pow_le_pow_right (by decide) (by decide)
+private theorem index_bound (index : BitVec 160) : index.toNat / 2 < 2 ^ 192 := by
+  have bound : (2 : Nat) ^ 160 ≤ 2 ^ 192 := Nat.pow_le_pow_right (by decide) (by decide)
   exact lt_of_le_of_lt (Nat.div_le_self ..) (lt_of_lt_of_le index.isLt bound)
 
 /-- All compact signature fields as explicit graph-coordinate reveals. -/
 def signature (privateAnswers : PrivateTable) (labels : Labels) (r : Bytes 32)
-    (index : BitVec 152) : SignatureEncoding.Compact :=
+    (index : BitVec 160) : SignatureEncoding.Compact :=
   let tree := BitVec.ofNat 192 (index.toNat / 2)
   let side := index.toNat % 2 == 1
   ⟨r, chainPoint privateAnswers labels ⟨0, tree, side, 0⟩ 0,
     leafLabel labels 0 tree (!side),
-    upperLayers privateAnswers labels 151 1 (index.toNat / 2) (by decide) (index_bound index)
+    upperLayers privateAnswers labels 159 1 (index.toNat / 2) (by decide) (index_bound index)
       (truncate (labels (.node 0 tree)))⟩
 
 /-- The actual full ideal signing program has exactly this graph-coordinate
@@ -247,7 +247,7 @@ theorem eval_signCompact (privateAnswers : PrivateTable) (labels : Labels) (resi
       (SecurityIdealSign.signCompact pk message) =
       signature privateAnswers labels (privateAnswers (.randomizer message))
         ((residual (SecurityRandomOracle.indexInput pk message
-          (privateAnswers (.randomizer message)))).extractLsb' 0 152) := by
+          (privateAnswers (.randomizer message)))).extractLsb' 0 160) := by
   simp only [SecurityIdealSign.signCompact, evalWithAnswerFn_bind, evalWithAnswerFn_pure,
     eval_randomizedIndex, eval_signLayer, eval_signUpper]
   rfl

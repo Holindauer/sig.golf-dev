@@ -31,7 +31,7 @@ private theorem coin_run (factors : Factors) (n : Nat) (cache : QueryCache HashS
 private theorem sign_run (factors : Factors) (pk : PublicKey) (message : Message) (cache : QueryCache HashSpec) :
     (simulateQ (handler factors) ((SecurityExperiment.signWire pk message).liftComp GameWorld)).run cache =
       (fun result => (SecurityExperiment.serialize (SecurityGraphSigner.signature (privateTable factors)
-        (labels factors) (factors.2.1 message) (result.1.extractLsb' 0 152)), result.2)) <$>
+        (labels factors) (factors.2.1 message) (result.1.extractLsb' 0 160)), result.2)) <$>
         (randomOracle (spec := HashSpec) (SecurityRandomOracle.indexInput pk message (factors.2.1 message))).run cache := by
   rw [handler, routing, routed_signWire_run]
   rfl
@@ -84,9 +84,9 @@ theorem traced_view {α : Type} (factors : Factors) (pk : PublicKey) (view : Vie
       intro result _
       simpa only [extend_sign, traced] using ih
         (SecurityExperiment.serialize (SecurityGraphSigner.signature (privateTable factors) (labels factors)
-          (factors.2.1 message) (result.1.extractLsb' 0 152))) (budget - 111596)
+          (factors.2.1 message) (result.1.extractLsb' 0 160))) (budget - 111596)
         (SecurityGraphDisclosure.revealCache factors.1
-          (SecurityGraphMonitorSign.needed factors.2.2 exposed (result.1.extractLsb' 0 152)) exposed)
+          (SecurityGraphMonitorSign.needed factors.2.2 exposed (result.1.extractLsb' 0 160)) exposed)
         result.2 (recordSign history message
           (cache (SecurityRandomOracle.indexInput signPk message (factors.2.1 message))).isSome result.1)
     · rw [if_neg enough]

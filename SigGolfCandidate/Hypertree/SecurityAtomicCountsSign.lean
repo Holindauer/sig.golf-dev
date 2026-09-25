@@ -31,7 +31,7 @@ private theorem nodeChoice (level tree : Nat) (side : Bool) (sibling current : D
       else SecurityReference.node level tree current sibling) 1 := by
   cases side <;> exact node _ _ _ _
 
-theorem signLayerWithRoot (level : Fin 152) (tree : BitVec 192) (side : Bool) (message : Digest) :
+theorem signLayerWithRoot (level : Fin 160) (tree : BitVec 192) (side : Bool) (message : Digest) :
     Queries (SecurityIdealSign.signLayerWithRoot level tree side message)
       (if level.val = 0 then 5 else 739) := by
   by_cases bottom : level.val = 0
@@ -52,7 +52,7 @@ theorem signLayerWithRoot (level : Fin 152) (tree : BitVec 192) (side : Bool) (m
           sibling.bind _ (fun sibling => (publicCall (nodeChoice level.val tree.toNat side sibling current)).map
             (fun root => ((⟨fun i => (chains i).1, sibling⟩ : LayerSignature), root)))))
 
-theorem signUpper (count level index : Nat) (hl : count + level ≤ 152) (hi : index < 2 ^ 192)
+theorem signUpper (count level index : Nat) (hl : count + level ≤ 160) (hi : index < 2 ^ 192)
     (message : Digest) (positive : 0 < level) :
     Queries (SecurityIdealSign.signUpper count level index hl hi message) (739 * count) := by
   induction count generalizing level index message with
@@ -77,7 +77,7 @@ theorem randomizedIndex (pk : PublicKey) (message : Message) :
   simpa only [map_eq_pure_bind] using
     (randomizer message).bind _ (fun nonce =>
       (publicCall (Queries.ask (spec := HashSpec) (SecurityRandomOracle.indexInput pk message nonce))).map
-        (fun answer => (nonce, answer.extractLsb' 0 152)))
+        (fun answer => (nonce, answer.extractLsb' 0 160)))
 
 /-- Full ideal signer query shape is constant for every possible oracle history,
 not only answers induced by a consistent function or secretKeyed oracle. -/
@@ -90,7 +90,7 @@ theorem signCompact_queries (pk : PublicKey) (message : Message) :
   · exact signLayerWithRoot ⟨0, by decide⟩ _ _ _
   · intro bottom
     refine Queries.bind (cost := 111589) (nextCost := 0) ?_ _ ?_
-    · exact signUpper 151 1 (ri.2.toNat / 2) _ _ bottom.2 (by decide)
+    · exact signUpper 159 1 (ri.2.toNat / 2) _ _ bottom.2 (by decide)
     · intro upper
       exact Queries.pure _
 

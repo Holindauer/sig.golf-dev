@@ -139,7 +139,7 @@ def canonicalCompact (hash : Hash) (secretKey : SecretKey) (r : Bytes 32) (index
     SignatureEncoding.Compact :=
   ⟨r, secret hash secretKey 0 (index / 2) (index % 2 == 1) 0,
     leafRoot hash secretKey 0 (index / 2) (!(index % 2 == 1)),
-    signLayers hash secretKey 151 1 (index / 2) (treeRoot hash secretKey 0 (index / 2))⟩
+    signLayers hash secretKey 159 1 (index / 2) (treeRoot hash secretKey 0 (index / 2))⟩
 
 /-- Absence of path faults determines every compact signature byte, including all
 upper WOTS fragments and siblings; no unused bottom fields enter the conclusion. -/
@@ -166,7 +166,7 @@ theorem compact_canonical_of_no_fault (hash : Hash) (secretKey : SecretKey) (mes
       ((indexOf hash (Reference.keygen hash secretKey) message signature.randomizer).toNat / 2)
       ((indexOf hash (Reference.keygen hash secretKey) message signature.randomizer).toNat % 2 == 1) 0) ∧
     LayersAgree 1 signature.upper
-      (signLayers hash secretKey 151 1
+      (signLayers hash secretKey 159 1
         ((indexOf hash (Reference.keygen hash secretKey) message signature.randomizer).toNat / 2)
         (treeRoot hash secretKey 0 ((indexOf hash (Reference.keygen hash secretKey) message signature.randomizer).toNat / 2))) at bound
   have bottom := bound.1.2 0 (Or.inr rfl)

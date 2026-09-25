@@ -69,7 +69,7 @@ noncomputable def compile {α : Type} (table : PointTable) (nonces : NonceTable)
         let nonce := nonces message
         let input := SecurityRandomOracle.indexInput signPk message nonce
         drawCached residual input (decide (message ∉ history.signedMessages)) (fun answer cache =>
-          let index := answer.extractLsb' 0 152
+          let index := answer.extractLsb' 0 160
           let opened := SecurityGraphDisclosure.revealCache table (needed metadata exposed index) exposed
           let factors := viewFactors opened metadata
           let signature := SecurityGraphSigner.signature (privateTable factors) (labels factors) nonce index

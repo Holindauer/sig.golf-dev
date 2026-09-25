@@ -360,3 +360,30 @@ addresses. No implementation choice made yet; prototype is only sample-tested.
 Prioritize restoration of160-level reference/security proof next, using
 height commits36bf323/f0e9307 to avoid confusing numeric code offsets with tree
 height. Universal cycle bound and witness charge remain uncertified.
+
+### 2026-09-25T22:16 restore160-level security
+
+Restored semantic height/index constants in66 Security*/Reference/Signature
+modules, regenerated160-level images, and updated basic compression/signature
+arithmetic. Width split is96+160=256 (three uniform-extraction calls corrected
+from104+152). Instruction-proof offsets were not globally substituted.
+Actual images now160levels, S=W119632, and index mask shifts32; signing still
+needs its public-key derivation prelude before it satisfies the new interface.
+
+Validated SecurityIndexMonitor2754jobs and SecuritySharedBudget2760jobs,
+including their permitted-axiom guards. The lifetime collision factor is now
+2^32/2^160=2^-128 and composes with the shared127-bit query budget.
+Logs siggolf-contract-security160c.log, siggolf-contract-sharedbudget160.log.
+This is a component security result, not a complete candidate certificate.
+Signature and SignatureDecode also compile for160levels/119632bytes.
+Reference-sign arithmetic121008 compressions excludes key derivation;
+adding761 gives121769, below131072. Bytecode proof of this addition unfinished.
+
+Next executable proof migration: SignIndex and VerifyIndex still describe
+SLLI/SRLI x6,x6,40 and corresponding <<<40/>>>40. Change only those shift
+operands to32, preserving unrelated numeric instruction offsets. Restore
+SignIndexRefine/VerifyIndexRefine widths and level bounds using original height
+diffs, then tackle remaining image constants (witness base0x3d3b0 vs0x3bc30,
+159upperlayers vs151). Full certificate build will enumerate residuals.
+Sign loaded-state pk assumptions still need actual derivation; do not fabricate
+a loader pk lemma. Accepted PR12 remains unchanged; no submission this wake.
