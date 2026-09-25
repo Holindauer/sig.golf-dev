@@ -44,7 +44,7 @@ theorem OrdinarySteps.trace {hash : Hash} {image : Image} {s t : MachineState} {
     (block : OrdinarySteps image s steps t) : Trace hash image s steps steps 0 0 t := by
   induction block with
   | refl state => exact Trace.refl state
-  | step state next final instruction steps hf hs unitCost tail ih =>
+  | stepCost state next final instruction steps hf hs unitCost tail ih =>
     simpa only [unitCost] using Trace.ordinary state next final instruction steps steps 0 0 hf hs ih
 
 /-- Any certified prefix followed by a terminating suffix is a certified full execution. -/

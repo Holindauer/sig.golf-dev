@@ -272,3 +272,32 @@ Additional optimization preserved in ../research-persistent-step-base at91adbc2:
 all2772jobs pass for STEP-base initial/core/recurrent/loop components under OLD
 contract; recurrent17cycles, nonempty17*n+36. Integrate after baseline migration.
 Never push this checkout's origin (it points to local research-persistent-limit).
+
+### 2026-09-25T22:00 continuation
+
+Unit-price migration now passes KeygenTreeControl (2707jobs): OrdinarySteps
+constructor stepCost retains an explicit price proof; compatibility theorem step
+uses `by rfl` default proof for concrete unit-cost instruction constructors.
+`by decide` was rejected for symbolic ADDI/JAL operands; definitional reduction
+solves this without an axiom or weakening. OrdinarySteps induction cases must
+use stepCost and carry unitCost. KeygenBlocks HASH helpers now take byte counts,
+require whole-word alignment, and charge compressions(8*byteCount).
+
+Independent prototype: ../research/contract-byte-probe/{build.py,check.py}.
+Restores160levels, HASH byte lengths, derives public key from secret key at start
+of signing (new sign input no longer includes pk), resets scratch state, then
+signs. Caller-supplied cache remains unused. All keygen/sign/expand/verify
+reference comparisons and malformed signature/randomizer/message checks pass.
+Signature119632bytes; sample verify1280208executioncycles+468witnesscycles=
+1280676chargedcycles. Sign uses121769compressions including761for key derivation,
+below131072 in this test. These are SAMPLE measurements, not a certificate.
+Prototype only uses non-M ordinary instructions; unsupported M instructions are
+rejected by its interpreter rather than incorrectly priced.
+Log ../research/validation/siggolf-contract-probe.log; measured-run.json inprobe.
+
+Next: migrate HASH setup/caller proof literals from bits to bytes while keeping
+reference Query bit lengths unchanged. Serialization input assumptions change
+to byte counts. Import prototype changes into actual candidate only along with
+all corresponding image-address, sign-loader,160-level security and cycle proofs.
+Sign public-key recomputation is essential; merely deleting pk from loader is
+incorrect for our existing candidate. No submission prepared or sent this wake.

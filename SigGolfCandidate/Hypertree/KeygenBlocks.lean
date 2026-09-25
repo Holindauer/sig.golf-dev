@@ -67,11 +67,12 @@ theorem copy_next_pc (s : MachineState) :
 /-- The HASH service accepts exactly the fixed buffers used by all four images. -/
 theorem hash_arguments (s : MachineState) (bits : Nat)
     (src : s.getReg .x10 = 0x80000) (len : s.getReg .x11 = BitVec.ofNat 64 bits)
-    (dst : s.getReg .x12 = 0x80300) (bound : bits ≤ 6144) :
+    (dst : s.getReg .x12 = 0x80300) (bound : bits ≤ 768)
+    (aligned : bits % 8 = 0 := by decide) :
     hashArgumentsValid s = true := by
   have small : bits < 2 ^ 64 := by omega
   simp [hashArgumentsValid, src, len, dst, accessValid, rangeValid,
-    BitVec.toNat_ofNat, MEMORY_BYTES]
+    BitVec.toNat_ofNat, Nat.mod_eq_of_lt small, aligned, MEMORY_BYTES]
   omega
 
 /-- Hash output preserves all integer registers and advances exactly one instruction. -/
@@ -86,16 +87,17 @@ theorem hash_then (image : Image) (hash : Hash) (s : MachineState) (bits : Nat)
     (code : instructionAt image s.pc = some (.base .ECALL))
     (service : s.getReg .x5 = 1)
     (src : s.getReg .x10 = 0x80000) (len : s.getReg .x11 = BitVec.ofNat 64 bits)
-    (dst : s.getReg .x12 = 0x80300) (bound : bits ≤ 6144)
+    (dst : s.getReg .x12 = 0x80300) (bound : bits ≤ 768)
     (steps : Nat) (result : Execution)
-    (tail : Executes hash image (writeHash s (hash (hashInput s))) steps result) :
+    (tail : Executes hash image (writeHash s (hash (hashInput s))) steps result)
+    (aligned : bits % 8 = 0 := by decide) :
     Executes hash image s (steps + 1)
-      (result.charge (8 * compressions bits) 1 (compressions bits)) := by
+      (result.charge (8 * compressions (8 * bits)) 1 (compressions (8 * bits))) := by
   have small : bits < 2 ^ 64 := by omega
-  have input_len : (hashInput s).1 = bits := by
+  have input_len : (hashInput s).1 = 8 * bits := by
     simp only [hashInput, len, BitVec.toNat_ofNat, Nat.mod_eq_of_lt small]
   simpa only [input_len] using Executes.hash s steps result code service
-    (hash_arguments s bits src len dst bound) tail
+    (hash_arguments s bits src len dst bound aligned) tail
 
 /-- Source and destination are mathematical byte addresses, and `n` counts remaining words. -/
 def CopyInvariant (p : Word) (source destination total n : Nat) (s : MachineState) : Prop :=
@@ -157,8 +159,8 @@ theorem ordinary_trans (image : Image) (s t u : MachineState) (m n : Nat)
     OrdinarySteps image s (n + m) u := by
   induction first with
   | refl => simpa using second
-  | step s t v instruction m hf hs block ih =>
-    simpa only [Nat.add_assoc] using OrdinarySteps.step s t u instruction (n + m) hf hs (ih second)
+  | stepCost s t v instruction m hf hs unitCost block ih =>
+    simpa only [Nat.add_assoc] using OrdinarySteps.step s t u instruction (n + m) hf hs (ih second) unitCost
 
 /-- Every in-bounds generated copy loop terminates after exactly six instructions per word.
 The theorem permits overlapping buffers and arbitrary memory contents. -/

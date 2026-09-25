@@ -7,7 +7,7 @@ open SigGolf SigGolf.Riscv RiscvZkvm.Rv64
 /-- The VM's bit-by-bit hash encoding agrees with the fixed-size byte representation. -/
 theorem hashInput_of_bytes (s : MachineState) (base n : Nat) (value : Bytes n)
     (source : s.getReg .x10 = BitVec.ofNat 64 base)
-    (bits : (s.getReg .x11).toNat = 8 * n)
+    (bits : (s.getReg .x11).toNat = n)
     (h : ∀ i, i < n → s.getByte (BitVec.ofNat 64 (base + i)) = value.extractLsb' (8 * i) 8) :
     hashInput s = ⟨8 * n, value⟩ := by
   dsimp only [hashInput]
@@ -93,7 +93,7 @@ theorem zipIdx_eq_range (data : List Byte) :
 /-- A buffer with these bytes produces precisely the reference scheme's oracle query. -/
 theorem hashInput_of_list (s : MachineState) (base : Nat) (data : List Byte)
     (source : s.getReg .x10 = BitVec.ofNat 64 base)
-    (bits : (s.getReg .x11).toNat = 8 * data.length)
+    (bits : (s.getReg .x11).toNat = data.length)
     (h : ∀ i, (hi : i < data.length) → s.getByte (BitVec.ofNat 64 (base + i)) = data[i]'hi) :
     hashInput s = Hypertree.Reference.packed data := by
   dsimp only [hashInput, Hypertree.Reference.packed]

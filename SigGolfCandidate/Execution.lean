@@ -55,12 +55,21 @@ theorem Executes.sound {hash : Hash} {image : Image} {state : MachineState} {ste
 /-- A block of ordinary instructions, with each fetch and memory check certified. -/
 inductive OrdinarySteps (image : Image) : MachineState → Nat → MachineState → Prop where
   | refl (state : MachineState) : OrdinarySteps image state 0 state
-  | step (state next final : MachineState) (instruction : Instruction) (steps : Nat)
+  | stepCost (state next final : MachineState) (instruction : Instruction) (steps : Nat)
       (hf : fetch image state = some instruction)
       (hs : ordinaryStep state instruction = some next)
       (unitCost : instructionCycles instruction = 1)
       (tail : OrdinarySteps image next steps final) :
       OrdinarySteps image state (steps + 1) final
+
+/-- Existing unit-cost block constructors discharge concrete prices by kernel reduction. -/
+theorem OrdinarySteps.step {image : Image} (state next final : MachineState) (instruction : Instruction)
+    (steps : Nat) (hf : fetch image state = some instruction)
+    (hs : ordinaryStep state instruction = some next)
+    (tail : OrdinarySteps image next steps final)
+    (unitCost : instructionCycles instruction = 1 := by rfl) :
+    OrdinarySteps image state (steps + 1) final :=
+  OrdinarySteps.stepCost state next final instruction steps hf hs unitCost tail
 
 theorem OrdinarySteps.then_executes {hash : Hash} {image : Image} {state next : MachineState}
     {count steps : Nat} {result : Execution} (block : OrdinarySteps image state count next)
@@ -68,7 +77,7 @@ theorem OrdinarySteps.then_executes {hash : Hash} {image : Image} {state next : 
     Executes hash image state (steps + count) (result.charge count 0 0) := by
   induction block with
   | refl => simpa [Execution.charge] using tail
-  | step state next final instruction count hf hs unitCost block ih =>
+  | stepCost state next final instruction count hf hs unitCost block ih =>
     have he : instruction ≠ .base .ECALL := by
       intro h
       simp [h, ordinaryStep] at hs
