@@ -1,4 +1,5 @@
 import SigGolfCandidate.Hypertree.SignEncodeSubroutine
+import SigGolfCandidate.Hypertree.SignTreeHelpers
 namespace SigGolfCandidate.Hypertree.Signing
 open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 OracleComp Keygen
 set_option maxRecDepth 4096
@@ -127,4 +128,50 @@ theorem deriveSetup_stack (s : MachineState) :
 /-- info: 'SigGolfCandidate.Hypertree.Signing.deriveSetup_block' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms deriveSetup_block
+/-- Exact memory effect of the setup; no caller memory assumptions. -/
+theorem deriveSetup_mem (s : MachineState) (a : Word) :
+    (deriveSetupState s).getMem a =
+      if a = 0x80400 then 159 else
+      if a = 0x80448 then 0x20080 else
+      if a = 0x80440 then 1 else s.getMem a := by
+  simp [deriveSetupState, execInstrBr, signExtend12,
+    MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne,
+    MachineState.getMem, MachineState.setMem, MachineState.setPC, MachineState.setReg, MachineState.getReg]
+
+theorem deriveSetup_frame (s : MachineState) (a : Word)
+    (hlevel : a ≠ 0x80400) (hptr : a ≠ 0x80448) (hmode : a ≠ 0x80440) :
+    (deriveSetupState s).getMem a = s.getMem a := by
+  rw [deriveSetup_mem]; simp only [if_neg hlevel, if_neg hptr, if_neg hmode]
+
+theorem deriveSetup_context (s : MachineState) (secretKey : SecretKey)
+    (index : ∀ i : Fin 3, s.getMem (wordAddress 0x80408 i.val) =
+      (BitVec.ofNat 192 0).extractLsb' (64*i.val) 64)
+    (secret : ∀ i : Fin 4, s.getMem (wordAddress 0x20 i.val) =
+      secretKey.extractLsb' (64*i.val) 64) :
+    TreeContext (deriveSetupState s) secretKey 159 0 := by
+  constructor
+  · rw [deriveSetup_mem]; rfl
+  · intro i
+    rw [deriveSetup_frame s _ (by fin_cases i <;> decide)
+      (by fin_cases i <;> decide) (by fin_cases i <;> decide)]
+    exact index i
+  · intro i
+    rw [deriveSetup_frame s _ (by fin_cases i <;> decide)
+      (by fin_cases i <;> decide) (by fin_cases i <;> decide)]
+    exact secret i
+
+theorem deriveSetup_mode (s : MachineState) :
+    (deriveSetupState s).getMem 0x80440 = 1 := by
+  rw [deriveSetup_mem]; rfl
+
+theorem deriveSetup_pointer (s : MachineState) :
+    (deriveSetupState s).getMem 0x80448 = 0x20080 := by
+  rw [deriveSetup_mem]; rfl
+
+/-- info: 'SigGolfCandidate.Hypertree.Signing.deriveSetup_mem' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms deriveSetup_mem
+/-- info: 'SigGolfCandidate.Hypertree.Signing.deriveSetup_context' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms deriveSetup_context
 end SigGolfCandidate.Hypertree.Signing
