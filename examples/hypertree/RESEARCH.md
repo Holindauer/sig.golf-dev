@@ -415,3 +415,35 @@ implement and prove the signer pk prelude and new loader-to-loop interface.
 
 VerifyLoader final result: PASS2736jobs with its permitted-axiom guard,
 log siggolf-contract-verifyloader160b.log. No build process remains running.
+
+### 2026-09-25T22:27 complete verifier bound; appended signer prototype
+
+VerifyFunctional PASS2868jobs under current contract, universally including
+malformed witnesses: executionC<=1730845. New VerifyCharged.run_refines_charged
+PASS2869jobs with permitted-axiom guard proves execution+witnessCycles<=1731313
+(468loadingcycles). Logs siggolf-contract-verifyfunctional160.log and
+siggolf-contract-verifycharged160b.log. Full four-program certificate incomplete.
+
+Tested alternative signing prelude in ../research/contract-append-pk-probe:
+entry JAL jumps to appended0x1c70; original sign words1..795 unchanged exactly.
+Sets MODE1, POINTER0x20080, LEVEL159, calls encode on initiallyzero CURRENT,
+then the existing enabled signing tree (whose sign_tree proof can be reused),
+copies root to0x40, clears LEVEL/INDEX0..2/CURRENT0..1, restores displaced
+ADDIx6,x0,1, jumps to0x1004. Sign image847words vs796. No other images altered.
+Encoding is essential to satisfy sign_tree's checksum-digit assumption; the
+first unencoded experiment passed sample output but was not suitable for reusing
+that theorem, so the retained prototype includes encode.
+
+All reference/rejection tests pass for retained encoded prototype:
+S119632; sign121769compressions; sample verify1280367execution+468loading=
+1280835cycles. Log siggolf-contract-append-pk-probe-encoded.log; measured-run.json
+in prototype. These measured numbers are not substituted for universal bounds.
+
+Next: prove appended prelude and entry suffix, then integrate. Factor
+SignPrepare.initializeState_block into12-instruction suffix at0x1004; preserve
+all later code addresses. Its incomingx6=1 comes from prelude. Reuse SignTree
+sign_tree atlevel159/tree0 with captureenabled, pointer0x20080, selectorfalse,
+encoded CURRENT0; prove secret/message/stack preservation and required cleared
+scratch facts. Rebuild signer loader-to-loop proofs with computedpk and new
+resource counts. Existing sign image in actual candidate still lacksprelude.
+Then assemble honest witness-charge theorem, export/layout/policy/full checks.
