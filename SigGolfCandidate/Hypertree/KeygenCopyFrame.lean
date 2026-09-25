@@ -8,9 +8,9 @@ theorem ordinary_deterministic {image : Image} {s t u : MachineState} {n : Nat}
     (first : OrdinarySteps image s n t) (second : OrdinarySteps image s n u) : t = u := by
   induction first generalizing u with
   | refl state => cases second; rfl
-  | step state next final instruction steps hf hs tail ih =>
+  | stepCost state next final instruction steps hf hs unitCost tail ih =>
     cases second with
-    | step _ other _ otherInstruction _ hf' hs' tail' =>
+    | stepCost _ other _ otherInstruction _ hf' hs' unitCost' tail' =>
       have instr_eq := Option.some.inj (hf.symm.trans hf')
       subst otherInstruction
       have next_eq := Option.some.inj (hs.symm.trans hs')

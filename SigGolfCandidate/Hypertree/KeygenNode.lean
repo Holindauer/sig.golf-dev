@@ -38,7 +38,7 @@ theorem payload_byte (level tree : Nat) (left right : Reference.Digest) (i : Fin
 
 /-- A word-level subroutine invariant establishes the precise reference oracle input. -/
 theorem query_eq (s : MachineState) (level tree : Nat) (left right : Reference.Digest)
-    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 512)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 64)
     (words : ∀ i : Fin 8, s.getMem (Signing.wordAddress 0x80000 i.val) = inputWord level tree left right i) :
     hashInput s = Reference.packed (payload level tree left right) := by
   apply Serialization.hashInput_of_list s 0x80000 (payload level tree left right)
@@ -52,7 +52,7 @@ theorem query_eq (s : MachineState) (level tree : Nat) (left right : Reference.D
 /-- The concrete HASH write contains the reference node digest. -/
 theorem node_answer (hash : Hash) (s : MachineState)
     (level tree : Nat) (left right : Reference.Digest)
-    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 512)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 64)
     (destination : s.getReg .x12 = 0x80300)
     (words : ∀ i : Fin 8, s.getMem (Signing.wordAddress 0x80000 i.val) = inputWord level tree left right i) :
     ∀ i : Fin 2, (writeHash s (hash (hashInput s))).getMem (Signing.wordAddress 0x80300 i.val) =
@@ -77,13 +77,13 @@ theorem hashes_node (image : Image) (hash : Hash) (s : MachineState)
     (level tree : Nat) (left right : Reference.Digest)
     (code : fetch image s = some (.base .ECALL))
     (service : s.getReg .x5 = 1) (source : s.getReg .x10 = 0x80000)
-    (bits : s.getReg .x11 = 512) (destination : s.getReg .x12 = 0x80300)
+    (bits : s.getReg .x11 = 64) (destination : s.getReg .x12 = 0x80300)
     (words : ∀ i : Fin 8, s.getMem (Signing.wordAddress 0x80000 i.val) = inputWord level tree left right i) :
     ∃ final, Trace hash image s 1 8 1 1 final ∧ final.pc = s.pc + 4 ∧
       ∀ i : Fin 2, final.getMem (Signing.wordAddress 0x80300 i.val) =
         (Reference.node hash level tree left right).extractLsb' (64 * i.val) 64 := by
   let answer := hash (hashInput s)
-  have valid := Keygen.hash_arguments s 512 source bits destination (by decide)
+  have valid := Keygen.hash_arguments s 64 source bits destination (by decide)
   have len : (hashInput s).1 = 512 := by simp [hashInput, bits]
   refine ⟨writeHash s answer, ?_, Keygen.hash_pc _ _, ?_⟩
   · simpa [len, compressions] using

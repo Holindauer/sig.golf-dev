@@ -12,7 +12,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word)
     ∃ final, Trace hash image s 38 45 1 1 final ∧ final.pc = p+128 ∧
       Buffered final level tree side chain (step+1) (Reference.chainHash hash level tree side chain step value) ∧
       CachedPrepare.Ready final ∧ final.getReg .x28 = 0x80438 ∧ final.getReg .x13 = 4294967296 ∧
-      (final.getReg .x11 = 384 ∧ final.getReg .x12 = 0x80020 ∧ final.getReg .x5 = 1) ∧
+      (final.getReg .x11 = 48 ∧ final.getReg .x12 = 0x80020 ∧ final.getReg .x5 = 1) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, OutsideChainWork a → final.getMem a = s.getMem a) := by
   let copied := Copy6.optimized s 0x510 0x20
@@ -52,7 +52,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word)
     simp [prepared,MachineState.getReg_setReg_eq,MachineState.getReg_setReg_ne]
   have source : prepared.getReg .x10 = 0x80000 := by
     simpa [prepared,MachineState.getReg_setReg_ne] using (KeygenChainHeader.regs copied).2.1
-  have bits : prepared.getReg .x11 = 384 := by
+  have bits : prepared.getReg .x11 = 48 := by
     simpa [prepared,MachineState.getReg_setReg_ne] using (KeygenChainHeader.regs copied).2.2.1
   have service : prepared.getReg .x5 = 1 := by
     simpa [prepared,MachineState.getReg_setReg_ne] using (KeygenChainHeader.regs copied).1

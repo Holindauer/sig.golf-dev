@@ -301,3 +301,29 @@ to byte counts. Import prototype changes into actual candidate only along with
 all corresponding image-address, sign-loader,160-level security and cycle proofs.
 Sign public-key recomputation is essential; merely deleting pk from loader is
 incorrect for our existing candidate. No submission prepared or sent this wake.
+
+### 2026-09-25T22:05 byte-HASH integration
+
+Migrated explicit x11 HASH-length proof constants and instruction definitions
+from bits to bytes (35 modules initially), regenerated all four images at the
+same instruction counts572/796/15/578. Leaf HASH length keeps its two-instruction
+setup as LUI x11,0; ADDI x11,x11,768 to preserve every code address. Image delta
+check confirms only length-setup instructions differ:7keygen,9sign,0expand,6verify;
+evidence ../research/validation/siggolf-contract-image-delta.json.
+
+KeygenDomain dependency build passes2726jobs, including exact node/chain/secret
+oracle query proofs, serialization, real randomizer HASH and copy proofs.
+SignIndex and KeygenLeafQuery also compiled in the broader component run.
+Fixed OrdinarySteps deterministic proof induction to retain stepCost premise.
+FastCopy16 embeds an experimental image used in proof dependencies; migrated
+its raw HASH immediates too (its old image failed the updated exact Code check).
+
+Still incomplete:160-level restoration and sign public-key derivation are only
+in the separately tested prototype. Actual candidate remains152levels and its
+signer expects pk; do not submit. Next after HASH components: build retained-limit
+loop/certificate to find remaining HASH constants and proof API changes, then
+restore160levels and signing prelude with their bounds. Preserve acceptedPR12.
+
+Final component result: KeygenLeafQuery, PersistentLimit and SignIndex build
+PASS2756jobs with their axiom guards (siggolf-contract-hash-components3.log).
+No outstanding build process. Full certificate remains unvalidated as above.

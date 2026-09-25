@@ -66,7 +66,7 @@ theorem chain_compute (image : Image) (hash : Hash) (p : Word) (code : ChainCode
   have hpc : prepared.pc = p+236 := by
     simp only [prepared,MachineState.setReg,KeygenChainHeader.pc,cpc]; simp [BitVec.add_assoc]
   have pr : prepared.getReg .x5 = 1 ∧ prepared.getReg .x10 = 0x80000 ∧
-      prepared.getReg .x11 = 384 ∧ prepared.getReg .x12 = 0x80300 := by
+      prepared.getReg .x11 = 48 ∧ prepared.getReg .x12 = 0x80300 := by
     simpa [prepared, MachineState.getReg_setReg_ne] using KeygenChainHeader.regs copied
   obtain ⟨service,source,bits,destination⟩ := pr
   have oldwords := KeygenChainHeader.words copied level tree (Reference.sideNumber side) chain.val step value

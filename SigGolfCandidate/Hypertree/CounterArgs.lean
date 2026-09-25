@@ -65,7 +65,7 @@ theorem block (image : Image) (p : Word) (code : Code image p)
 #print axioms block
 
 theorem equiv (s : MachineState) (base : s.getReg .x28 = 0x80438)
-    (bits : s.getReg .x11 = 384) (dst : s.getReg .x12 = 0x80020)
+    (bits : s.getReg .x11 = 48) (dst : s.getReg .x12 = 0x80020)
     (service : s.getReg .x5 = 1) : state s = (InplacePrepare.state s).setPC (s.pc+104) := by
   cases s with
   | mk regs mem code pc committed publicValues privateInput inputBufBase =>

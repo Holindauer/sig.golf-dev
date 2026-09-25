@@ -33,7 +33,7 @@ def Code (image : Image) (p : Word) : Prop :=
   instructionAt image (p + 92) = some (.base (.SD .x28 .x11 (-1056))) ∧
   instructionAt image (p + 96) = some (.base (.ADDI .x28 .x28 (-1056))) ∧
   instructionAt image (p + 100) = some (.base (.ADDI .x10 .x28 (-24))) ∧
-  instructionAt image (p + 104) = some (.base (.ADDI .x11 .x0 384)) ∧
+  instructionAt image (p + 104) = some (.base (.ADDI .x11 .x0 48)) ∧
   instructionAt image (p + 108) = some (.base (.ADDI .x12 .x28 744)) ∧
   instructionAt image (p + 112) = some (.base (.ADDI .x5 .x0 1)) ∧
   instructionAt image (p + 116) = some (.base (.JAL .x0 120))
@@ -69,7 +69,7 @@ theorem block (image : Image) (p : Word) (code : Code image p)
   let s24 := execInstrBr s23 (.SD .x28 .x11 (-1056))
   let s25 := execInstrBr s24 (.ADDI .x28 .x28 (-1056))
   let s26 := execInstrBr s25 (.ADDI .x10 .x28 (-24))
-  let s27 := execInstrBr s26 (.ADDI .x11 .x0 384)
+  let s27 := execInstrBr s26 (.ADDI .x11 .x0 48)
   let s28 := execInstrBr s27 (.ADDI .x12 .x28 744)
   let s29 := execInstrBr s28 (.ADDI .x5 .x0 1)
   let s30 := execInstrBr s29 (.JAL .x0 120)
@@ -208,7 +208,7 @@ theorem block (image : Image) (p : Word) (code : Code image p)
   · have hp : s25.pc = p + 100 := by simp [s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, execInstrBr, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c25
   · rfl
-  apply OrdinarySteps.step s26 s27 _ (.base (.ADDI .x11 .x0 384)) 3
+  apply OrdinarySteps.step s26 s27 _ (.base (.ADDI .x11 .x0 48)) 3
   · have hp : s26.pc = p + 104 := by simp [s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, execInstrBr, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c26
   · rfl

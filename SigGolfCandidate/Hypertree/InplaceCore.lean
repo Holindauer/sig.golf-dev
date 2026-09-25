@@ -10,7 +10,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word) (code : Code image p)
     (s : MachineState) (pc : s.pc = p) (base : s.getReg .x28 = 0x80018)
     (constant : s.getReg .x13 = 4294967296) (current : InplaceInvariant.Current s)
     (service : s.getReg .x5 = 1) (source : s.getReg .x10 = 0x80000)
-    (bits : s.getReg .x11 = 384) (destination : s.getReg .x12 = 0x80020)
+    (bits : s.getReg .x11 = 48) (destination : s.getReg .x12 = 0x80020)
     (level tree step : Nat) (side : Bool) (chain : Reference.Chain) (value : Reference.Digest)
     (words : ∀ i : Fin 6, s.getMem (wordAddress 0x80000 i.val) =
       KeygenDomain.inputWord (KeygenDomain.header 2 level (Reference.sideNumber side) chain.val step) tree value i) :
@@ -19,7 +19,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word) (code : Code image p)
         (Reference.chainHash hash level tree side chain step value).extractLsb' (64*i.val) 64) ∧
       CachedPrepare.Ready final ∧ final.getReg .x28 = 0x80438 ∧
       final.getReg .x13 = 4294967296 ∧
-      (final.getReg .x11 = 384 ∧ final.getReg .x12 = 0x80020 ∧ final.getReg .x5 = 1) ∧
+      (final.getReg .x11 = 48 ∧ final.getReg .x12 = 0x80020 ∧ final.getReg .x5 = 1) ∧
       final.getMem 0x80438 = s.getMem 0x80438 + 1 ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, (∀ i : Fin 4, a ≠ wordAddress 0x80020 i.val) → a ≠ 0x80438 →

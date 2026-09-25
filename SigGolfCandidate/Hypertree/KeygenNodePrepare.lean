@@ -38,7 +38,7 @@ def HeaderCode (image : Image) (p : Word) : Prop :=
   instructionAt image (p + 104) = some (.base (.SD .x28 .x11 0)) ∧
   instructionAt image (p + 108) = some (.base (.LUI .x10 128)) ∧
   instructionAt image (p + 112) = some (.base (.ADDI .x10 .x10 0)) ∧
-  instructionAt image (p + 116) = some (.base (.ADDI .x11 .x0 512)) ∧
+  instructionAt image (p + 116) = some (.base (.ADDI .x11 .x0 64)) ∧
   instructionAt image (p + 120) = some (.base (.LUI .x12 128)) ∧
   instructionAt image (p + 124) = some (.base (.ADDI .x12 .x12 768)) ∧
   instructionAt image (p + 128) = some (.base (.ADDI .x5 .x0 1))
@@ -76,7 +76,7 @@ def headerState (s : MachineState) : MachineState :=
   let s := execInstrBr s (.SD .x28 .x11 0)
   let s := execInstrBr s (.LUI .x10 128)
   let s := execInstrBr s (.ADDI .x10 .x10 0)
-  let s := execInstrBr s (.ADDI .x11 .x0 512)
+  let s := execInstrBr s (.ADDI .x11 .x0 64)
   let s := execInstrBr s (.LUI .x12 128)
   let s := execInstrBr s (.ADDI .x12 .x12 768)
   execInstrBr s (.ADDI .x5 .x0 1)
@@ -114,7 +114,7 @@ theorem header_block (image : Image) (p : Word) (code : HeaderCode image p)
   let s27 := execInstrBr s26 (.SD .x28 .x11 0)
   let s28 := execInstrBr s27 (.LUI .x10 128)
   let s29 := execInstrBr s28 (.ADDI .x10 .x10 0)
-  let s30 := execInstrBr s29 (.ADDI .x11 .x0 512)
+  let s30 := execInstrBr s29 (.ADDI .x11 .x0 64)
   let s31 := execInstrBr s30 (.LUI .x12 128)
   let s32 := execInstrBr s31 (.ADDI .x12 .x12 768)
   let s33 := execInstrBr s32 (.ADDI .x5 .x0 1)
@@ -242,7 +242,7 @@ theorem header_block (image : Image) (p : Word) (code : HeaderCode image p)
   · have hp : s28.pc = p + 112 := by simp [s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, execInstrBr, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c28
   · rfl
-  apply OrdinarySteps.step s29 s30 _ (.base (.ADDI .x11 .x0 512)) 3
+  apply OrdinarySteps.step s29 s30 _ (.base (.ADDI .x11 .x0 64)) 3
   · have hp : s29.pc = p + 116 := by simp [s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, execInstrBr, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c29
   · rfl
@@ -265,7 +265,7 @@ theorem header_pc (s : MachineState) : (headerState s).pc = s.pc + 132 := by
 
 theorem header_regs (s : MachineState) :
     (headerState s).getReg .x5 = 1 ∧ (headerState s).getReg .x10 = 0x80000 ∧
-    (headerState s).getReg .x11 = 512 ∧ (headerState s).getReg .x12 = 0x80300 := by
+    (headerState s).getReg .x11 = 64 ∧ (headerState s).getReg .x12 = 0x80300 := by
   simp [headerState, execInstrBr, signExtend12,
     MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne]
 

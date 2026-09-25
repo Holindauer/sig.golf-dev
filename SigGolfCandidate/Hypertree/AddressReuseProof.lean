@@ -28,7 +28,7 @@ def header (s : MachineState) : MachineState :=
   let s := execInstrBr s (.SD .x28 .x11 24)
   let s := execInstrBr s (.ADDI .x28 .x28 24)
   let s := execInstrBr s (.ADDI .x10 .x28 (-24))
-  let s := execInstrBr s (.ADDI .x11 .x0 384)
+  let s := execInstrBr s (.ADDI .x11 .x0 48)
   let s := execInstrBr s (.ADDI .x12 .x28 744)
   let s := execInstrBr s (.ADDI .x5 .x0 1)
   execInstrBr s (.JAL .x0 88)
@@ -96,7 +96,7 @@ def headerCode (image : Image) (p : Word) : Prop :=
   instructionAt image (p + 80) = some (.base (.SD .x28 .x11 24)) ∧
   instructionAt image (p + 84) = some (.base (.ADDI .x28 .x28 24)) ∧
   instructionAt image (p + 88) = some (.base (.ADDI .x10 .x28 (-24))) ∧
-  instructionAt image (p + 92) = some (.base (.ADDI .x11 .x0 384)) ∧
+  instructionAt image (p + 92) = some (.base (.ADDI .x11 .x0 48)) ∧
   instructionAt image (p + 96) = some (.base (.ADDI .x12 .x28 744)) ∧
   instructionAt image (p + 100) = some (.base (.ADDI .x5 .x0 1)) ∧
   instructionAt image (p + 104) = some (.base (.JAL .x0 88))
@@ -127,7 +127,7 @@ theorem header_block (image : Image) (p : Word) (code : headerCode image p)
   let s21 := execInstrBr s20 (.SD .x28 .x11 24)
   let s22 := execInstrBr s21 (.ADDI .x28 .x28 24)
   let s23 := execInstrBr s22 (.ADDI .x10 .x28 (-24))
-  let s24 := execInstrBr s23 (.ADDI .x11 .x0 384)
+  let s24 := execInstrBr s23 (.ADDI .x11 .x0 48)
   let s25 := execInstrBr s24 (.ADDI .x12 .x28 744)
   let s26 := execInstrBr s25 (.ADDI .x5 .x0 1)
   let s27 := execInstrBr s26 (.JAL .x0 88)
@@ -235,7 +235,7 @@ theorem header_block (image : Image) (p : Word) (code : headerCode image p)
   · have hp : s22.pc = p + 88 := by simp [s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, execInstrBr, MachineState.setPC, signExtend21, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c22
   · rfl
-  apply OrdinarySteps.step s23 s24 _ (.base (.ADDI .x11 .x0 384)) 3
+  apply OrdinarySteps.step s23 s24 _ (.base (.ADDI .x11 .x0 48)) 3
   · have hp : s23.pc = p + 92 := by simp [s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, execInstrBr, MachineState.setPC, signExtend21, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c23
   · rfl

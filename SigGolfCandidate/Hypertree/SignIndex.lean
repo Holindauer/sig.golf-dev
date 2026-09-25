@@ -8,7 +8,7 @@ set_option linter.unusedSimpArgs false
 def indexHashState (s : MachineState) : MachineState :=
   let s := execInstrBr s (.LUI .x10 0x80)
   let s := execInstrBr s (.ADDI .x10 .x10 0)
-  let s := execInstrBr s (.ADDI .x11 .x0 896)
+  let s := execInstrBr s (.ADDI .x11 .x0 112)
   let s := execInstrBr s (.LUI .x12 0x80)
   let s := execInstrBr s (.ADDI .x12 .x12 0x300)
   execInstrBr s (.ADDI .x5 .x0 1)
@@ -17,7 +17,7 @@ theorem indexHashState_block (s : MachineState) (pc : s.pc = 0x11b8) :
     OrdinarySteps sign s 6 (indexHashState s) := by
   let s1 := execInstrBr s (.LUI .x10 0x80)
   let s2 := execInstrBr s1 (.ADDI .x10 .x10 0)
-  let s3 := execInstrBr s2 (.ADDI .x11 .x0 896)
+  let s3 := execInstrBr s2 (.ADDI .x11 .x0 112)
   let s4 := execInstrBr s3 (.LUI .x12 0x80)
   let s5 := execInstrBr s4 (.ADDI .x12 .x12 0x300)
   let s6 := execInstrBr s5 (.ADDI .x5 .x0 1)
@@ -29,7 +29,7 @@ theorem indexHashState_block (s : MachineState) (pc : s.pc = 0x11b8) :
   · have hp : s1.pc = 0x11bc := by simp [s1, execInstrBr, pc]
     simp only [fetch, hp]; decide
   · rfl
-  apply OrdinarySteps.step s2 s3 _ (.base (.ADDI .x11 .x0 896)) 3
+  apply OrdinarySteps.step s2 s3 _ (.base (.ADDI .x11 .x0 112)) 3
   · have hp : s2.pc = 0x11c0 := by simp [s1, s2, execInstrBr, pc]
     simp only [fetch, hp]; decide
   · rfl
@@ -139,7 +139,7 @@ theorem indexStoreState_block (s : MachineState) (pc : s.pc = 0x1200) :
 
 theorem indexHashState_regs (s : MachineState) :
     (indexHashState s).getReg .x5 = 1 ∧ (indexHashState s).getReg .x10 = 0x80000 ∧
-    (indexHashState s).getReg .x11 = 896 ∧ (indexHashState s).getReg .x12 = 0x80300 := by
+    (indexHashState s).getReg .x11 = 112 ∧ (indexHashState s).getReg .x12 = 0x80300 := by
   simp [indexHashState, execInstrBr, signExtend12,
     MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne]
 
@@ -190,7 +190,7 @@ theorem index_trace (hash : Hash) (s : MachineState) (pc : s.pc = 0x11b8) :
   have hpc : hs.pc = 0x11d0 := by simp [hs, indexHashState_pc, pc]
   obtain ⟨service, src, len, dst⟩ := indexHashState_regs s
   have hf : fetch sign hs = some (.base .ECALL) := by simp only [fetch, hpc]; decide
-  have hv : hashArgumentsValid hs = true := hash_arguments hs 896 src len dst (by decide)
+  have hv : hashArgumentsValid hs = true := hash_arguments hs 112 src len dst (by decide)
   have hlen : (hashInput hs).1 = 896 := by simp [hashInput, hs, len]
   let answer := hash (hashInput hs)
   have outpc : (writeHash hs answer).pc = 0x11d4 := by simp [hash_pc, hpc]

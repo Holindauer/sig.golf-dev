@@ -33,7 +33,7 @@ theorem payload_byte (head : Word) (tree : Nat) (value : Reference.Digest) (i : 
     interval_cases j <;> simp [extractByte,← BitVec.getLsbD_eq_getElem,BitVec.getLsbD_ofNat]
 
 theorem query_eq (s : MachineState) (head : Word) (tree : Nat) (value : Reference.Digest)
-    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 384)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 48)
     (words : ∀ i : Fin 6, s.getMem (Signing.wordAddress 0x80000 i.val) = inputWord head tree value i) :
     hashInput s = Reference.packed (payload head tree value) := by
   apply Serialization.hashInput_of_list s 0x80000 (payload head tree value)
@@ -46,7 +46,7 @@ theorem query_eq (s : MachineState) (head : Word) (tree : Nat) (value : Referenc
 
 theorem answer_words (hash : Hash) (s : MachineState)
     (tag level tree leaf chain step : Nat) (value : Reference.Digest)
-    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 384)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 48)
     (destination : s.getReg .x12 = 0x80300)
     (words : ∀ i : Fin 6, s.getMem (Signing.wordAddress 0x80000 i.val) =
       inputWord (header tag level leaf chain step) tree value i) :
@@ -64,10 +64,10 @@ theorem answer_words (hash : Hash) (s : MachineState)
 
 theorem hash_trace (image : Image) (hash : Hash) (s : MachineState)
     (code : fetch image s = some (.base .ECALL)) (service : s.getReg .x5 = 1)
-    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 384)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 48)
     (destination : s.getReg .x12 = 0x80300) :
     Trace hash image s 1 8 1 1 (writeHash s (hash (hashInput s))) := by
-  have valid := Keygen.hash_arguments s 384 source bits destination (by decide)
+  have valid := Keygen.hash_arguments s 48 source bits destination (by decide)
   have len : (hashInput s).1 = 384 := by simp [hashInput,bits]
   simpa [len,compressions] using
     Trace.hash s _ 0 0 0 0 code service valid (Trace.refl _)
@@ -126,7 +126,7 @@ theorem secretPayload_byte (head : Word) (tree : Nat) (secretKey : SecretKey) (i
     interval_cases j <;> simp [extractByte,← BitVec.getLsbD_eq_getElem,BitVec.getLsbD_ofNat]
 
 theorem secret_query_eq (s : MachineState) (head : Word) (tree : Nat) (secretKey : SecretKey)
-    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 512)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 64)
     (words : ∀ i : Fin 8, s.getMem (Signing.wordAddress 0x80000 i.val) = secretInputWord head tree secretKey i) :
     hashInput s = Reference.packed (secretPayload head tree secretKey) := by
   apply Serialization.hashInput_of_list s 0x80000 (secretPayload head tree secretKey)
@@ -139,7 +139,7 @@ theorem secret_query_eq (s : MachineState) (head : Word) (tree : Nat) (secretKey
 
 theorem secret_answer_words (hash : Hash) (s : MachineState)
     (level tree leaf chain : Nat) (secretKey : SecretKey)
-    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 512)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 64)
     (destination : s.getReg .x12 = 0x80300)
     (words : ∀ i : Fin 8, s.getMem (Signing.wordAddress 0x80000 i.val) =
       secretInputWord (header 1 level leaf chain 0) tree secretKey i) :
@@ -157,10 +157,10 @@ theorem secret_answer_words (hash : Hash) (s : MachineState)
 
 theorem secret_hash_trace (image : Image) (hash : Hash) (s : MachineState)
     (code : fetch image s = some (.base .ECALL)) (service : s.getReg .x5 = 1)
-    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 512)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 64)
     (destination : s.getReg .x12 = 0x80300) :
     Trace hash image s 1 8 1 1 (writeHash s (hash (hashInput s))) := by
-  have valid := Keygen.hash_arguments s 512 source bits destination (by decide)
+  have valid := Keygen.hash_arguments s 64 source bits destination (by decide)
   have len : (hashInput s).1 = 512 := by simp [hashInput,bits]
   simpa [len,compressions] using
     Trace.hash s _ 0 0 0 0 code service valid (Trace.refl _)

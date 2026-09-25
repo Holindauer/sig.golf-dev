@@ -34,7 +34,7 @@ theorem compute (image : Image) (hash : Hash) (p : Word) (code : BodyCode image 
     prepare image p code.1 s pc level tree left right hlevel hindex hchildren
   let hashed := writeHash prepared (hash (hashInput prepared))
   have hashTrace : Trace hash image prepared 1 8 1 1 hashed := by
-    have valid := hash_arguments prepared 512 source bits destination (by decide)
+    have valid := hash_arguments prepared 64 source bits destination (by decide)
     have len : (hashInput prepared).1 = 512 := by simp [hashInput,bits]
     have hf : fetch image prepared = some (.base .ECALL) := by
       simpa only [fetch_at,hpc] using code.2.1

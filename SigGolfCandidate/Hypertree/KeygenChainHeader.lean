@@ -54,7 +54,7 @@ def Code (image : Image) (p : Word) : Prop :=
   instructionAt image (p + 164) = some (.base (.SD .x28 .x11 0)) ∧
   instructionAt image (p + 168) = some (.base (.LUI .x10 128)) ∧
   instructionAt image (p + 172) = some (.base (.ADDI .x10 .x10 0)) ∧
-  instructionAt image (p + 176) = some (.base (.ADDI .x11 .x0 384)) ∧
+  instructionAt image (p + 176) = some (.base (.ADDI .x11 .x0 48)) ∧
   instructionAt image (p + 180) = some (.base (.LUI .x12 128)) ∧
   instructionAt image (p + 184) = some (.base (.ADDI .x12 .x12 768)) ∧
   instructionAt image (p + 188) = some (.base (.ADDI .x5 .x0 1))
@@ -107,7 +107,7 @@ def state (s : MachineState) : MachineState :=
   let s := execInstrBr s (.SD .x28 .x11 0)
   let s := execInstrBr s (.LUI .x10 128)
   let s := execInstrBr s (.ADDI .x10 .x10 0)
-  let s := execInstrBr s (.ADDI .x11 .x0 384)
+  let s := execInstrBr s (.ADDI .x11 .x0 48)
   let s := execInstrBr s (.LUI .x12 128)
   let s := execInstrBr s (.ADDI .x12 .x12 768)
   execInstrBr s (.ADDI .x5 .x0 1)
@@ -159,7 +159,7 @@ theorem block (image : Image) (p : Word) (code : Code image p)
   let s42 := execInstrBr s41 (.SD .x28 .x11 0)
   let s43 := execInstrBr s42 (.LUI .x10 128)
   let s44 := execInstrBr s43 (.ADDI .x10 .x10 0)
-  let s45 := execInstrBr s44 (.ADDI .x11 .x0 384)
+  let s45 := execInstrBr s44 (.ADDI .x11 .x0 48)
   let s46 := execInstrBr s45 (.LUI .x12 128)
   let s47 := execInstrBr s46 (.ADDI .x12 .x12 768)
   let s48 := execInstrBr s47 (.ADDI .x5 .x0 1)
@@ -350,7 +350,7 @@ theorem block (image : Image) (p : Word) (code : Code image p)
   · have hp : s43.pc = p + 172 := by simp [s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31, s32, s33, s34, s35, s36, s37, s38, s39, s40, s41, s42, s43, execInstrBr, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c43
   · rfl
-  apply OrdinarySteps.step s44 s45 _ (.base (.ADDI .x11 .x0 384)) 3
+  apply OrdinarySteps.step s44 s45 _ (.base (.ADDI .x11 .x0 48)) 3
   · have hp : s44.pc = p + 176 := by simp [s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31, s32, s33, s34, s35, s36, s37, s38, s39, s40, s41, s42, s43, s44, execInstrBr, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c44
   · rfl
@@ -373,7 +373,7 @@ theorem pc (s : MachineState) : (state s).pc = s.pc + 192 := by
 
 theorem regs (s : MachineState) :
     (state s).getReg .x5 = 1 ∧ (state s).getReg .x10 = 0x80000 ∧
-    (state s).getReg .x11 = 384 ∧ (state s).getReg .x12 = 0x80300 := by
+    (state s).getReg .x11 = 48 ∧ (state s).getReg .x12 = 0x80300 := by
   simp [state,execInstrBr,signExtend12,MachineState.getReg_setReg_eq,MachineState.getReg_setReg_ne]
 
 theorem mem (s : MachineState) (a : Word) :

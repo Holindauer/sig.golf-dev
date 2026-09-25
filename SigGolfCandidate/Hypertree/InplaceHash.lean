@@ -16,7 +16,7 @@ theorem header_preserved (s : MachineState) (answer : BitVec 256)
 
 theorem hash_trace (image : Image) (hash : Hash) (s : MachineState)
     (code : fetch image s = some (.base .ECALL)) (service : s.getReg .x5 = 1)
-    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 384)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 48)
     (destination : s.getReg .x12 = 0x80020) :
     Trace hash image s 1 8 1 1 (writeHash s (hash (hashInput s))) := by
   have valid : hashArgumentsValid s = true := by
@@ -53,7 +53,7 @@ open KeygenDomain
 
 theorem answer_words (hash : Hash) (s : MachineState)
     (tag level tree leaf chain step : Nat) (value : Reference.Digest)
-    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 384)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 48)
     (destination : s.getReg .x12 = 0x80020)
     (words : ∀ i : Fin 6, s.getMem (Signing.wordAddress 0x80000 i.val) =
       inputWord (header tag level leaf chain step) tree value i) :

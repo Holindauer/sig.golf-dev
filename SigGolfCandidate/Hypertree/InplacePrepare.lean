@@ -10,7 +10,7 @@ def state (s : MachineState) : MachineState :=
   let s := execInstrBr s (.SD .x28 .x10 (-1080))
   let s := execInstrBr s (.ADDI .x28 .x28 (-1056))
   let s := execInstrBr s (.ADDI .x10 .x28 (-24))
-  let s := execInstrBr s (.ADDI .x11 .x0 384)
+  let s := execInstrBr s (.ADDI .x11 .x0 48)
   let s := execInstrBr s (.ADDI .x12 .x28 8)
   let s := execInstrBr s (.ADDI .x5 .x0 1)
   execInstrBr s (.JAL .x0 64)
@@ -21,7 +21,7 @@ def Code (image : Image) (p : Word) : Prop :=
   instructionAt image (p + 8) = some (.base (.SD .x28 .x10 (-1080))) ∧
   instructionAt image (p + 12) = some (.base (.ADDI .x28 .x28 (-1056))) ∧
   instructionAt image (p + 16) = some (.base (.ADDI .x10 .x28 (-24))) ∧
-  instructionAt image (p + 20) = some (.base (.ADDI .x11 .x0 384)) ∧
+  instructionAt image (p + 20) = some (.base (.ADDI .x11 .x0 48)) ∧
   instructionAt image (p + 24) = some (.base (.ADDI .x12 .x28 8)) ∧
   instructionAt image (p + 28) = some (.base (.ADDI .x5 .x0 1)) ∧
   instructionAt image (p + 32) = some (.base (.JAL .x0 64))
@@ -35,7 +35,7 @@ theorem block (image : Image) (p : Word) (code : Code image p)
   let s3 := execInstrBr s2 (.SD .x28 .x10 (-1080))
   let s4 := execInstrBr s3 (.ADDI .x28 .x28 (-1056))
   let s5 := execInstrBr s4 (.ADDI .x10 .x28 (-24))
-  let s6 := execInstrBr s5 (.ADDI .x11 .x0 384)
+  let s6 := execInstrBr s5 (.ADDI .x11 .x0 48)
   let s7 := execInstrBr s6 (.ADDI .x12 .x28 8)
   let s8 := execInstrBr s7 (.ADDI .x5 .x0 1)
   let s9 := execInstrBr s8 (.JAL .x0 64)
@@ -64,7 +64,7 @@ theorem block (image : Image) (p : Word) (code : Code image p)
   · have hp : s4.pc = p + 16 := by simp [s1, s2, s3, s4, execInstrBr, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c4
   · rfl
-  apply OrdinarySteps.step s5 s6 _ (.base (.ADDI .x11 .x0 384)) 3
+  apply OrdinarySteps.step s5 s6 _ (.base (.ADDI .x11 .x0 48)) 3
   · have hp : s5.pc = p + 20 := by simp [s1, s2, s3, s4, s5, execInstrBr, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c5
   · rfl
@@ -97,7 +97,7 @@ theorem preserved (s : MachineState) :
 
 theorem regs (s : MachineState) (base : s.getReg .x28 = 0x80438) :
     (state s).getReg .x28 = 0x80018 ∧ (state s).getReg .x10 = 0x80000 ∧
-    (state s).getReg .x11 = 384 ∧ (state s).getReg .x12 = 0x80020 ∧
+    (state s).getReg .x11 = 48 ∧ (state s).getReg .x12 = 0x80020 ∧
     (state s).getReg .x5 = 1 := by simp [state, execInstrBr, MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne, signExtend12, signExtend21, base]
 /-- info: 'SigGolfCandidate.Hypertree.InplacePrepare.block' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in

@@ -44,7 +44,7 @@ theorem index_trace_full (hash : Hash) (s : MachineState) (pc : s.pc = 0x11b8) :
   have hpc : hs.pc = 0x11d0 := by simp [hs, indexHashState_pc, pc]
   obtain ⟨service, src, len, dst⟩ := indexHashState_regs s
   have hf : fetch sign hs = some (.base .ECALL) := by simp only [fetch, hpc]; decide
-  have hv : hashArgumentsValid hs = true := hash_arguments hs 896 src len dst (by decide)
+  have hv : hashArgumentsValid hs = true := hash_arguments hs 112 src len dst (by decide)
   have hlen : (hashInput hs).1 = 896 := by simp [hashInput, hs, len]
   let answer := hash (hashInput hs)
   have outpc : (writeHash hs answer).pc = 0x11d4 := by simp [hash_pc, hpc]

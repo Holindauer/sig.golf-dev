@@ -9,7 +9,7 @@ theorem inplace_loop_recurrent (image : Image)
     (restoreCode : InplaceRestore.Code image 0x1604) (hash : Hash) (s : MachineState) (level tree start remaining : Nat)
     (side : Bool) (chain : Reference.Chain) (value : Reference.Digest)
     (pc : s.pc = 0x1580) (base : s.getReg .x28 = 0x80438) (constant : s.getReg .x13 = 4294967296) (ready : CachedPrepare.Ready s)
-    (args : s.getReg .x11 = 384 ∧ s.getReg .x12 = 0x80020 ∧ s.getReg .x5 = 1) (length : start + remaining = 7)
+    (args : s.getReg .x11 = 48 ∧ s.getReg .x12 = 0x80020 ∧ s.getReg .x5 = 1) (length : start + remaining = 7)
     (data : Buffered s level tree side chain start value) :
     ∃ final, Trace hash image s (15*remaining+8) (22*remaining+8) remaining remaining final ∧
       final.pc = 0x163c ∧

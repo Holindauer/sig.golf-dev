@@ -100,7 +100,7 @@ theorem randomizer_trace_full (hash : Hash) (s : MachineState) (pc : s.pc = 0x10
   have hpc : hs.pc = 0x10cc := by simp [hs, randomizerHashState_pc, pc]
   obtain ⟨service, src, len, dst⟩ := randomizerHashState_regs s
   have hf : fetch sign hs = some (.base .ECALL) := by simp only [fetch, hpc]; decide
-  have hv : hashArgumentsValid hs = true := hash_arguments hs 768 src len dst (by decide)
+  have hv : hashArgumentsValid hs = true := hash_arguments hs 96 src len dst (by decide)
   have hlen : (hashInput hs).1 = 768 := by simp [hashInput, hs, len]
   let answer := hash (hashInput hs)
   have outpc : (writeHash hs answer).pc = 0x10d0 := by simp [hash_pc, hpc]

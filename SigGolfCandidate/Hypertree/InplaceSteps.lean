@@ -21,7 +21,7 @@ theorem initial (image : Image) (hash : Hash)
     ∃ final, Trace hash image s 41 48 1 1 final ∧ final.pc = 0x1580 ∧
       Buffered final level tree side chain (step+1) (Reference.chainHash hash level tree side chain step value) ∧
       CachedPrepare.Ready final ∧ final.getReg .x28 = 0x80438 ∧ final.getReg .x13 = 4294967296 ∧
-      (final.getReg .x11 = 384 ∧ final.getReg .x12 = 0x80020 ∧ final.getReg .x5 = 1) ∧
+      (final.getReg .x11 = 48 ∧ final.getReg .x12 = 0x80020 ∧ final.getReg .x5 = 1) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, OutsideChainWork a → final.getMem a = s.getMem a) := by
   have ne : s.getMem 0x80438 ≠ 7 := by
@@ -51,12 +51,12 @@ theorem recurrent (image : Image) (hash : Hash)
     (s : MachineState) (level tree step : Nat) (side : Bool) (chain : Reference.Chain) (value : Reference.Digest)
     (pc : s.pc = 0x1580) (base : s.getReg .x28 = 0x80438)
     (constant : s.getReg .x13 = 4294967296) (ready : CachedPrepare.Ready s)
-    (args : s.getReg .x11 = 384 ∧ s.getReg .x12 = 0x80020 ∧ s.getReg .x5 = 1)
+    (args : s.getReg .x11 = 48 ∧ s.getReg .x12 = 0x80020 ∧ s.getReg .x5 = 1)
     (bound : step < 7) (data : Buffered s level tree side chain step value) :
     ∃ final, Trace hash image s 15 22 1 1 final ∧ final.pc = 0x1580 ∧
       Buffered final level tree side chain (step+1) (Reference.chainHash hash level tree side chain step value) ∧
       CachedPrepare.Ready final ∧ final.getReg .x28 = 0x80438 ∧ final.getReg .x13 = 4294967296 ∧
-      (final.getReg .x11 = 384 ∧ final.getReg .x12 = 0x80020 ∧ final.getReg .x5 = 1) ∧
+      (final.getReg .x11 = 48 ∧ final.getReg .x12 = 0x80020 ∧ final.getReg .x5 = 1) ∧
       final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
       (∀ a, OutsideChainWork a → final.getMem a = s.getMem a) := by
   have ne : s.getMem 0x80438 ≠ 7 := by

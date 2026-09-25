@@ -17,7 +17,7 @@ def state (s : MachineState) : MachineState :=
   let s := execInstrBr s (.SD .x28 .x10 (-1080))
   let s := execInstrBr s (.ADDI .x28 .x28 (-1056))
   let s := execInstrBr s (.ADDI .x10 .x28 (-24))
-  let s := execInstrBr s (.ADDI .x11 .x0 384)
+  let s := execInstrBr s (.ADDI .x11 .x0 48)
   let s := execInstrBr s (.ADDI .x12 .x28 744)
   let s := execInstrBr s (.ADDI .x5 .x0 1)
   execInstrBr s (.JAL .x0 48)
@@ -32,7 +32,7 @@ def Code (image : Image) (p : Word) : Prop :=
   instructionAt image (p + 24) = some (.base (.SD .x28 .x10 (-1080))) ∧
   instructionAt image (p + 28) = some (.base (.ADDI .x28 .x28 (-1056))) ∧
   instructionAt image (p + 32) = some (.base (.ADDI .x10 .x28 (-24))) ∧
-  instructionAt image (p + 36) = some (.base (.ADDI .x11 .x0 384)) ∧
+  instructionAt image (p + 36) = some (.base (.ADDI .x11 .x0 48)) ∧
   instructionAt image (p + 40) = some (.base (.ADDI .x12 .x28 744)) ∧
   instructionAt image (p + 44) = some (.base (.ADDI .x5 .x0 1)) ∧
   instructionAt image (p + 48) = some (.base (.JAL .x0 48))
@@ -50,7 +50,7 @@ theorem block (image : Image) (p : Word) (code : Code image p)
   let s7 := execInstrBr s6 (.SD .x28 .x10 (-1080))
   let s8 := execInstrBr s7 (.ADDI .x28 .x28 (-1056))
   let s9 := execInstrBr s8 (.ADDI .x10 .x28 (-24))
-  let s10 := execInstrBr s9 (.ADDI .x11 .x0 384)
+  let s10 := execInstrBr s9 (.ADDI .x11 .x0 48)
   let s11 := execInstrBr s10 (.ADDI .x12 .x28 744)
   let s12 := execInstrBr s11 (.ADDI .x5 .x0 1)
   let s13 := execInstrBr s12 (.JAL .x0 48)
@@ -103,7 +103,7 @@ theorem block (image : Image) (p : Word) (code : Code image p)
   · have hp : s8.pc = p + 32 := by simp [s1, s2, s3, s4, s5, s6, s7, s8, execInstrBr, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c8
   · rfl
-  apply OrdinarySteps.step s9 s10 _ (.base (.ADDI .x11 .x0 384)) 3
+  apply OrdinarySteps.step s9 s10 _ (.base (.ADDI .x11 .x0 48)) 3
   · have hp : s9.pc = p + 36 := by simp [s1, s2, s3, s4, s5, s6, s7, s8, s9, execInstrBr, pc, BitVec.add_assoc]
     simpa only [fetch_at, hp] using c9
   · rfl
@@ -130,7 +130,7 @@ theorem mem (s : MachineState) (base : s.getReg .x28 = 0x80438) (constant : s.ge
 theorem regs (s : MachineState) (base : s.getReg .x28 = 0x80438) (constant : s.getReg .x13 = 4294967296) :
     (state s).getReg .x28 = 0x80018 ∧
     (state s).getReg .x10 = 0x80000 ∧
-    (state s).getReg .x11 = 384 ∧
+    (state s).getReg .x11 = 48 ∧
     (state s).getReg .x12 = 0x80300 ∧
     (state s).getReg .x5 = 1 := by
   simp [state, execInstrBr, MachineState.getReg_setReg_eq, MachineState.getReg_setReg_ne, signExtend12, signExtend21, base, constant, BitVec.add_assoc]

@@ -66,7 +66,7 @@ theorem payload_byte (head : Word) (tree : Nat) (values : Reference.Chain → Re
     simp [extractByte,low,← Nat.add_assoc,shift]
 
 theorem query_eq (s : MachineState) (head : Word) (tree : Nat) (values : Reference.Chain → Reference.Digest)
-    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 6144)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 768)
     (words : ∀ i : Fin 96, s.getMem (Signing.wordAddress 0x80000 i.val) = inputWord head tree values i) :
     hashInput s = Reference.packed (payload head tree values) := by
   apply Serialization.hashInput_of_list s 0x80000 (payload head tree values)
@@ -80,7 +80,7 @@ theorem query_eq (s : MachineState) (head : Word) (tree : Nat) (values : Referen
 /-- The exact 768-byte endpoint-compression query returns the reference leaf root. -/
 theorem answer_words (hash : Hash) (s : MachineState) (level tree : Nat)
     (side : Bool) (values : Reference.Chain → Reference.Digest)
-    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 6144)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 768)
     (destination : s.getReg .x12 = 0x80300)
     (words : ∀ i : Fin 96, s.getMem (Signing.wordAddress 0x80000 i.val) =
       inputWord (BitVec.ofNat 64 (3 + level*2^8 + Reference.sideNumber side*2^16)) tree values i) :
@@ -102,10 +102,10 @@ theorem answer_words (hash : Hash) (s : MachineState) (level tree : Nat)
 
 theorem hash_trace (image : Image) (hash : Hash) (s : MachineState)
     (code : fetch image s = some (.base .ECALL)) (service : s.getReg .x5 = 1)
-    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 6144)
+    (source : s.getReg .x10 = 0x80000) (bits : s.getReg .x11 = 768)
     (destination : s.getReg .x12 = 0x80300) :
     Trace hash image s 1 96 1 12 (writeHash s (hash (hashInput s))) := by
-  have valid := Keygen.hash_arguments s 6144 source bits destination (by decide)
+  have valid := Keygen.hash_arguments s 768 source bits destination (by decide)
   have len : (hashInput s).1 = 6144 := by simp [hashInput,bits]
   simpa [len,compressions] using Trace.hash s _ 0 0 0 0 code service valid (Trace.refl _)
 

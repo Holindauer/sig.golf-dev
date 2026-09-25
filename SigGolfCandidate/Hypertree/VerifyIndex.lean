@@ -9,7 +9,7 @@ theorem indexHashState_block (s : MachineState) (pc : s.pc = 0x10e0) :
     OrdinarySteps verify s 6 (indexHashState s) := by
   let s1 := execInstrBr s (.LUI .x10 0x80)
   let s2 := execInstrBr s1 (.ADDI .x10 .x10 0)
-  let s3 := execInstrBr s2 (.ADDI .x11 .x0 896)
+  let s3 := execInstrBr s2 (.ADDI .x11 .x0 112)
   let s4 := execInstrBr s3 (.LUI .x12 0x80)
   let s5 := execInstrBr s4 (.ADDI .x12 .x12 0x300)
   let s6 := execInstrBr s5 (.ADDI .x5 .x0 1)
@@ -21,7 +21,7 @@ theorem indexHashState_block (s : MachineState) (pc : s.pc = 0x10e0) :
   · have hp : s1.pc = 0x10e4 := by simp [s1, execInstrBr, pc]
     simp only [fetch, hp]; decide
   · rfl
-  apply OrdinarySteps.step s2 s3 _ (.base (.ADDI .x11 .x0 896)) 3
+  apply OrdinarySteps.step s2 s3 _ (.base (.ADDI .x11 .x0 112)) 3
   · have hp : s2.pc = 0x10e8 := by simp [s1, s2, execInstrBr, pc]
     simp only [fetch, hp]; decide
   · rfl
@@ -142,7 +142,7 @@ theorem index_trace (hash : Hash) (s : MachineState) (pc : s.pc = 0x10e0) :
   have hpc : hs.pc = 0x10f8 := by simp [hs, indexHashState_pc, pc]
   obtain ⟨service, src, len, dst⟩ := indexHashState_regs s
   have hf : fetch verify hs = some (.base .ECALL) := by simp only [fetch, hpc]; decide
-  have hv : hashArgumentsValid hs = true := hash_arguments hs 896 src len dst (by decide)
+  have hv : hashArgumentsValid hs = true := hash_arguments hs 112 src len dst (by decide)
   have hlen : (hashInput hs).1 = 896 := by simp [hashInput, hs, len]
   let answer := hash (hashInput hs)
   have outpc : (writeHash hs answer).pc = 0x10fc := by simp [hash_pc, hpc]

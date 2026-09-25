@@ -79,7 +79,7 @@ class Assembler:
                 self.ld(11,28,src-STEP);self.shift(11,11,shift);self.add(10,10,11)
             self.store(10,28,-1080)
             for off,src in [(8,INDEX0),(16,INDEX1),(24,INDEX2)]:self.ld(11,28,src-STEP);self.store(11,28,off-1080)
-            self.i(0x13,0,28,28,-1056);self.i(0x13,0,10,28,-24);self.li(11,384);self.i(0x13,0,12,28,8);self.li(5,1)
+            self.i(0x13,0,28,28,-1056);self.i(0x13,0,10,28,-24);self.li(11,48);self.i(0x13,0,12,28,8);self.li(5,1)
             self.li(13,1);self.shift(13,13,32)
             end=self.fresh('fused_end');self.jump(end)
             self.label('cached_chain_check')
@@ -148,6 +148,14 @@ class Assembler:
             if message: self.li(11, 0)
             else: self.load(11, source)
             self.save(11, HASH + offset)
+    def hash_length(self, size):
+        # Keep the former two-instruction leaf length setup and all code addresses.
+        if size == 768:
+            self.emit((11 << 7) | 0x37)
+            self.i(0x13, 0, 11, 11, size)
+        else:
+            self.li(11, size)
+
     def hash(self, tag, size, **fields):
         if getattr(self, "fused_hash_ready", False):
             assert tag == 2 and size == 48 and fields == dict(leaf=True, chain=True, step=True)
@@ -165,14 +173,14 @@ class Assembler:
             for offset,source in [(8,INDEX0),(16,INDEX1),(24,INDEX2)]:
                 self.ld(11,28,source-HASH); self.store(11,28,offset)
             self.i(0x13,0,28,28,24)
-            self.i(0x13,0,10,28,-24); self.li(11,384)
+            self.i(0x13,0,10,28,-24); self.li(11,48)
             self.i(0x13,0,12,28,744); self.li(5,1)
             end = self.fresh('reuse_header_end'); self.jump(end)
             while len(self.words)-start < 48: self.i(0x13,0,0,0,0)
             self.label(end); self.emit(0x73)
             return
         self.header(tag, **fields)
-        self.li(10, HASH); self.li(11, size * 8); self.li(12, ANSWER); self.li(5, 1); self.emit(0x73)
+        self.li(10, HASH); self.hash_length(size); self.li(12, ANSWER); self.li(5, 1); self.emit(0x73)
     def finish(self):
         for pos, kind, args, label in self.fixups:
             offset = self.labels[label] - 4 * pos
