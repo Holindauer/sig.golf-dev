@@ -540,3 +540,9 @@ PreludeLoader defines a research submission selecting signPrelude and proves ima
 ### 2026-09-26 loader-backed preparation and suffix entry
 
 PreludeLoadedPrepared.loaded_prepared discharges every preparation assumption from actual official initialState: real entry jump+complete pk derivation/copy/cleanup reaches0x1004 with correct pk,zero metadata,x6=1,input frame,≤100422instructions105771cycles739calls761compressions. PreludeResume.resumed_initialization proves actual12-step suffix0x1004 matches initializeState of a synthetic oldPC state; used explicit concrete fetch agreement, not unproved trace transport. PASS2861jobs with both guards; research/validation/siggolf-contract-loaded-resume.log. Next adapt randomizer_prepare_full to actual suffix using this equivalence, dropping displaced ADDI from81→80steps; port randomizer/index execution to signPrelude, then full signing tree loop.
+
+### 2026-09-26 resumed randomizer proof
+
+Ported five concrete instruction-block proofs to the847-word signPrelude image, reusing parent state definitions. PreludePrefixRandomizer proves the resumed entry at0x1004 (x6=1) prepares the randomizer in80instructions, then performs the exact reference randomizer in116instructions/131cycles total,1oracle call/2compressions. Includes arbitrary-memory frame, mode, pointer, and stack preservation. All three theorem axiom guards permit only propext, Classical.choice, Quot.sound. Component build PASS2833jobs; log research/validation/siggolf-contract-randomizer.log. Organizer definitions unchanged. No submission or full signer certificate claimed.
+
+Next executable step: port SignIndexPrepare block theorems and index_prepare, SignIndex block theorems, and SignPrefixStack index_prepare_stack/index_trace_full to nested Signing.Prelude with signPrelude. Compose index_refines_full and resumed entry_full (237instructions267cycles), then continue bottom-tree/full160level signer proof.
