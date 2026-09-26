@@ -13,7 +13,7 @@ theorem security : preludeSubmission.Secure := by
     ← PreludeReferenceCutoff.reference_probability]
   exact PreludeMonitorRealTransfer.real_bound KeygenFunctional.zeroCache adversary rounds budget
 
-theorem certificate : Certificate preludeSubmission 1731313 :=
+theorem certificate : Certificate preludeSubmission 1633369 :=
   certificate_of_secure security
 
 /-- info: 'SigGolfCandidate.Hypertree.PreludeCandidate.security' depends on axioms: [propext, Classical.choice, Quot.sound] -/

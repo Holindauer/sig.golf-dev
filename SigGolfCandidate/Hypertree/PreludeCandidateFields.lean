@@ -49,7 +49,7 @@ theorem compressionBounds : preludeSubmission.CompressionBounds := by
   | verify => simp [Phase.budgeted] at budgeted
 
 /-- Honest verification is bounded by the universal exact-bytecode verifier bound. -/
-theorem verificationBound : preludeSubmission.VerificationBound 1731313 := by
+theorem verificationBound : preludeSubmission.VerificationBound 1633369 := by
   intro hash secretKey message
   dsimp only
   intro _
@@ -58,7 +58,7 @@ theorem verificationBound : preludeSubmission.VerificationBound 1731313 := by
   exact cycleBound
 
 /-- This conditional assembly deliberately requires the organizer's actual security theorem. -/
-theorem certificate_of_secure (security : preludeSubmission.Secure) : Certificate preludeSubmission 1731313 :=
+theorem certificate_of_secure (security : preludeSubmission.Secure) : Certificate preludeSubmission 1633369 :=
   ⟨admitted,termination,completeness,compressionBounds,security,verificationBound⟩
 
 /-- info: 'SigGolfCandidate.Hypertree.PreludeCandidate.termination' depends on axioms: [propext, Classical.choice, Quot.sound] -/

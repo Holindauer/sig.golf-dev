@@ -3,7 +3,7 @@ namespace SigGolfCandidate.Hypertree.PreludeCandidate
 open SigGolf OracleComp SignatureEncoding Signing.Prelude
 set_option maxRecDepth 4096
 theorem honest_exact (hash : Hash) (secretKey : SecretKey) (message : Message) :
-    ∃ cycles calls blocks, cycles≤1731313 ∧ calls≤51841 ∧ blocks≤53602 ∧
+    ∃ cycles calls blocks, cycles≤1633369 ∧ calls≤51841 ∧ blocks≤53602 ∧
       evalWithAnswerFn hash (preludeSubmission.honest secretKey message)=
         ⟨true,fun phase => match phase with | .keygen => 761 | .sign => 121769 | .expand => 0 | .verify => blocks,cycles⟩ := by
   let pk := Reference.keygen hash secretKey

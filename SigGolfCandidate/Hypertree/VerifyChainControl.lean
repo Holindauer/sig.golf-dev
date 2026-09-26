@@ -15,15 +15,8 @@ theorem verify_chain_check : ChainLoopControl.CheckCode verify 0x14ec := by deci
 
 theorem verify_short_check : CheckReuse.Code verify 0x14f4 := by unfold CheckReuse.Code; decide
 
-theorem verify_chain_code : InplaceInitialPrepare.Code verify 0x1500 ∧ CounterCore.Code verify 0x15ec := by
-  unfold InplaceInitialPrepare.Code CounterCore.Code RegisterCounter.FinishCode
-  decide
-
 theorem verify_cached_check : CounterCheck.Code verify 0x1580 := by unfold CounterCheck.Code; decide
 
-theorem verify_cached_code : CounterArgs.Code verify 0x1584 ∧ CounterCore.Code verify 0x15ec := by
-  unfold CounterArgs.Code CounterCore.Code RegisterCounter.FinishCode
-  decide
 theorem verify_restore_code : InplaceRestore.Code verify 0x1604 := by unfold InplaceRestore.Code; decide
 
 end SigGolfCandidate.Hypertree.Verifying
