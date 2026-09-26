@@ -492,3 +492,7 @@ SignPreludeEncode proves aligned low-word preservation from the encoder byte fra
 ### 2026-09-26 tree entry components
 
 SignPreludeTreeEntry proves encoder low-word frame preserves TreeContext159/0, and proves actual one-step JAL at0x1ca8 with destination0x13c8 and return0x1cac. The call preserves memory, bytes, stack and tree context. PASS2820jobs with guards, log research/validation/siggolf-contract-prelude-tree-entry.log. Concrete appended-image integration still required before composing fixed-image derive_root; these generic fetch hypotheses are not a complete certificate. Next assemble469-step entry theorem including mode/pointer/selector/digits, then resolve fixed-image integration.
+
+### 2026-09-26 complete conditional root entry
+
+SignPreludeEntry.derive_entry composes469 ordinary steps from0x1c70 to0x13c8, RA0x1cac, restored stack, TreeContext159/0, mode1, pointer0x20080, selector0, zero-message digits and low aligned-word preservation. PASS2821jobs with permitted-axiom guard, log research/validation/siggolf-contract-prelude-entry.log. It explicitly requires setup/encode/call fetch agreement; not yet a concrete candidate certificate. Next integrate847-word image with suffix refactoring, then root-copy/cleanup and full loader/sign certificate.
