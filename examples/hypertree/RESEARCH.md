@@ -532,3 +532,7 @@ PreludeRootCopy.root_copy proves16 actual ordinary steps0x1cac→0x1cd4, writing
 ### 2026-09-26 prepared signer state
 
 PreludePrepared.prepare_signer composes derivation/copy/cleanup: actual returnPC0x1004,x6=1,stack0x1000000,correct pk words,zero LEVEL/INDEX/CURRENT, low aligned-input frame excluding pk. Bound≤100421instructions/105770cycles,739calls761compressions. PreludeJump proves actual0x1000→0x1c70 jump and memory/stack frame. PASS2855jobs with guards; research/validation/siggolf-contract-prelude-jump.log (includes prepared theorem). Next establish actual initialState loader facts for signPrelude and compose jump with prepared theorem; then full suffix certification.
+
+### 2026-09-26 official signer loader
+
+PreludeLoader defines a research submission selecting signPrelude and proves image validity, actual official-loader scratch words zero above0x80000, stack0x1000000,entryPC0x1000 and four secret-key words via official byte loading. No public-key input assumed. PASS2856jobs with guards; research/validation/siggolf-contract-prelude-loader.log. Next use these facts to discharge every prepare_signer assumption after entryJump and compose total bound≤100422instructions/105771cycles. Full suffix remains unfinished.
