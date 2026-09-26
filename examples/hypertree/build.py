@@ -300,7 +300,7 @@ def tree_function(a, verifying):
     a.label(done)
     a.copy(PUB0, HASH + 32, 32); a.hash(4, 64); a.copy(ANSWER, CURRENT); a.ret()
 
-def build(phase):
+def build(phase, derive_pk=False):
     a = Assembler()
     if phase == 'expand':
         a.copy(0x20060, WITNESS_BASE, SIGNATURE_BYTES); a.halt(True); return a.finish()
@@ -325,6 +325,16 @@ def build(phase):
         a.halt(True); a.label('reject'); a.halt(False)
     if phase != 'keygen': encode(a)
     tree_function(a, verifying); leaf_functions(a, verifying)
+    if phase == 'sign' and derive_pk:
+        a.words[0] = 0
+        a.fixups.append((0, 'jump', 0, 'sign_pk_prelude'))
+        a.labels['sign_resume'] = 4
+        a.label('sign_pk_prelude')
+        a.set(MODE, 1); a.set(POINTER, 0x20080); a.set(LEVEL, HEIGHT - 1)
+        a.call('encode'); a.call('tree'); a.copy(CURRENT, 0x40)
+        for address in (LEVEL, INDEX0, INDEX1, INDEX2, CURRENT, CURRENT + 8):
+            a.set(address, 0)
+        a.li(6, 1); a.jump('sign_resume')
     return a.finish()
 
 def generate():

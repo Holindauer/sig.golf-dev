@@ -496,3 +496,7 @@ SignPreludeTreeEntry proves encoder low-word frame preserves TreeContext159/0, a
 ### 2026-09-26 complete conditional root entry
 
 SignPreludeEntry.derive_entry composes469 ordinary steps from0x1c70 to0x13c8, RA0x1cac, restored stack, TreeContext159/0, mode1, pointer0x20080, selector0, zero-message digits and low aligned-word preservation. PASS2821jobs with permitted-axiom guard, log research/validation/siggolf-contract-prelude-entry.log. It explicitly requires setup/encode/call fetch agreement; not yet a concrete candidate certificate. Next integrate847-word image with suffix refactoring, then root-copy/cleanup and full loader/sign certificate.
+
+### 2026-09-26 concrete appended image entry
+
+Added optional derive_pk generator mode and build_prelude.py generating ImagesPrelude.signPrelude (847 words), exactly matching the reference-tested prototype. Existing Images/sign remain intact while migration proceeds. SignPreludeCode proves exact setup, encoder and call fetch conditions, retained body words1..795, and instantiates prelude_entry469 steps on this concrete image. PASS2823jobs with permitted-axiom guard; research/validation/siggolf-contract-prelude-code.log. This removes entry fetch assumptions but does not transport the tree trace: next prove fetch/trace transfer for unchanged body region, or refactor fixed-image tree proofs. No submission image switched until full certificate.
