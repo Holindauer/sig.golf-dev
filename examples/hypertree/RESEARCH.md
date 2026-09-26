@@ -524,3 +524,7 @@ Direct concrete-image port now covers secret preparation, STEP reset, selected/u
 ### 2026-09-26 concrete public-key derivation
 
 Direct image proofs now cover upper-tree settings/calls, both leaves, sibling serialization, node hash and return. PreludeDerivation.derive_public_key composes concrete469-step entry and root derivation:739calls761compressions, instructions≤100379, cycles≤105728, actual return0x1cac, restored stack, reference public key in CURRENT and aligned low-word frame. PASS2851jobs with permitted-axiom guard; research/validation/siggolf-contract-prelude-derivation.log. Assumptions are explicit initial secret/index/zero-buffer state at0x1c70; actual loader jump and final root-copy/cleanup/resume still need composition. Next prove appended root copy0x1cac→public-key0x40 and cleanup/resume, then loader-to-prelude entry and full signing suffix.
+
+### 2026-09-26 root copy and cleanup
+
+PreludeRootCopy.root_copy proves16 actual ordinary steps0x1cac→0x1cd4, writing CURRENT words to pk0x40/0x48 and preserving other memory and stack. PreludeCleanup proves26steps resetting LEVEL, three INDEX words, two CURRENT words, x6=1, then actual JAL to0x1004. Exact cleanup memory effect and stack preservation are proved. PASS2853jobs with block/copy guards; research/validation/siggolf-contract-prelude-cleanup.log. Next compose derivation+copy+cleanup (extra42cycles), then actual loader entry jump and full signing suffix.
