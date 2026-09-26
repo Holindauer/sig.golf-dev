@@ -9,7 +9,7 @@ This is a verifier component theorem; the signing certificate is separate. -/
 theorem run_refines_charged (hash : Hash) (pk : PublicKey) (message : Message)
     (witness : Bytes signatureBytes) :
     ∃ cycles calls blocks,
-      cycles + witnessCycles signatureBytes ≤ 1633369 ∧
+      cycles + witnessCycles signatureBytes ≤ 1591711 ∧
       calls ≤ 51841 ∧ blocks ≤ 53602 ∧
       submission.runWith hash .verify (message, pk, witness) =
         ⟨if Reference.verify hash pk message (SignatureEncoding.decode witness).toReference

@@ -21,7 +21,7 @@ theorem loaded_recovery (hash : Hash) (pk : PublicKey) (message : Message) (witn
     omega
   obtain ⟨recovered, steps, cycles, calls, blocks, lastIndex, run, hsteps, hcycles, hcalls, hblocks, finalPC, finalData, frame⟩ :=
     verify_layers hash witness 160 0 index ready 0 rfl indexSmall (by simpa using pc) data
-  change cycles + 9979 ≤ 10267*160 at hcycles
+  change cycles + 9717 ≤ 10005*160 at hcycles
   have allFrame := preFrame.trans initial ready recovered frame
   have pkWords : ∀ i : Fin 2, recovered.getMem (wordAddress 0x40 i.val) = pk.extractLsb' (64*i.val) 64 := by
     intro i
@@ -40,7 +40,7 @@ theorem loaded_recovery (hash : Hash) (pk : PublicKey) (message : Message) (witn
 
 /-- Universal bytecode refinement, including malformed witnesses and exact accept/reject behavior. -/
 theorem run_refines (hash : Hash) (pk : PublicKey) (message : Message) (witness : Bytes signatureBytes) :
-    ∃ cycles calls blocks, cycles ≤ 1632901 ∧ calls ≤ 51841 ∧ blocks ≤ 53602 ∧
+    ∃ cycles calls blocks, cycles ≤ 1591243 ∧ calls ≤ 51841 ∧ blocks ≤ 53602 ∧
       submission.runWith hash .verify (message, pk, witness) =
         ⟨if Reference.verify hash pk message (SignatureEncoding.decode witness).toReference then some () else none,
           true, cycles, calls, blocks⟩ := by
