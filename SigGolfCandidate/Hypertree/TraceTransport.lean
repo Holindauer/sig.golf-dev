@@ -36,6 +36,37 @@ theorem RegionTrace.transport {region : MachineState → Prop} {hash : Hash}
     exact Trace.hash state final steps cycles calls blocks
       ((agreement state inside).trans hf) hs hv ih
 
+/-- Compose regional prefixes without constraining the intermediate return state separately. -/
+theorem RegionTrace.trans {region : MachineState → Prop} {hash : Hash} {image : Image}
+    {s t u : MachineState} {n c q b n' c' q' b' : Nat}
+    (first : RegionTrace region hash image s n c q b t)
+    (second : RegionTrace region hash image t n' c' q' b' u) :
+    RegionTrace region hash image s (n+n') (c+c') (q+q') (b+b') u := by
+  induction first with
+  | refl => simpa using second
+  | ordinary state next final instruction steps cycles calls blocks inside hf hs tail ih =>
+    simpa only [Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using
+      RegionTrace.ordinary state next u instruction _ _ _ _ inside hf hs (ih second)
+  | hash state final steps cycles calls blocks inside hf hs hv tail ih =>
+    simpa only [Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using
+      RegionTrace.hash state u _ _ _ _ inside hf hs hv (ih second)
+
+/-- A single ordinary instruction with explicit regional evidence. -/
+theorem RegionTrace.one {region : MachineState → Prop} {hash : Hash} {image : Image}
+    (s t : MachineState) (instruction : Instruction) (inside : region s)
+    (hf : fetch image s = some instruction) (hs : ordinaryStep s instruction = some t) :
+    RegionTrace region hash image s 1 (instructionCycles instruction) 0 0 t := by
+  simpa using RegionTrace.ordinary s t t instruction 0 0 0 0 inside hf hs (RegionTrace.refl t)
+
+theorem RegionTrace.step {region : MachineState → Prop} {hash : Hash} {image : Image}
+    (s t u : MachineState) (instruction : Instruction) (n : Nat)
+    (inside : region s) (hf : fetch image s = some instruction)
+    (hs : ordinaryStep s instruction = some t)
+    (tail : RegionTrace region hash image t n n 0 0 u)
+    (cost : instructionCycles instruction = 1 := by rfl) :
+    RegionTrace region hash image s (n+1) (n+1) 0 0 u := by
+  simpa only [cost] using RegionTrace.ordinary s t u instruction n n 0 0 inside hf hs tail
+
 /-- info: 'SigGolfCandidate.RegionTrace.transport' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms RegionTrace.transport

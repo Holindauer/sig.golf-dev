@@ -504,3 +504,7 @@ Added optional derive_pk generator mode and build_prelude.py generating ImagesPr
 ### 2026-09-26 fetch agreement and trace transport
 
 SignPreludeFetch universally proves fetch equality for every state with PC in[0x1004,0x1c70), including unaligned PCs, from retained body words. RegionTrace explicitly tracks this condition at every executed instruction and transports all resource counters and states unchanged to signPrelude. PASS2825jobs with guards; research/validation/siggolf-contract-prelude-fetch.log. Crucially derive_root still returns ordinary Trace, not RegionTrace; its regional execution evidence MUST be constructed before transport can apply. No inference of trace locality from finalPC or sample runs. Failed approach: defining Within by matching indexed Trace proof failed dependent elimination; replaced with explicit inductive RegionTrace. Next add regional composition/block constructors and instrument tree/leaf proofs, or choose generic-image proof refactoring if smaller.
+
+### 2026-09-26 first regional tree block
+
+Added RegionTrace.trans, one and unit-cost step constructors. SignTreeControlRegion.left_region explicitly proves all five fetch PCs for actual left-leaf control block0x13d0, retaining exact final state and5cycles. PASS2826jobs with guard; research/validation/siggolf-contract-region-control.log. Full tree regional evidence remains unfinished. Next generalize this block to right call0x13e4 and instrument enter/return, leaf loops and hashing; final return state may leave region and must stay unrestricted.
