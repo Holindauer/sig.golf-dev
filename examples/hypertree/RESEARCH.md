@@ -508,3 +508,7 @@ SignPreludeFetch universally proves fetch equality for every state with PC in[0x
 ### 2026-09-26 first regional tree block
 
 Added RegionTrace.trans, one and unit-cost step constructors. SignTreeControlRegion.left_region explicitly proves all five fetch PCs for actual left-leaf control block0x13d0, retaining exact final state and5cycles. PASS2826jobs with guard; research/validation/siggolf-contract-region-control.log. Full tree regional evidence remains unfinished. Next generalize this block to right call0x13e4 and instrument enter/return, leaf loops and hashing; final return state may leave region and must stay unrestricted.
+
+### 2026-09-26 regional stack and right-call proofs
+
+Added right tree-control block regional proof, generic enter/return regional traces, and all five concrete signer stack sites (tree/leaf enter; leaf/bottom/node return). Return fetches stay in body while final return destination is unrestricted. PASS2828jobs with guards, research/validation/siggolf-contract-region-stack.log. Remaining work is regional leaf/hash/chain and tree composition, not stack sites. Existing full tree Trace cannot yet be transported.
