@@ -488,3 +488,7 @@ SignPreludeSetup now proves exact three-store memory effect, arbitrary-address f
 ### 2026-09-26 composed prelude encoder
 
 SignPreludeEncode proves aligned low-word preservation from the encoder byte frame, including exclusion of the saved stack return address. derive_encode composes setup14 + encode454 =468 ordinary steps, returns at0x1ca8 with stack restored, zero-message digits encoded, and all aligned words below0x80600 preserved relative to setup. PASS2819jobs with permitted-axiom guards; research/validation/siggolf-contract-prelude-encode.log. Next transfer TreeContext/mode/pointer/selector through this frame and prove JAL into derive_root. Concrete image agreement and loader composition remain outstanding.
+
+### 2026-09-26 tree entry components
+
+SignPreludeTreeEntry proves encoder low-word frame preserves TreeContext159/0, and proves actual one-step JAL at0x1ca8 with destination0x13c8 and return0x1cac. The call preserves memory, bytes, stack and tree context. PASS2820jobs with guards, log research/validation/siggolf-contract-prelude-tree-entry.log. Concrete appended-image integration still required before composing fixed-image derive_root; these generic fetch hypotheses are not a complete certificate. Next assemble469-step entry theorem including mode/pointer/selector/digits, then resolve fixed-image integration.
