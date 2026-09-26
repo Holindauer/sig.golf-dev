@@ -83,6 +83,58 @@ theorem tracked_base (scheme : Interface) (adversary : Adversary submission.size
     case sample n resume => exact bind_congr (fun answer => ih _ _ _)
     case step next => exact ih _ _ _
 
+theorem tracked_charged_generic (base charged : Interface)
+    (hs : ∀ sk pk request, charged.sign sk pk request =
+      (fun r => (r.1,r.2+739)) <$> base.sign sk pk request)
+    (hc : ∀ pk t candidate extra, charged.check pk (addTranscriptCalls t extra) candidate =
+      (fun r => addResultCalls r extra) <$> base.check pk t candidate)
+    (adversary : Adversary submission.sizes) (sk : SecretKey) (pk : PublicKey)
+    (rounds : Nat) (state : adversary.State) (t : Transcript submission.sizes) (extra : Nat) :
+    (fun r => addResultCalls r.1 r.2) <$> interactTracked base adversary sk pk rounds state t extra =
+      interactWith charged adversary sk pk rounds state (addTranscriptCalls t extra) := by
+  induction rounds generalizing state t extra with
+  | zero => rfl
+  | succ rounds ih =>
+    simp only [interactTracked,interactWith]
+    cases h : adversary.step state <;> simp only [h]
+    all_goals simp only [map_eq_bind_pure_comp,bind_assoc,pure_bind,Function.comp_def] at ih ⊢
+    case submit candidate =>
+      rw [hc]
+      simp only [map_eq_bind_pure_comp,OracleComp.liftComp_bind,OracleComp.liftComp_pure,
+        Function.comp_def]
+    case hash input resume =>
+      apply bind_congr
+      intro answer
+      convert ih (resume answer) {t with hashCalls := t.hashCalls+1} extra using 1 <;>
+        simp [addTranscriptCalls,Nat.add_assoc,Nat.add_comm,Nat.add_left_comm]
+    case sign request resume =>
+      simp only [addTranscriptCalls]
+      split
+      · rw [bind_assoc,hs]
+        simp only [map_eq_bind_pure_comp,OracleComp.liftComp_bind,OracleComp.liftComp_pure,
+          bind_assoc,pure_bind,Function.comp_def]
+        apply bind_congr
+        intro result
+        change _ = interactWith charged adversary sk pk rounds (resume result.1)
+          (recordView (addTranscriptCalls t extra) request.message (result.1,result.2+739))
+        rw [record_charge]
+        exact ih _ _ _
+      · rfl
+    case sample n resume => exact bind_congr (fun answer => ih _ _ _)
+    case step next => exact ih _ _ _
+
+theorem tracked_charged (adversary : Adversary submission.sizes) (sk : SecretKey) (pk : PublicKey)
+    (rounds : Nat) (state : adversary.State) (t : Transcript submission.sizes) (extra : Nat) :
+    (fun r => addResultCalls r.1 r.2) <$>
+      interactTracked baseReferenceInterface adversary sk pk rounds state t extra =
+      interactWith referenceInterface adversary sk pk rounds state (addTranscriptCalls t extra) :=
+  tracked_charged_generic baseReferenceInterface referenceInterface
+    signing_charge check_charge adversary sk pk rounds state t extra
+
+/-- info: 'SigGolfCandidate.Hypertree.PreludeSecurity.tracked_charged' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms tracked_charged
+
 /-- info: 'SigGolfCandidate.Hypertree.PreludeSecurity.tracked_base' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms tracked_base
