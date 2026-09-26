@@ -1,0 +1,131 @@
+import SigGolfCandidate.Hypertree.PreludeChainStep
+import SigGolfCandidate.Hypertree.SignCaptureRefine
+
+namespace SigGolfCandidate.Hypertree.Signing.Prelude
+open SigGolf SigGolf.Riscv RiscvZkvm.Rv64 Keygen ChainLoopControl Verifying
+set_option maxRecDepth 4096
+
+/-- The signer executes every capture and HASH in a remaining chain fragment. The resource
+bound allows the longest capture branch at every step; the HASH count is exact. -/
+theorem sign_chain_capture_loop (hash : Hash) (s : MachineState) (pointer level tree start remaining : Nat)
+    (side : Bool) (chain : Reference.Chain) (digit : Fin 8) (value expected : Reference.Digest)
+    (pc : s.pc = 0x1698) (length : start + remaining = 7)
+    (valid : CapturePointerValid pointer) (ptr : s.getMem 0x80448 = BitVec.ofNat 64 pointer)
+    (data : ChainData s level tree side chain start value)
+    (settings : CaptureSettings s pointer chain digit)
+    (future : start ≤ digit.val → expected = walk (Reference.chainHash hash level tree side chain) start (digit.val - start) value)
+    (past : digit.val < start → CapturedValue s pointer chain expected) :
+    ∃ final instructions cycles, Trace hash signPrelude s instructions cycles remaining remaining final ∧
+      instructions ≤ 131 * remaining + 40 ∧ cycles ≤ 138 * remaining + 40 ∧
+      final.pc = 0x1874 ∧
+      ChainData final level tree side chain 7
+        (walk (Reference.chainHash hash level tree side chain) start remaining value) ∧
+      CapturedValue final pointer chain expected ∧
+      final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
+      (∀ a, OutsideChainWork a →
+        (∀ i : Fin 2, a ≠ wordAddress (pointer + 16 * chain.val) i.val) → final.getMem a = s.getMem a) := by
+  induction remaining generalizing s start value with
+  | zero =>
+    have startEq : start = 7 := by omega
+    subst start
+    have target := capture_target s pointer chain valid ptr data.chainEq
+    obtain ⟨safe, safeNext⟩ := capture_access pointer chain valid
+    have cap := captureUpper_block signPrelude 0x1698 sign_upper_capture_code s pc
+      (capture_digit_access s chain data.chainEq)
+      (by rw [target]; exact safe)
+      (by rw [target, capture_target_next]; exact safeNext)
+    have capPC : (captureUpperState s).pc = 0x1724 := by rw [captureUpper_pc, pc]; rfl
+    have capData := captureUpper_chainData s pointer level tree 7 side chain value valid ptr data
+    have done := check_block signPrelude 0x1724 sign_chain_check _ capPC
+    refine ⟨check (captureUpperState s), captureUpperSteps s + 5, captureUpperSteps s + 5,
+      cap.trace.trans done.trace, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    · have := captureUpper_steps_le s; omega
+    · have := captureUpper_steps_le s; omega
+    · rw [check_pc, capPC, capData.stepEq]; rfl
+    · simpa only [walk] using capData.check
+    · have captured := capture_completed_checkpoint s hash pointer level tree 7 side chain digit value expected
+        valid settings data (by omega) future past (by have := digit.isLt; omega)
+      intro i
+      rw [check_mem]
+      exact captured i
+    · exact (check_stack _).1.trans (captureUpper_ra s)
+    · exact (check_stack _).2.trans (captureUpper_sp s)
+    · intro a _ outside
+      rw [check_mem]
+      exact captureUpper_frame s pointer chain valid ptr data.chainEq a outside
+  | succ remaining ih =>
+    have target := capture_target s pointer chain valid ptr data.chainEq
+    obtain ⟨safe, safeNext⟩ := capture_access pointer chain valid
+    have cap := captureUpper_block signPrelude 0x1698 sign_upper_capture_code s pc
+      (capture_digit_access s chain data.chainEq)
+      (by rw [target]; exact safe)
+      (by rw [target, capture_target_next]; exact safeNext)
+    have capPC : (captureUpperState s).pc = 0x1724 := by rw [captureUpper_pc, pc]; rfl
+    have capData := captureUpper_chainData s pointer level tree start side chain value valid ptr data
+    obtain ⟨next, core, nextPC, nextData, nextRA, nextSP, nextFrame⟩ := chain_core_step hash
+      (captureUpperState s) level tree start side chain value capPC (by omega) capData
+    have nextPtr : next.getMem 0x80448 = BitVec.ofNat 64 pointer := by
+      rw [nextFrame _ (by unfold OutsideChainWork; decide), captureUpper_high_frame s pointer chain valid ptr data.chainEq _ (by decide)]
+      exact ptr
+    have capSettings := capture_settings s pointer chain digit valid settings data.chainEq
+    have nextSettings : CaptureSettings next pointer chain digit :=
+      capSettings.frame _ next pointer chain digit valid (fun a outside _ => nextFrame a outside)
+    have nextFuture : start + 1 ≤ digit.val → expected =
+        walk (Reference.chainHash hash level tree side chain) (start+1) (digit.val - (start+1))
+          (Reference.chainHash hash level tree side chain start value) := by
+      intro le
+      rw [future (by omega)]
+      have distance : digit.val - start = (digit.val - (start + 1)) + 1 := by omega
+      rw [distance, walk]
+    have nextPast : digit.val < start + 1 → CapturedValue next pointer chain expected := by
+      intro lt
+      have captured := capture_completed_checkpoint s hash pointer level tree start side chain digit value expected
+        valid settings data (by omega) future past (by omega)
+      intro i
+      rw [nextFrame _ (capture_output_outside_work pointer chain valid i)]
+      exact captured i
+    obtain ⟨final, steps, cycles, tail, stepsBound, cyclesBound, finalPC, finalData, captured,
+      finalRA, finalSP, finalFrame⟩ := ih next (start+1)
+      (Reference.chainHash hash level tree side chain start value) nextPC (by omega) nextPtr nextData nextSettings nextFuture nextPast
+    refine ⟨final, captureUpperSteps s + 96 + steps, captureUpperSteps s + 103 + cycles,
+      ?_, ?_, ?_, finalPC, ?_, captured, ?_, ?_, ?_⟩
+    · convert (cap.trace.trans core).trans tail using 1 <;> omega
+    · have := captureUpper_steps_le s; omega
+    · have := captureUpper_steps_le s; omega
+    · simpa only [walk] using finalData
+    · exact finalRA.trans (nextRA.trans (captureUpper_ra s))
+    · exact finalSP.trans (nextSP.trans (captureUpper_sp s))
+    · intro a workOutside captureOutside
+      rw [finalFrame a workOutside captureOutside, nextFrame a workOutside]
+      exact captureUpper_frame s pointer chain valid ptr data.chainEq a captureOutside
+
+/-- The actual signer computes the endpoint and writes the requested Winternitz digit
+checkpoint into the exact two-word signature slot. -/
+theorem sign_chain_captured_endpoint (hash : Hash) (s : MachineState) (secretKey : SecretKey) (pointer level tree : Nat)
+    (side : Bool) (chain : Reference.Chain) (message : Reference.Digest)
+    (pc : s.pc = 0x1698) (upper : level ≠ 0)
+    (valid : CapturePointerValid pointer)
+    (data : ChainData s level tree side chain 0 (Reference.secret hash secretKey level tree side chain))
+    (settings : CaptureSettings s pointer chain (Reference.digit message chain)) :
+    ∃ final instructions cycles, Trace hash signPrelude s instructions cycles 7 7 final ∧
+      instructions ≤ 957 ∧ cycles ≤ 1006 ∧ final.pc = 0x1874 ∧
+      ChainData final level tree side chain 7 (Reference.endpoint hash secretKey level tree side chain) ∧
+      CapturedValue final pointer chain ((Reference.signLayer hash secretKey level tree side message).values chain) ∧
+      final.getReg .x1 = s.getReg .x1 ∧ final.getReg .x2 = s.getReg .x2 ∧
+      (∀ a, OutsideChainWork a →
+        (∀ i : Fin 2, a ≠ wordAddress (pointer + 16 * chain.val) i.val) → final.getMem a = s.getMem a) := by
+  simpa only [Reference.endpoint, Reference.signLayer, upper, if_false] using
+    sign_chain_capture_loop hash s pointer level tree 0 7 side chain (Reference.digit message chain)
+      (Reference.secret hash secretKey level tree side chain)
+      (walk (Reference.chainHash hash level tree side chain) 0 (Reference.digit message chain).val
+        (Reference.secret hash secretKey level tree side chain)) pc (by decide) valid settings.pointerEq data settings
+      (by intro _; rfl) (by intro h; omega)
+
+set_option format.width 200
+/-- info: 'SigGolfCandidate.Hypertree.Signing.Prelude.sign_chain_captured_endpoint' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms sign_chain_captured_endpoint
+
+end SigGolfCandidate.Hypertree.Signing.Prelude

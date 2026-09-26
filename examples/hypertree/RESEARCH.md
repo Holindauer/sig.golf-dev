@@ -512,3 +512,7 @@ Added RegionTrace.trans, one and unit-cost step constructors. SignTreeControlReg
 ### 2026-09-26 regional stack and right-call proofs
 
 Added right tree-control block regional proof, generic enter/return regional traces, and all five concrete signer stack sites (tree/leaf enter; leaf/bottom/node return). Return fetches stay in body while final return destination is unrestricted. PASS2828jobs with guards, research/validation/siggolf-contract-region-stack.log. Remaining work is regional leaf/hash/chain and tree composition, not stack sites. Existing full tree Trace cannot yet be transported.
+
+### 2026-09-26 direct appended-image chain proofs
+
+A smaller integration route works: re-elaborate signer execution proofs in Signing.Prelude using generic bytecode components and concrete signPrelude code facts. PreludeChainStep proves actual96-instruction103-cycle core; PreludeChainLoop, PreludeChainUnselected and PreludeChainCapture prove universal remaining-chain execution/endpoints including captured signature values directly on signPrelude. PASS2787jobs with permitted-axiom guards; research/validation/siggolf-contract-prelude-chains.log. This avoids requiring regional instrumentation for these components. Existing regional framework remains valid but is not needed for directly reproved chains. Next port upper-leaf loop/entry/calls using these concrete chain proofs and generic secret/endpoint/compression code, then upper tree and derive_root. Existing signer certificate remains incomplete.
