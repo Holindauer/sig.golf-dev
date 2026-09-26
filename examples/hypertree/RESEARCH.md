@@ -528,3 +528,7 @@ Direct image proofs now cover upper-tree settings/calls, both leaves, sibling se
 ### 2026-09-26 root copy and cleanup
 
 PreludeRootCopy.root_copy proves16 actual ordinary steps0x1cac→0x1cd4, writing CURRENT words to pk0x40/0x48 and preserving other memory and stack. PreludeCleanup proves26steps resetting LEVEL, three INDEX words, two CURRENT words, x6=1, then actual JAL to0x1004. Exact cleanup memory effect and stack preservation are proved. PASS2853jobs with block/copy guards; research/validation/siggolf-contract-prelude-cleanup.log. Next compose derivation+copy+cleanup (extra42cycles), then actual loader entry jump and full signing suffix.
+
+### 2026-09-26 prepared signer state
+
+PreludePrepared.prepare_signer composes derivation/copy/cleanup: actual returnPC0x1004,x6=1,stack0x1000000,correct pk words,zero LEVEL/INDEX/CURRENT, low aligned-input frame excluding pk. Bound≤100421instructions/105770cycles,739calls761compressions. PreludeJump proves actual0x1000→0x1c70 jump and memory/stack frame. PASS2855jobs with guards; research/validation/siggolf-contract-prelude-jump.log (includes prepared theorem). Next establish actual initialState loader facts for signPrelude and compose jump with prepared theorem; then full suffix certification.

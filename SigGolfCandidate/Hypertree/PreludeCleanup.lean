@@ -186,6 +186,13 @@ theorem cleanup_mem (s : MachineState) (a : Word) :
   simp [cleanupState, execInstrBr, signExtend12, MachineState.getReg,
     MachineState.setReg, MachineState.setPC, MachineState.getMem, MachineState.setMem]
 
+theorem cleanup_low (s : MachineState) (a : Word) (low : a.toNat < 0x80000) :
+    (cleanupState s).getMem a = s.getMem a := by
+  have ne (b : Word) (high : 0x80000 ≤ b.toNat) : a ≠ b := by
+    intro eq; rw [eq] at low; omega
+  rw [cleanup_mem]
+  simp only [if_neg (ne 0x80508 (by decide)), if_neg (ne 0x80500 (by decide)), if_neg (ne 0x80418 (by decide)), if_neg (ne 0x80410 (by decide)), if_neg (ne 0x80408 (by decide)), if_neg (ne 0x80400 (by decide))]
+
 /-- info: 'SigGolfCandidate.Hypertree.Signing.Prelude.cleanup_block' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms cleanup_block
