@@ -536,3 +536,7 @@ PreludePrepared.prepare_signer composes derivation/copy/cleanup: actual returnPC
 ### 2026-09-26 official signer loader
 
 PreludeLoader defines a research submission selecting signPrelude and proves image validity, actual official-loader scratch words zero above0x80000, stack0x1000000,entryPC0x1000 and four secret-key words via official byte loading. No public-key input assumed. PASS2856jobs with guards; research/validation/siggolf-contract-prelude-loader.log. Next use these facts to discharge every prepare_signer assumption after entryJump and compose total bound≤100422instructions/105771cycles. Full suffix remains unfinished.
+
+### 2026-09-26 loader-backed preparation and suffix entry
+
+PreludeLoadedPrepared.loaded_prepared discharges every preparation assumption from actual official initialState: real entry jump+complete pk derivation/copy/cleanup reaches0x1004 with correct pk,zero metadata,x6=1,input frame,≤100422instructions105771cycles739calls761compressions. PreludeResume.resumed_initialization proves actual12-step suffix0x1004 matches initializeState of a synthetic oldPC state; used explicit concrete fetch agreement, not unproved trace transport. PASS2861jobs with both guards; research/validation/siggolf-contract-loaded-resume.log. Next adapt randomizer_prepare_full to actual suffix using this equivalence, dropping displaced ADDI from81→80steps; port randomizer/index execution to signPrelude, then full signing tree loop.
