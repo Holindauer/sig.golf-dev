@@ -10,7 +10,7 @@ theorem loaded_recovery (hash : Hash) (pk : PublicKey) (message : Message) (witn
     ∃ initial recovered steps cycles calls blocks,
       initialState submission .verify (message, pk, witness) = some initial ∧
       Trace hash verify initial steps cycles calls blocks recovered ∧
-      steps ≤ 5506530 ∧ cycles ≤ 1632886 ∧ calls ≤ 51841 ∧ blocks ≤ 53602 ∧
+      steps ≤ 5506530 ∧ cycles ≤ 1591228 ∧ calls ≤ 51841 ∧ blocks ≤ 53602 ∧
       recovered.pc = 0x1220 ∧
       (RootMatches recovered ↔ Reference.verify hash pk message (SignatureEncoding.decode witness).toReference) := by
   obtain ⟨initial, ready, loaded, pre, pc, data, preFrame⟩ := loaded_loop_data hash pk message witness
