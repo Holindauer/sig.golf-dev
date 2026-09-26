@@ -484,3 +484,7 @@ Approval-service authentication recovered. Added SignPreludeSetup: generic exact
 ### 2026-09-25 prelude memory and context
 
 SignPreludeSetup now proves exact three-store memory effect, arbitrary-address frame, mode1, pointer0x20080, and TreeContext159/0 from initial index and secret-key words. Build PASS2818jobs with permitted-axiom guards for memory and context; log research/validation/siggolf-contract-prelude-memory.log. Next compose encode_subroutine and reconstruct word frames from its byte frame, then tree call at0x1ca8. Concrete image agreement and official loader composition remain outstanding; no complete candidate certificate claimed. Organizer files still identical to be68468.
+
+### 2026-09-26 composed prelude encoder
+
+SignPreludeEncode proves aligned low-word preservation from the encoder byte frame, including exclusion of the saved stack return address. derive_encode composes setup14 + encode454 =468 ordinary steps, returns at0x1ca8 with stack restored, zero-message digits encoded, and all aligned words below0x80600 preserved relative to setup. PASS2819jobs with permitted-axiom guards; research/validation/siggolf-contract-prelude-encode.log. Next transfer TreeContext/mode/pointer/selector through this frame and prove JAL into derive_root. Concrete image agreement and loader composition remain outstanding.
