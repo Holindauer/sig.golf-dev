@@ -546,3 +546,11 @@ PreludeLoadedPrepared.loaded_prepared discharges every preparation assumption fr
 Ported five concrete instruction-block proofs to the847-word signPrelude image, reusing parent state definitions. PreludePrefixRandomizer proves the resumed entry at0x1004 (x6=1) prepares the randomizer in80instructions, then performs the exact reference randomizer in116instructions/131cycles total,1oracle call/2compressions. Includes arbitrary-memory frame, mode, pointer, and stack preservation. All three theorem axiom guards permit only propext, Classical.choice, Quot.sound. Component build PASS2833jobs; log research/validation/siggolf-contract-randomizer.log. Organizer definitions unchanged. No submission or full signer certificate claimed.
 
 Next executable step: port SignIndexPrepare block theorems and index_prepare, SignIndex block theorems, and SignPrefixStack index_prepare_stack/index_trace_full to nested Signing.Prelude with signPrelude. Compose index_refines_full and resumed entry_full (237instructions267cycles), then continue bottom-tree/full160level signer proof.
+
+### 2026-09-26 complete resumed prefix and bottom tree
+
+PreludeIndexBlocks/PreludeIndex/PreludePrefixRefine certify index derivation and complete resumed prefix at0x1004 with x6=1:237instructions267cycles2calls4compressions, exact reference index/randomizer and memory/stack frames. PASS2837jobs with permitted-axiom guards (siggolf-contract-prefix-refine.log).
+
+PreludeBottomLeaf/PreludeBottomTreeLeaves/PreludeBottomSibling/PreludeBottomTreeFinish certify both selected and unselected bottom leaves plus sibling output and root: universal bottom tree≤537instructions572cycles5calls5compressions. PASS2845jobs with guards (siggolf-contract-bottom-tree.log). CaptureCode fields quantify arbitrary states, so prove concrete fetches by intro s i pc, rewrite fetch/pc, fin_cases i; decide cannot directly decide these quantified predicates. Organizer files unchanged. No full signer certificate or submission yet.
+
+Next: port SignTree wrapper to combine PreludeTreeFinish upper tree with PreludeBottomTreeFinish, then SignLayerPrepare/SignLayer/SignLayers and required shift/dispatch/advance instruction blocks. Compose160level loop with official loaded preparation and resumed prefix; finish signer resource/functional certificate before exporting/submitting.
