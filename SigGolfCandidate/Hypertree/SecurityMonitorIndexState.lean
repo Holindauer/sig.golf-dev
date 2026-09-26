@@ -35,14 +35,14 @@ noncomputable def recordPublic (pk : PublicKey) (history : History) (query : Que
     (cached : Bool) (answer : BitVec 256) : History :=
   recordParsed history query (parse pk query) (decide (SecretKeyEligible query)) cached answer
 
-/-- Honest signing uses one H5 call; its other 111595 calls are charged too. -/
+/-- Honest signing uses one H5 call; its other 117507 calls are charged too. -/
 noncomputable def recordSign (history : History) (message : Message) (cached : Bool) (answer : BitVec 256) : History :=
   { history with
     signedMessages := insert message history.signedMessages
     signedIndices := insert (answer.extractLsb' 0 160) history.signedIndices
     indexTrace := if cached then history.indexTrace else
       history.indexTrace ++ [(decide (message ∉ history.signedMessages),answer.extractLsb' 0 160)]
-    counts := {history.counts with graph := history.counts.graph+111595, index := history.counts.index+1} }
+    counts := {history.counts with graph := history.counts.graph+117507, index := history.counts.index+1} }
 
 def recordKeygen (history : History) : History :=
   {history with counts := {history.counts with graph := history.counts.graph+739}}
@@ -59,7 +59,7 @@ theorem public_total (pk : PublicKey) (history : History) (query : Query) (cache
   parsed_total history query (parse pk query) (decide (SecretKeyEligible query)) cached answer
 
 theorem sign_total (history : History) (message : Message) (cached : Bool) (answer : BitVec 256) :
-    (recordSign history message cached answer).counts.total = history.counts.total+111596 := by
+    (recordSign history message cached answer).counts.total = history.counts.total+117508 := by
   simp only [recordSign, Counts.total]
   omega
 

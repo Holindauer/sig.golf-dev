@@ -8,7 +8,7 @@ set_option maxRecDepth 4096
 
 /-- The actual adversary-visible operations. Honest signing remains one atomic
 operation with its complete reference implementation in `realize`; it will be
-charged its already-proved 111596 calls by every monitor interpretation. -/
+charged its already-proved 117508 calls by every monitor interpretation. -/
 inductive View (α : Type) where
   | done (value : α)
   | hash (query : Query) (next : BitVec 256 → View α)

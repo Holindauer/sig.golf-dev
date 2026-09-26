@@ -81,10 +81,10 @@ theorem interact_atChecker (factors : Factors) (adversary : Adversary submission
       dsimp only at member
       by_cases allowed : transcript.signingRequests < LIFETIME
       · rw [if_pos allowed, execute] at member
-        by_cases enough : 111596 ≤ remaining
+        by_cases enough : 117508 ≤ remaining
         · rw [if_pos enough, mem_support_bind_iff] at member
           obtain ⟨answer, queried, member⟩ := member
-          exact ih (resume _) _ (remaining - 111596) _ answer.2 _
+          exact ih (resume _) _ (remaining - 117508) _ answer.2 _
             (sign_ready factors history exposed cache ready _ request.message answer.1 answer.2 queried)
             (coherent.sign request.message answer.1 answer.2 queried)
             (tracked.sign_random request.message answer.1 answer.2 queried) member

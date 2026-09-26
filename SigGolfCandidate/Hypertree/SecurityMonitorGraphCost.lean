@@ -108,9 +108,9 @@ theorem compile_credit {α : Type} (nonces : NonceTable) (metadata : MetadataTab
       intro answer residual
       apply disclose_credit
       intro opened
-      apply Credit.weaken _ _ _ (ih _ (remaining - 111596) opened residual
+      apply Credit.weaken _ _ _ (ih _ (remaining - 117508) opened residual
         (recordSign history message (cache (SecurityRandomOracle.indexInput signPk message (nonces message))).isSome answer))
-      change 2 * history.counts.graph ≤ 2 * (history.counts.graph + 111595)
+      change 2 * history.counts.graph ≤ 2 * (history.counts.graph + 117507)
       omega
     next short => exact Nat.le_refl _
 

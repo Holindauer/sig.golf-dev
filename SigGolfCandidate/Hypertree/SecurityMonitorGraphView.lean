@@ -33,7 +33,7 @@ noncomputable def compile {α : Type} (nonces : NonceTable) (metadata : Metadata
           (fun answer opened cache => compile nonces metadata pk (next answer) remaining opened cache
             (recordPublic pk history input (residual input).isSome answer))
   | .sign signPk message next, remaining, exposed, residual, history =>
-      if 111596 ≤ remaining then
+      if 117508 ≤ remaining then
         let nonce := nonces message
         let input := SecurityRandomOracle.indexInput signPk message nonce
         indexStep residual input (fun answer cache =>
@@ -41,7 +41,7 @@ noncomputable def compile {α : Type} (nonces : NonceTable) (metadata : Metadata
           SecurityGraphMonitorOracle.disclose (needed metadata exposed index) exposed (fun opened =>
             let factors := viewFactors opened metadata
             let signature := SecurityGraphSigner.signature (privateTable factors) (labels factors) nonce index
-            compile nonces metadata pk (next (SecurityExperiment.serialize signature)) (remaining - 111596)
+            compile nonces metadata pk (next (SecurityExperiment.serialize signature)) (remaining - 117508)
               opened cache (recordSign history message (residual input).isSome answer)))
       else .done ⟨none, remaining, exposed, residual, history⟩
 

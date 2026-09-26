@@ -33,7 +33,7 @@ theorem compile_wellCounted {α : Type} (nonces : NonceTable) (metadata : Metada
       intro answer residual
       apply disclose_returns
       intro opened
-      exact ih _ (remaining - 111596) opened residual _ (counted.recordSign message _ answer)
+      exact ih _ (remaining - 117508) opened residual _ (counted.recordSign message _ answer)
     · exact counted
 
 /-- At most one new signed message is inserted per actual signing operation. -/
@@ -62,7 +62,7 @@ theorem compile_signed_card {α : Type} (nonces : NonceTable) (metadata : Metada
       intro answer residual
       apply disclose_returns
       intro opened
-      apply returns_mono _ _ _ _ (ih _ (signs - 1) (within.2 _) (remaining - 111596) opened residual
+      apply returns_mono _ _ _ _ (ih _ (signs - 1) (within.2 _) (remaining - 117508) opened residual
         (recordSign history message (cache (SecurityRandomOracle.indexInput signPk message (nonces message))).isSome answer))
       intro result limited
       change result.history.signedMessages.card ≤ (insert message history.signedMessages).card + (signs - 1) at limited

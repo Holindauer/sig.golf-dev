@@ -60,7 +60,7 @@ theorem program_run_insufficient (publicCache : Cache) (adversary : Adversary su
       𝒮[(pure (none : Option Result) : ProbComp (Option Result))] := by
   rw [program_atomic_run, if_neg (by omega)]
 
-/-- Unfold only the actual signing action; the 111596-query body stays opaque. -/
+/-- Unfold only the actual signing action; the 117508-query body stays opaque. -/
 theorem interact_sign (adversary : Adversary submission.sizes) (pk : PublicKey) (rounds : Nat)
     (state : adversary.State) (transcript : Transcript submission.sizes) (request : SigningRequest)
     (resume : Option (Bytes submission.sizes.signature) → adversary.State)
@@ -78,10 +78,10 @@ theorem interact_sign_cutoff_enough (adversary : Adversary submission.sizes) (pk
     (rounds budget : Nat) (state : adversary.State) (transcript : Transcript submission.sizes)
     (request : SigningRequest) (resume : Option (Bytes submission.sizes.signature) → adversary.State)
     (action : adversary.step state = .sign request resume)
-    (allowed : transcript.signingRequests < LIFETIME) (enough : 111596 ≤ budget) :
+    (allowed : transcript.signingRequests < LIFETIME) (enough : 117508 ≤ budget) :
     cutoff (interact adversary pk (rounds + 1) state transcript) budget = (do
       let response ← (signWire pk request.message).liftComp GameWorld
-      cutoff (signContinuation adversary pk rounds transcript request resume response) (budget - 111596)) := by
+      cutoff (signContinuation adversary pk rounds transcript request resume response) (budget - 117508)) := by
   rw [interact_sign adversary pk rounds state transcript request resume action allowed]
   exact (SecurityAtomicCounts.signWire pk request.message).bind_enough _ budget enough
 
@@ -90,11 +90,11 @@ theorem interact_sign_run_enough (adversary : Adversary submission.sizes) (pk : 
     (rounds budget : Nat) (state : adversary.State) (transcript : Transcript submission.sizes)
     (request : SigningRequest) (resume : Option (Bytes submission.sizes.signature) → adversary.State)
     (cache : SplitCache) (action : adversary.step state = .sign request resume)
-    (allowed : transcript.signingRequests < LIFETIME) (enough : 111596 ≤ budget) :
+    (allowed : transcript.signingRequests < LIFETIME) (enough : 117508 ≤ budget) :
     (simulateQ idealGameOracle (cutoff (interact adversary pk (rounds + 1) state transcript) budget)).run cache =
       ((simulateQ idealGameOracle ((signWire pk request.message).liftComp GameWorld)).run cache >>= fun first =>
         (simulateQ idealGameOracle (cutoff
-          (signContinuation adversary pk rounds transcript request resume first.1) (budget - 111596))).run first.2) := by
+          (signContinuation adversary pk rounds transcript request resume first.1) (budget - 117508))).run first.2) := by
   rw [interact_sign adversary pk rounds state transcript request resume action allowed]
   exact (SecurityAtomicCounts.signWire pk request.message).run_bind_enough idealGameOracle _ cache budget enough
 
@@ -117,10 +117,10 @@ theorem interact_sign_atomic_run (adversary : Adversary submission.sizes) (pk : 
     (cache : SplitCache) (action : adversary.step state = .sign request resume) :
     𝒮[(simulateQ idealGameOracle (cutoff (interact adversary pk (rounds + 1) state transcript) budget)).run' cache] =
       if transcript.signingRequests < LIFETIME then
-        if 111596 ≤ budget then
+        if 117508 ≤ budget then
           𝒮[(simulateQ idealGameOracle (do
             let response ← (signWire pk request.message).liftComp GameWorld
-            cutoff (signContinuation adversary pk rounds transcript request resume response) (budget - 111596))).run' cache]
+            cutoff (signContinuation adversary pk rounds transcript request resume response) (budget - 117508))).run' cache]
         else 𝒮[(pure (none : Option Result) : ProbComp (Option Result))]
       else 𝒮[(pure (some (⟨false, none, transcript⟩ : Result)) : ProbComp (Option Result))] := by
   by_cases allowed : transcript.signingRequests < LIFETIME
@@ -135,7 +135,7 @@ theorem interact_sign_run_insufficient (adversary : Adversary submission.sizes) 
     (rounds budget : Nat) (state : adversary.State) (transcript : Transcript submission.sizes)
     (request : SigningRequest) (resume : Option (Bytes submission.sizes.signature) → adversary.State)
     (cache : SplitCache) (action : adversary.step state = .sign request resume)
-    (allowed : transcript.signingRequests < LIFETIME) (short : budget < 111596) :
+    (allowed : transcript.signingRequests < LIFETIME) (short : budget < 117508) :
     𝒮[(simulateQ idealGameOracle (cutoff (interact adversary pk (rounds + 1) state transcript) budget)).run' cache] =
       𝒮[(pure (none : Option Result) : ProbComp (Option Result))] := by
   rw [interact_sign_atomic_run adversary pk rounds budget state transcript request resume cache action,

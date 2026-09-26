@@ -74,7 +74,7 @@ theorem traced_view {α : Type} (factors : Factors) (pk : PublicKey) (view : Vie
     have safe := lift_clean (SecuritySecretKeyHonest.signWire signPk message)
     have fixed := SecurityAtomicCounts.signWire signPk message
     rw [SecurityMonitorGraphCoupling.execute]
-    by_cases enough : 111596 ≤ budget
+    by_cases enough : 117508 ≤ budget
     · rw [if_pos enough]
       simp only [traced, realize]
       rw [trace_enough safe fixed _ budget enough, run_bind]
@@ -84,7 +84,7 @@ theorem traced_view {α : Type} (factors : Factors) (pk : PublicKey) (view : Vie
       intro result _
       simpa only [extend_sign, traced] using ih
         (SecurityExperiment.serialize (SecurityGraphSigner.signature (privateTable factors) (labels factors)
-          (factors.2.1 message) (result.1.extractLsb' 0 160))) (budget - 111596)
+          (factors.2.1 message) (result.1.extractLsb' 0 160))) (budget - 117508)
         (SecurityGraphDisclosure.revealCache factors.1
           (SecurityGraphMonitorSign.needed factors.2.2 exposed (result.1.extractLsb' 0 160)) exposed)
         result.2 (recordSign history message
